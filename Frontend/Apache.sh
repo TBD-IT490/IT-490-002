@@ -1,3 +1,2 @@
 #!/bin/sh
-sudo apt install apache2
-
+sudo apt install apache2 libapache2-mod-php
