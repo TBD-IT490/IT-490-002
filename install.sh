@@ -1,8 +1,8 @@
 #!/bin/bash
 clear;
-#sudo apt install git;
-#sudo systemctl enable nftables.service;
-#sudo systemctl start nftables.service;
+sudo apt install git php;
+sudo systemctl enable nftables.service;
+sudo systemctl start nftables.service;
 while true
 do
     echo -e 'Which Server to Install?\n 0. Frontend\n 1. DMZ\n 2. Middleware\n 3. Database';
