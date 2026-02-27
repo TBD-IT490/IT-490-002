@@ -12,7 +12,7 @@ When the proccess is complete reboot the VM, press enter and wait.
 
 Try logging in, if all is good the only thing you should do now is run this command and nothing else.
 ```bash
-git clone 
+git clone git@github.com:TBD-IT490/IT-490-002.git
 
 ```
 
