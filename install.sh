@@ -1,6 +1,6 @@
 #!/bin/bash
 clear;
-sudo apt install git php;
+sudo apt install php;
 sudo systemctl enable nftables.service;
 sudo systemctl start nftables.service;
 while true
