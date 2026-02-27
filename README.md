@@ -21,3 +21,4 @@ After this copy the public key into github and name it i490-vm_name and send to 
 ```bash
 git clone git@github.com:TBD-IT490/IT-490-002.git
 ```
+Once cloned, cd into the repo and run the install.sh script.
