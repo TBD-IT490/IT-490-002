@@ -10,8 +10,14 @@ When in the installtion proccess don't change anything but adding 3rd party driv
 your name and user and password should all be it490, the server name should be what the server will handle so web, dmz, database or broker.
 When the proccess is complete reboot the VM, press enter and wait.
 
-Try logging in, if all is good the only thing you should do now is run this command and nothing else.
+Try logging in, if all is good the only thing you should do now is run these commands and nothing else.
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+cat ~/.ssh/id_ed25519.pub
+```
+After this copy the public key into github and name it i490-vm_name and send to discord for us to use. Now you can clone the repo
 ```bash
 git clone git@github.com:TBD-IT490/IT-490-002.git
 ```
-It should error out and deny acesss, you should now
