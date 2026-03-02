@@ -17,28 +17,66 @@ $username = $_SESSION['username'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        body {
+            background-color: #202030;
+            color: #DCBCCE;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: #242E0F !important;
+        }
+
+        .navbar-brand {
+            color: #DCBCCE !important;
+            font-weight: bold;
+        }
+
+        .btn-logout {
+            background-color: #86715B;
+            border: none;
+            color: #202030;
+        }
+
+        .btn-logout:hover {
+            background-color: #242E0F;
+            color: #DCBCCE;
+        }
+
         .widget {
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
+            background-color: #39304A;
+            border-radius: 15px;
             padding: 20px;
             text-align: center;
-            margin: 10px;
+            margin: 10px 0;
             cursor: pointer;
+            color: #DCBCCE;
+            transition: all 0.2s;
         }
+
         .widget:hover {
-            background-color: #e9ecef;
+            background-color: #86715B;
+            color: #202030;
+        }
+
+        h4 {
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin: 0;
         }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-primary">
+    <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
-            <span class="navbar-brand text-white">Welcome, <?php echo htmlspecialchars($username); ?></span>
-            <button class="btn btn-outline-light" type="button" onclick="window.location.href='logout.php'">Log Out</button>
+            <span class="navbar-brand">Welcome, <?php echo htmlspecialchars($username); ?></span>
+            <button class="btn btn-logout" type="button" onclick="window.location.href='logout.php'">Log Out</button>
         </div>
     </nav>
 
@@ -66,7 +104,7 @@ $username = $_SESSION['username'];
         </div>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
