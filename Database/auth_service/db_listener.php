@@ -5,14 +5,14 @@ require_once __DIR__ .'/vendor/autoload.php'; /** rmq library */
 use PhpAmqpLib\Connection\AMQPStreamConnection; /**import RMQ classes*/
 use PhpAmqpLib\Message\AMQPMessage;
 
-define('RMQ_HOST', '100.127.138.110'); //p3 ts pass - matt
+define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
-define('DB_HOST', '100.99.7.121'); //my ts ip
+define('DB_HOST', '100.112.153.128'); //my ts ip
 define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
-define('DB_NAME', 'auth_system');
+define('DB_NAME', 'noetic');
 
 //db connection
 function connectDB() {
