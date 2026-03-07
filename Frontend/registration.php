@@ -21,7 +21,7 @@ if (isset($_POST["register"])) {
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
     $connection = new AMQPStreamConnection(
-        "100.127.138.110",
+        "100.101.27.73",
         5672,
         "broker",
         "test",
