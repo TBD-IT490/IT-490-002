@@ -1,7 +1,0 @@
-Fetching books from last 1 day(s) ... 
-Error fetching book api :( HTTP code: 0
-Failed to fetch data D:
-url: https://www.googleapis.com/books/v1/volumes?q=search+terms?pubStartDate=2026-03-06T00%3A00%3A02Z&pubEndDate=2026-03-07T00%3A00%3A02Z&resultsPerPage=100
-Fetching books from last 1 day(s) ... 
-Error fetching book api :( HTTP code: 0
-Failed to fetch data D:
