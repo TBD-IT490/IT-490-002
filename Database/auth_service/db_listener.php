@@ -62,9 +62,9 @@ function handleRegistration($data) {
 //handle login and session
 function handleLogin($data) {
 	//make sure it's not null
-//	echo "RAHHH 2: $data\n";
-        if(!isset($data['username'], $data['password'])){
-                return ['success'=>false, 'message'=>'Missing credentials!'];
+	//echo "RAHHH 2: $data\n";
+    if(!isset($data['username'], $data['password'])){
+        return ['success'=>false, 'message'=>'Missing credentials!'];
 	}
 
 	$conn = connectDB();
@@ -107,6 +107,107 @@ function handleLogin($data) {
 	return ['success' => true, 'session_key' => $sessionKey, 'username' => $username, 'message' => 'Logged in!'];
 }
 
+//Handling creating a club*****
+function handleCreateClub($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+
+	$club_name = $data['club_name']; //change data
+    $description = $data['description']; //change data later
+    $user_id = $data['user_id']; //change data later
+    $invite_code = strtoupper(substr(md5(uniqid(rand(), true)),0,8));
+
+	$stmt = $conn->prepare("INSERT INTO book_clubs (club_name, description, invite_code, created_by) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("sssi", $club_name, $description, $invite_code, $user_id);
+
+	if ($stmt->execute()) {
+		$club_id = $conn->insert_id;
+
+		//make creator admin
+		$stmt2 = $conn->prepare("INSERT INTO club_members (club_id, user_id, role) VALUES (?, ?, ?)");
+		$stmt2->bind_param("ii", $club_id, $user_id);
+		$stmt2->execute();
+
+		echo "SUCCESS: Club created: $club_name\n";
+		return ['success' => true, 'club_id' => $club_id, 'invite_code' => $invite_code];
+	}
+
+	return ['success' => false, 'message' => 'Failed to create club.'];
+}
+
+//Handling joining a club*****
+function handleJoinClub($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//change variablessss
+	$invite_code = $data['invite_code'];
+    $user_id = $data['user_id'];
+
+	//get invite code
+	$stmt = $conn->prepare("SELECT club_id FROM book_clubs WHERE invite_code = ?");
+	$stmt->bind_param("s", $invite_code);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	if ($result->num_rows === 0) {
+		return ['success' => false, 'message' => 'Invalid invite code.'];
+	}
+
+	$club = $result->fetch_assoc();
+	$club_id = $club['club_id'];
+
+	//adding member - woohoo!
+	$stmt = $conn->prepare("INSERT INTO club_members (club_id, user_id) VALUES (?, ?)");
+	$stmt->bind_param("ii", $club_id, $user_id);
+
+	if ($stmt->execute()) {
+		echo "SUCCESS: User $user_id joined club $club_id\n"; //CHANGE VARIABLES
+		return ['success' => true, 'club_id' => $club_id];
+	}
+
+	return ['success' => false, 'message' => 'Already a member...or error :/'];
+}
+
+//handle scheduling a meeting*****
+function handleScheduleMeeting($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+
+	//validate fields
+	if(!isset($data['club_id'], $data['scheduled_time'], $data['agenda'])) {
+		return ['success' => false, 'message' => 'Missing required fields!'];
+	}
+
+	$club_id = $data['club_id'];
+	//INSERT TARYN'S VARIABLES
+	$scheduled_time = $data['scheduled_time'];
+	$agenda = $data['agenda'];
+
+	
+}
+
+//handle creating a review****
+function handleCreateReview($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+}
+
+//handle discussions*****
+function handleDiscussions($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+}
+
 //RMQ processing
 function processMessage($req) {
 	echo "HELLO!!\n";
@@ -116,6 +217,9 @@ function processMessage($req) {
 		$response = handleLogin($message);
 	}elseif($routing_key==='user.register') {
 		$response = handleRegistration($message);
+	//add new route for creating club*****
+
+	//add new route for joining club*****
 	}else {
 		echo "SOMEONE FORGOT ROUTING KEY >:(\n";
 		echo "UNKNOWN ROUTING KEY: ". $routing_key . "\n";
