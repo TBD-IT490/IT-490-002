@@ -35,8 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         if ($result['success'] ?? false) {
             $name = htmlspecialchars($result['group']['name'] ?? '');
+            $creator = htmlspecialchars($result['group']['creator'] ?? '');
             $code = htmlspecialchars($result['group']['invite_code'] ?? '');
-            $msg  = "success:Circle <em>$name</em> created! Your invite code is: <strong>$code</strong>";
+            $msg  = "success:Circle <em>$name</em> created by <em>$creator</em>! Your invite code is: <strong>$code</strong>";
         } else {
             $msg = 'error:Could not create circle. Please try again.';
         }
