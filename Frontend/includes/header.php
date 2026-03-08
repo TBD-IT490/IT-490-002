@@ -3,11 +3,6 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-if (!isset($_SESSION['loggedin'])) {
-    $_SESSION['loggedin'] = true;
-    $_SESSION['username'] = 'eleanor_voss';
-    $_SESSION['id'] = 1;
-}
 
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 ?>
@@ -206,7 +201,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 
 <nav class="noetic-nav">
     <div class="container d-flex align-items-center gap-4">
-        <a href="index.php" class="nav-brand">Noetic<span>.</span></a>
+        <a href="dashboard.php" class="nav-brand">Noetic<span>.</span></a>
         <div class="d-flex align-items-center gap-1 ms-2 flex-grow-1">
             <a href="books.php" class="nav-link <?php echo $current_page==='books'?'active':''; ?>">Library</a>
             <a href="groups.php" class="nav-link <?php echo $current_page==='groups'?'active':''; ?>">Circles</a>

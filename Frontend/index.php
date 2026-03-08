@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
             $connection = new AMQPStreamConnection(
                 '100.101.27.73',
-                'localhost',
+            //    'localhost',
                 5672,
                 'broker',
                 'test'
@@ -80,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
