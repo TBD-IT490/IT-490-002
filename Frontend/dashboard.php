@@ -1,4 +1,15 @@
 <?php
+
+session_start();
+
+// If user is NOT logged in, redirect to login page
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
+    header("Location: index.php");
+    exit();
+}
+
+// Get username from session (NOT from $_GET)
+$username = $_SESSION['username'];
 require_once 'includes/data.php';
 require_once 'includes/header.php';
 
@@ -8,6 +19,7 @@ $recent_reviews = array_slice($user_reviews, -3);
 $next_event = $schedule[0];
 $next_book = getBookById($next_event['book_id']);
 $next_group = getGroupById($next_event['group_id']);
+
 ?>
 
 <style>

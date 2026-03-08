@@ -112,19 +112,28 @@ $saved_prefs = $user_settings['preferences'] ?? [];
                         <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
                     <?php endif; ?>
                 </div>
-                <div style="margin-left:calc(80px + 1.5rem + 0.8rem); padding-top:0.5rem;">
-                    <h3 style="font-family:'IM Fell English',serif; margin:0;">
-                        <?php echo htmlspecialchars($profile['display_name'] ?? $_SESSION['username']); ?>
-                    </h3>
-                    <div style="font-size:0.82rem; color:var(--text-muted);">
-                        @<?php echo htmlspecialchars($_SESSION['username']); ?>
-                        &nbsp;·&nbsp; Member since <?php echo $profile['member_since'] ?? '—'; ?>
+                <div style="margin-left:calc(80px + 1.5rem + 0.8rem); padding-top:0.5rem;" class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h3 style="font-family:'IM Fell English',serif; margin:0;">
+                            <?php echo htmlspecialchars($profile['display_name'] ?? $_SESSION['username']); ?>
+                        </h3>
+                        <div style="font-size:0.82rem; color:var(--text-muted);">
+                            @<?php echo htmlspecialchars($_SESSION['username']); ?>
+                            &nbsp;·&nbsp; Member since <?php echo $profile['member_since'] ?? '—'; ?>
+                        </div>
+                        <?php if (!empty($profile['bio'])): ?>
+                        <div style="font-size:0.95rem; color:var(--text-muted); font-style:italic; margin-top:0.4rem;">
+                            <?php echo htmlspecialchars($profile['bio']); ?>
+                        </div>
+                        <?php endif; ?>
                     </div>
-                    <?php if (!empty($profile['bio'])): ?>
-                    <div style="font-size:0.95rem; color:var(--text-muted); font-style:italic; margin-top:0.4rem;">
-                        <?php echo htmlspecialchars($profile['bio']); ?>
-                    </div>
-                    <?php endif; ?>
+                    <a href="logout.php"
+                       style="font-family:'Crimson Text',serif; font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); text-decoration:none; border:1px solid rgba(134,113,91,0.3); border-radius:2px; padding:0.3rem 0.8rem; transition:color 0.2s, border-color 0.2s; white-space:nowrap;"
+                       onmouseover="this.style.color='var(--blush)'; this.style.borderColor='var(--umber)'"
+                       onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='rgba(134,113,91,0.3)'">
+                        <i class="bi bi-box-arrow-right"></i> Log Out
+                    </a>
+                </div>
                 </div>
             </div>
         </div>
