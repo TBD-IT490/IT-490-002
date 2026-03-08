@@ -1,4 +1,9 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php';
+
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
+
 // ── RABBITMQ CONFIGURATION ───────────────────────────────────
 define('RABBITMQ_HOST',     '100.101.27.73');
 define('RABBITMQ_PORT',     5672);
@@ -18,14 +23,13 @@ define('RABBITMQ_EXCHANGE', 'user_exchange');
 function rmq_rpc(string $action, array $payload = []): ?array {
     try {
         $connection = new AMQPStreamConnection(
-                '100.101.27.73',
-            //    'localhost',
-                5672,
-                'broker',
-                'test'
-            );
+            RABBITMQ_HOST,
+            RABBITMQ_PORT,
+            RABBITMQ_USER,
+            RABBITMQ_PASS
+        );
 
-        $$channel = $connection->channel();
+        $channel = $connection->channel();
         $channel->exchange_declare('user_exchange', 'direct', false, true, false);
         $channel->queue_declare('user_events_queue', false, true, false, false);
         $channel->basic_qos(null, 1, null);
