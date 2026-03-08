@@ -7,13 +7,13 @@ $msg = '';
 // ── POST HANDLER ──────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['suggest_book'])) {
-    $result = api_post('suggestions', [
+    // RabbitMQ action: 'suggestion.create'
+    // Expected response: { success: true }
+    $result = rmq_rpc('suggestion.create', [
         'group_id' => (int)($_POST['sug_group'] ?? 0),
         'book_id'  => (int)($_POST['sug_book']  ?? 0),
-        'user_id'  => $_SESSION['id'],
-        'note'     => trim($_POST['sug_note'] ?? ''),
+        'note'     => trim($_POST['sug_note']   ?? ''),
     ]);
-    // Expected API response: { success: true }
     $msg = ($result['success'] ?? false)
         ? 'success:Your suggestion has been sent to the circle.'
         : 'error:Could not send suggestion. Please try again.';
@@ -23,33 +23,33 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
 // ── DATA FETCHING ─────────────────────────────────────────────
 
-// Personal recommendations for the current user
-// Expected API response:
-// {
-//   recommendations: [{ id, title, author, cover, genre[], year, rating, score }, ...],
-//   genre_affinity:  { "Mystery": 22, "Gothic": 18, ... }  (genre → score, sorted desc)
-// }
-$personal_data  = api_get("users/{$_SESSION['id']}/recommendations") ?? [];
-$personal_recs  = $personal_data['recommendations']  ?? [];
-$genre_score    = $personal_data['genre_affinity']   ?? [];
-$top_genres     = array_slice(array_keys($genre_score), 0, 3);
+$personal_res = rmq_rpc('recommendation.personal') ?? [];
+$personal_recs = $personal_res['recommendations'] ?? [];
+$genre_score   = $personal_res['genre_affinity']  ?? [];
+$top_genres    = array_slice(array_keys($genre_score), 0, 3);
 
 // Group recommendations — one set per circle the user belongs to
-// Expected API response:
-// [
-//   {
-//     group: { id, name, current_book_id },
-//     recommendations: [{ id, title, author, cover, genre[], rating, genre_overlap }, ...]
-//   },
-//   ...
-// ]
-$group_recs_data = api_get("users/{$_SESSION['id']}/group-recommendations") ?? [];
+// RabbitMQ action: 'recommendation.groups'
+// Expected response:
+// {
+//   groups: [
+//     {
+//       group: { id, name, current_book_id },
+//       recommendations: [{ id, title, author, cover, genre[], rating, genre_overlap }, ...]
+//     },
+//     ...
+//   ]
+// }
+$group_recs_res  = rmq_rpc('recommendation.groups') ?? [];
+$group_recs_data = $group_recs_res['groups'] ?? [];
 
-// Books list for the "suggest to a circle" dropdown
-// Expected API response: [{ id, title }, ...]
-$books_for_select = api_get('books?fields=id,title') ?? [];
+// Books for the "suggest to a circle" dropdown
+// RabbitMQ action: 'book.list'
+// Expected response: { books: [{ id, title }] }
+$bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
+$books_for_select = $bselect_res['books'] ?? [];
 
-// $my_groups already fetched in data.php — used for the group selector dropdown
+// $my_groups already fetched in data.php
 ?>
 
 <style>
@@ -121,7 +121,6 @@ $books_for_select = api_get('books?fields=id,title') ?? [];
             <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1.2rem;">
                 Based on your ratings and genre affinities.
             </p>
-
             <?php if (!empty($personal_recs)): ?>
                 <?php foreach ($personal_recs as $i => $b): ?>
                 <div class="rec-card">
@@ -152,19 +151,15 @@ $books_for_select = api_get('books?fields=id,title') ?? [];
                         <div class="d-flex align-items-center gap-2">
                             <?php echo renderStars($b['rating']); ?>
                             <span style="font-size:0.78rem; color:var(--text-muted);"><?php echo $b['rating']; ?></span>
-                            <?php if (isset($b['score'])): ?>
-                            <span style="font-size:0.72rem; color:var(--umber); margin-left:auto;">
-                                Score: <?php echo $b['score']; ?>
-                            </span>
+                            <?php if (!empty($b['score'])): ?>
+                            <span style="font-size:0.72rem; color:var(--umber); margin-left:auto;">Score: <?php echo $b['score']; ?></span>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-            <p style="color:var(--text-muted); font-style:italic;">
-                Rate some books to unlock personal recommendations.
-            </p>
+            <p style="color:var(--text-muted); font-style:italic;">Rate some books to unlock personal recommendations.</p>
             <?php endif; ?>
         </div>
     </div>
@@ -174,7 +169,7 @@ $books_for_select = api_get('books?fields=id,title') ?? [];
         <?php foreach ($group_recs_data as $gr):
             $grp      = $gr['group']           ?? [];
             $grp_recs = $gr['recommendations'] ?? [];
-            $grp_book = getBookById((int)($grp['current_book_id'] ?? 0));
+            $grp_book = !empty($grp['current_book_id']) ? getBookById((int)$grp['current_book_id']) : null;
         ?>
         <div class="n-card p-4 mb-4">
             <h5 style="font-family:'IM Fell English',serif; margin-bottom:0.2rem;">
@@ -188,7 +183,6 @@ $books_for_select = api_get('books?fields=id,title') ?? [];
                 After finishing <em><?php echo htmlspecialchars($grp_book['title']); ?></em>.
             </p>
             <?php endif; ?>
-
             <?php foreach ($grp_recs as $i => $b): ?>
             <div class="rec-card">
                 <div class="rec-rank"><?php echo $i + 1; ?></div>
@@ -224,11 +218,8 @@ $books_for_select = api_get('books?fields=id,title') ?? [];
                 </div>
             </div>
             <?php endforeach; ?>
-
             <?php if (empty($grp_recs)): ?>
-            <p style="color:var(--text-muted); font-style:italic; font-size:0.9rem;">
-                No recommendations available yet.
-            </p>
+            <p style="color:var(--text-muted); font-style:italic; font-size:0.9rem;">No recommendations available yet.</p>
             <?php endif; ?>
         </div>
         <?php endforeach; ?>

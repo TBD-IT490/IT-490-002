@@ -11,18 +11,22 @@ $review_msg   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
 
-    // Save a quick star rating (no review text)
+    // Save a quick star rating
+    // RabbitMQ action: 'book.rate'
+    // Expected response: { success: true }
     if (isset($_POST['my_rating'])) {
-        api_put("users/{$_SESSION['id']}/ratings", [
+        rmq_rpc('book.rate', [
             'book_id' => $view_id,
             'rating'  => (int)$_POST['my_rating'],
         ]);
     }
 
     // Submit a full written review
+    // RabbitMQ action: 'review.create'
+    // Expected response: { success: true }
     if (isset($_POST['submit_review'])) {
-        $result = api_post("books/$view_id/reviews", [
-            'user_id' => $_SESSION['id'],
+        $result = rmq_rpc('review.create', [
+            'book_id' => $view_id,
             'rating'  => (int)($_POST['rating'] ?? 0),
             'title'   => trim($_POST['rev_title'] ?? ''),
             'body'    => trim($_POST['rev_body']  ?? ''),
@@ -32,47 +36,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
             : 'Something went wrong. Please try again.';
     }
 
-    // Add book to reading list
+    // Add to reading list
+    // RabbitMQ action: 'user.reading_list.add'
     if (isset($_POST['reading_list'])) {
-        api_post("users/{$_SESSION['id']}/reading-list", [
-            'book_id' => $view_id,
-        ]);
+        rmq_rpc('user.reading_list.add', ['book_id' => $view_id]);
     }
 
-    // Mark book as read
+    // Mark as read
+    // RabbitMQ action: 'user.mark_read'
     if (isset($_POST['mark_read'])) {
-        api_put("users/{$_SESSION['id']}/read", [
-            'book_id' => $view_id,
-        ]);
+        rmq_rpc('user.mark_read', ['book_id' => $view_id]);
     }
 }
 
 // ── DATA FETCHING ─────────────────────────────────────────────
 
 if ($view_id) {
-    // Single book detail view
-    // Expected API response: { id, title, author, cover, genre[], year, pages, rating, reviews, description, isbn }
-    $book = api_get("books/$view_id");
+    // Single book detail
+    // RabbitMQ action: 'book.get'
+    // Expected response: { book: { id, title, author, cover, genre[], year, pages, rating, reviews, description, isbn } }
+    $book_res = rmq_rpc('book.get', ['book_id' => $view_id]);
+    $book     = $book_res['book'] ?? null;
 
     if ($book) {
         // Reviews for this book
-        // Expected API response: [{ id, user, rating, title, body, created }, ...]
-        $book_reviews = api_get("books/$view_id/reviews") ?? [];
+        // RabbitMQ action: 'review.list'
+        // Expected response: { reviews: [{ id, user, rating, title, body, created }, ...] }
+        $reviews_res  = rmq_rpc('review.list', ['book_id' => $view_id]);
+        $book_reviews = $reviews_res['reviews'] ?? [];
 
-        // Current user's rating for this book (0 if not yet rated)
-        // Expected API response: { rating: 4 }  or null
-        $my_rating_data = api_get("users/{$_SESSION['id']}/ratings/$view_id");
-        $my_rating = $my_rating_data['rating'] ?? 0;
+        // Current user's rating for this book
+        // RabbitMQ action: 'book.get_rating'
+        // Expected response: { rating: 4 }  or { rating: null }
+        $rating_res = rmq_rpc('book.get_rating', ['book_id' => $view_id]);
+        $my_rating  = $rating_res['rating'] ?? 0;
     }
 
 } else {
-    // Library browse view — search + filter
-    // Expected API response: [{ id, title, author, cover, genre[], rating }, ...]
-    $params   = http_build_query(array_filter([
+    // Library browse
+    // RabbitMQ action: 'book.list'
+    // Expected response: { books: [{ id, title, author, cover, genre[], rating }, ...] }
+    $books_res = rmq_rpc('book.list', [
         'search' => $search,
         'genre'  => $genre_filter,
-    ]));
-    $filtered = api_get('books' . ($params ? "?$params" : '')) ?? [];
+    ]);
+    $filtered = $books_res['books'] ?? [];
 }
 ?>
 
@@ -80,7 +88,7 @@ if ($view_id) {
 .book-card { cursor:pointer; text-decoration:none; display:block; }
 .book-card:hover .n-card { border-color:rgba(134,113,91,0.6); transform:translateY(-3px); }
 .book-card .n-card { transition: transform 0.2s, border-color 0.2s; }
-.book-cover-lg { width:100%; max-width:200px; border:1px solid rgba(134,113,91,0.35); box-shadow: 8px 8px 24px rgba(0,0,0,0.5); }
+.book-cover-lg { width:100%; max-width:200px; border:1px solid rgba(134,113,91,0.35); box-shadow:8px 8px 24px rgba(0,0,0,0.5); }
 .review-card { border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:1rem; margin-bottom:1rem; }
 .rating-input label { font-size:1.6rem; cursor:pointer; color:var(--umber); transition:color 0.1s; }
 .rating-input input:checked ~ label,
@@ -96,14 +104,12 @@ if ($view_id) {
         <p style="color:var(--text-muted); font-style:italic;">Book not found.</p>
     <?php else: ?>
 
-    <!-- Breadcrumb -->
     <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">
         <a href="books.php" style="color:var(--umber); text-decoration:none;">Library</a>
         &nbsp;›&nbsp; <?php echo htmlspecialchars($book['title']); ?>
     </div>
 
     <div class="row g-5">
-        <!-- Cover + actions -->
         <div class="col-md-3 text-center">
             <img src="<?php echo htmlspecialchars($book['cover']); ?>"
                  class="book-cover-lg mb-3"
@@ -133,7 +139,6 @@ if ($view_id) {
             </form>
         </div>
 
-        <!-- Details -->
         <div class="col-md-9">
             <div style="font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.4rem;">
                 <?php echo implode(' · ', $book['genre']); ?>
@@ -144,7 +149,6 @@ if ($view_id) {
             <div style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;">
                 by <?php echo htmlspecialchars($book['author']); ?>, <?php echo $book['year']; ?>
             </div>
-
             <div class="d-flex align-items-center gap-3 mb-3">
                 <?php echo renderStars($book['rating']); ?>
                 <span style="font-size:0.9rem; color:var(--text-muted);">
@@ -152,16 +156,13 @@ if ($view_id) {
                 </span>
                 <span class="n-badge"><?php echo $book['pages']; ?> pages</span>
             </div>
-
             <p style="font-size:1.05rem; line-height:1.75; margin-bottom:1.5rem;">
                 <?php echo htmlspecialchars($book['description']); ?>
             </p>
-
             <div style="font-size:0.82rem; color:var(--text-muted);">ISBN: <?php echo $book['isbn']; ?></div>
 
             <div class="ornament mt-4">· · ·</div>
 
-            <!-- Reviews -->
             <h4 style="font-family:'IM Fell English',serif; margin-bottom:1.2rem;">Reader Reviews</h4>
 
             <?php if ($review_msg): ?>
@@ -221,13 +222,11 @@ if ($view_id) {
 
 <?php else: ?>
 
-<!-- Library browse view -->
 <div class="d-flex justify-content-between align-items-end mb-4">
     <h2 class="page-heading mb-0">The Library</h2>
     <span style="font-size:0.85rem; color:var(--text-muted);"><?php echo count($filtered); ?> volumes</span>
 </div>
 
-<!-- Search & Filter -->
 <form method="get" class="row g-2 mb-4">
     <div class="col-md-6">
         <input type="text" name="search" class="form-control"
@@ -250,7 +249,6 @@ if ($view_id) {
     </div>
 </form>
 
-<!-- Book grid -->
 <div class="row g-3">
     <?php foreach ($filtered as $b): ?>
     <div class="col-sm-6 col-md-4 col-lg-3">
@@ -279,7 +277,6 @@ if ($view_id) {
         </a>
     </div>
     <?php endforeach; ?>
-
     <?php if (empty($filtered)): ?>
     <div class="col-12 text-center" style="color:var(--text-muted); padding:3rem; font-style:italic;">
         No books found matching your search.

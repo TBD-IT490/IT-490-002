@@ -8,7 +8,9 @@ $msg          = '';
 // ── POST HANDLER ──────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
-    $result = api_post('schedule', [
+    // RabbitMQ action: 'schedule.create'
+    // Expected response: { success: true }
+    $result = rmq_rpc('schedule.create', [
         'group_id' => (int)($_POST['group_id']    ?? 0),
         'book_id'  => (int)($_POST['book_id']     ?? 0),
         'title'    => trim($_POST['event_title']  ?? ''),
@@ -16,10 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
         'time'     => $_POST['event_time']        ?? '',
         'format'   => trim($_POST['event_format'] ?? ''),
         'notes'    => trim($_POST['event_notes']  ?? ''),
-        'user_id'  => $_SESSION['id'],
     ]);
-    // Expected API response: { success: true }
-    //                     or { success: false, error: "..." }
     if ($result['success'] ?? false) {
         $date_fmt = date('F j, Y', strtotime($_POST['event_date'] ?? ''));
         $msg      = "success:Gathering scheduled for <em>$date_fmt</em>.";
@@ -31,42 +30,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
 list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
 // ── DATA FETCHING ─────────────────────────────────────────────
+$sched_res        = rmq_rpc('schedule.list', ['group_id' => $filter_group ?: null]);
+$filtered_schedule = $sched_res['events'] ?? [];
 
-// User's groups for the filter bar and the schedule modal dropdown
-// $my_groups is already fetched in data.php
-
-// Fetch schedule, optionally filtered by group
-// Expected API response: [{ id, group_id, book_id, title, date, time, format, notes }, ...]
-// The API should return results sorted by date ascending.
-$params           = $filter_group ? "?group_id=$filter_group" : '';
-$filtered_schedule = api_get("schedule$params") ?? [];
-
-// Fetch books list for the modal dropdown
-// Expected API response: [{ id, title }, ...]
-$books_for_select = api_get('books?fields=id,title') ?? [];
+// Books for modal dropdown
+// RabbitMQ action: 'book.list'
+// Expected response: { books: [{ id, title }] }
+$bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
+$books_for_select = $bselect_res['books'] ?? [];
 ?>
 
 <style>
 .event-month-header {
-    font-family: 'IM Fell English', serif;
-    font-size: 1rem;
-    color: var(--text-muted);
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin: 1.5rem 0 0.8rem;
-    border-bottom: 1px solid rgba(134,113,91,0.2);
-    padding-bottom: 0.4rem;
+    font-family:'IM Fell English',serif; font-size:1rem; color:var(--text-muted);
+    letter-spacing:0.15em; text-transform:uppercase;
+    margin:1.5rem 0 0.8rem; border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:0.4rem;
 }
-.event-row {
-    display:flex; gap:1.2rem; align-items:flex-start;
-    padding:1rem 0; border-bottom:1px solid rgba(134,113,91,0.12);
-}
-.event-date-box {
-    min-width:54px; text-align:center;
-    background:rgba(36,46,15,0.4); border:1px solid rgba(134,113,91,0.25);
-    border-radius:2px; padding:0.4rem 0.2rem;
-}
-.event-day  { font-family:'IM Fell English',serif; font-size:1.8rem; line-height:1; color:var(--blush); }
+.event-row { display:flex; gap:1.2rem; align-items:flex-start; padding:1rem 0; border-bottom:1px solid rgba(134,113,91,0.12); }
+.event-date-box { min-width:54px; text-align:center; background:rgba(36,46,15,0.4); border:1px solid rgba(134,113,91,0.25); border-radius:2px; padding:0.4rem 0.2rem; }
+.event-day      { font-family:'IM Fell English',serif; font-size:1.8rem; line-height:1; color:var(--blush); }
 .event-month-sm { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); }
 </style>
 
@@ -83,12 +65,8 @@ $books_for_select = api_get('books?fields=id,title') ?? [];
 </div>
 <?php endif; ?>
 
-<!-- Group filter bar -->
 <div class="d-flex gap-2 mb-4 flex-wrap">
-    <a href="schedule.php"
-       class="btn btn-sm <?php echo !$filter_group ? 'btn-n' : 'btn-n-outline'; ?>">
-        All Circles
-    </a>
+    <a href="schedule.php" class="btn btn-sm <?php echo !$filter_group ? 'btn-n' : 'btn-n-outline'; ?>">All Circles</a>
     <?php foreach ($my_groups as $g): ?>
     <a href="schedule.php?group_id=<?php echo $g['id']; ?>"
        class="btn btn-sm <?php echo $filter_group == $g['id'] ? 'btn-n' : 'btn-n-outline'; ?>">
@@ -97,7 +75,6 @@ $books_for_select = api_get('books?fields=id,title') ?? [];
     <?php endforeach; ?>
 </div>
 
-<!-- Schedule timeline -->
 <?php
 $months_seen = [];
 foreach ($filtered_schedule as $ev):
@@ -131,16 +108,13 @@ foreach ($filtered_schedule as $ev):
                 <i class="bi bi-geo-alt"></i> <?php echo htmlspecialchars($ev['format']); ?>
             </div>
             <?php if (!empty($ev['notes'])): ?>
-            <div style="font-size:0.9rem; font-style:italic; color:var(--text-muted);">
-                <?php echo htmlspecialchars($ev['notes']); ?>
-            </div>
+            <div style="font-size:0.9rem; font-style:italic; color:var(--text-muted);"><?php echo htmlspecialchars($ev['notes']); ?></div>
             <?php endif; ?>
         </div>
         <?php if ($evb): ?>
         <div class="d-flex flex-column align-items-center gap-2" style="flex-shrink:0;">
             <img src="<?php echo htmlspecialchars($evb['cover']); ?>"
-                 style="width:36px;height:54px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;"
-                 alt="<?php echo htmlspecialchars($evb['title']); ?>">
+                 style="width:36px;height:54px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;" alt="">
             <a href="books.php?id=<?php echo $evb['id']; ?>"
                style="font-size:0.7rem; color:var(--text-muted); text-decoration:none; text-align:center; max-width:60px; line-height:1.2;">
                 <?php echo htmlspecialchars($evb['title']); ?>
@@ -157,7 +131,6 @@ foreach ($filtered_schedule as $ev):
 </div>
 <?php endif; ?>
 
-<!-- Schedule modal -->
 <div class="modal fade" id="scheduleModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content" style="background:var(--card); border:1px solid rgba(134,113,91,0.3); border-radius:4px;">
@@ -199,18 +172,15 @@ foreach ($filtered_schedule as $ev):
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Session Title</label>
-                        <input type="text" class="form-control" name="event_title"
-                               placeholder="e.g. Rebecca — Chapters I–XIV">
+                        <input type="text" class="form-control" name="event_title" placeholder="e.g. Rebecca — Chapters I–XIV">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Format / Location</label>
-                        <input type="text" class="form-control" name="event_format"
-                               placeholder="e.g. Online (Zoom), The Blue Café…">
+                        <input type="text" class="form-control" name="event_format" placeholder="e.g. Online (Zoom), The Blue Café…">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Discussion Notes</label>
-                        <textarea class="form-control" name="event_notes" rows="2"
-                                  placeholder="Focus topics, readings to prepare…"></textarea>
+                        <textarea class="form-control" name="event_notes" rows="2" placeholder="Focus topics, readings to prepare…"></textarea>
                     </div>
                     <button type="submit" class="btn-n btn w-100">Save Gathering</button>
                 </form>

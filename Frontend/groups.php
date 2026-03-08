@@ -9,15 +9,13 @@ $msg     = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Join a circle by invite code
+    // Join by invite code
+    // RabbitMQ action: 'group.join'
+    // Expected response: { success: true, group: { id, name } }
     if (isset($_POST['join_code'])) {
-        $code   = strtoupper(trim($_POST['invite_code'] ?? ''));
-        $result = api_post('groups/join', [
-            'user_id'     => $_SESSION['id'],
-            'invite_code' => $code,
+        $result = rmq_rpc('group.join', [
+            'invite_code' => strtoupper(trim($_POST['invite_code'] ?? '')),
         ]);
-        // Expected API response: { success: true, group: { id, name, ... } }
-        //                     or { success: false, error: "..." }
         if ($result['success'] ?? false) {
             $name = htmlspecialchars($result['group']['name'] ?? '');
             $msg  = "success:You have joined <em>$name</em>. Welcome to the circle.";
@@ -27,14 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Create a new circle
+    // RabbitMQ action: 'group.create'
+    // Expected response: { success: true, group: { id, name, invite_code } }
     if (isset($_POST['create_group'])) {
-        $result = api_post('groups', [
+        $result = rmq_rpc('group.create', [
             'name'          => trim($_POST['group_name'] ?? ''),
             'description'   => trim($_POST['group_desc'] ?? ''),
-            'first_book_id' => $_POST['first_book'] ? (int)$_POST['first_book'] : null,
-            'created_by'    => $_SESSION['id'],
+            'first_book_id' => !empty($_POST['first_book']) ? (int)$_POST['first_book'] : null,
         ]);
-        // Expected API response: { success: true, group: { id, name, invite_code, ... } }
         if ($result['success'] ?? false) {
             $name = htmlspecialchars($result['group']['name'] ?? '');
             $code = htmlspecialchars($result['group']['invite_code'] ?? '');
@@ -44,28 +42,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Post a new discussion thread
+    // Post a new discussion
+    // RabbitMQ action: 'discussion.create'
+    // Expected response: { success: true }
     if (isset($_POST['post_discussion']) && $view_id) {
-        $result = api_post('discussions', [
+        $result = rmq_rpc('discussion.create', [
             'group_id' => $view_id,
             'book_id'  => (int)($_POST['discuss_book'] ?? 0),
-            'user_id'  => $_SESSION['id'],
             'content'  => trim($_POST['post_content'] ?? ''),
         ]);
-        // Expected API response: { success: true }
         $msg = ($result['success'] ?? false)
             ? 'success:Your discussion has been posted.'
-            : 'error:Could not post discussion. Please try again.';
+            : 'error:Could not post. Please try again.';
     }
 
-    // Reply to an existing discussion thread
+    // Reply to a discussion
+    // RabbitMQ action: 'discussion.reply'
+    // Expected response: { success: true }
     if (isset($_POST['post_reply']) && $view_id) {
-        $result = api_post("discussions/{$_POST['discussion_id']}/replies", [
-            'user_id' => $_SESSION['id'],
-            'content' => trim($_POST['reply'] ?? ''),
+        rmq_rpc('discussion.reply', [
+            'discussion_id' => (int)($_POST['discussion_id'] ?? 0),
+            'content'       => trim($_POST['reply'] ?? ''),
         ]);
-        // Expected API response: { success: true }
-        // (no visible message for replies — page just reloads)
     }
 }
 
@@ -74,36 +72,51 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 // ── DATA FETCHING ─────────────────────────────────────────────
 
 if ($view_id) {
-    // Single group detail view
-    // Expected API response: { id, name, description, members[], member_count, current_book_id, invite_code, created }
-    $group = api_get("groups/$view_id");
+    // Single group
+    // RabbitMQ action: 'group.get'
+    // Expected response: { group: { id, name, description, members[], member_count, current_book_id, invite_code, created } }
+    $group_res = rmq_rpc('group.get', ['group_id' => $view_id]);
+    $group     = $group_res['group'] ?? null;
 
     if ($group) {
         $current_book = getBookById((int)$group['current_book_id']);
 
-        // Discussions for this group
-        // Expected API response: [{ id, book_id, author, content, created, replies: [{author, content, created}] }, ...]
-        $group_discussions = api_get("groups/$view_id/discussions") ?? [];
+        // Discussions
+        // RabbitMQ action: 'discussion.list'
+        // Expected response: { discussions: [{ id, book_id, author, content, created, replies[] }] }
+        $disc_res          = rmq_rpc('discussion.list', ['group_id' => $view_id]);
+        $group_discussions = $disc_res['discussions'] ?? [];
 
-        // Schedule for this group
-        // Expected API response: [{ id, book_id, title, date, time, format, notes }, ...]
-        $group_schedule = api_get("groups/$view_id/schedule") ?? [];
+        // Schedule
+        // RabbitMQ action: 'schedule.list'
+        // Expected response: { events: [{ id, book_id, title, date, time, format, notes }] }
+        $sched_res      = rmq_rpc('schedule.list', ['group_id' => $view_id]);
+        $group_schedule = $sched_res['events'] ?? [];
 
-        // Stats
-        $gathering_count   = count($group_schedule);
-        $discussion_count  = count($group_discussions);
+        // Books this group has read (for discussion post dropdown)
+        // RabbitMQ action: 'group.books'
+        // Expected response: { books: [{ id, title }] }
+        $gbooks_res  = rmq_rpc('group.books', ['group_id' => $view_id]);
+        $group_books = $gbooks_res['books'] ?? [];
+
+        $gathering_count  = count($group_schedule);
+        $discussion_count = count($group_discussions);
     }
 
     $tab = $_GET['tab'] ?? 'discuss';
 
 } else {
-    // All circles list
-    // Expected API response: [{ id, name, description, members[], member_count, current_book_id, invite_code }, ...]
-    $groups = api_get('groups') ?? [];
+    // All circles
+    // RabbitMQ action: 'group.list_all'
+    // Expected response: { groups: [{ id, name, description, members[], member_count, current_book_id, invite_code }] }
+    $all_groups_res = rmq_rpc('group.list_all');
+    $groups         = $all_groups_res['groups'] ?? [];
 
-    // Fetch books dropdown for the create-group modal
-    // Expected API response: [{ id, title }, ...]
-    $books_for_select = api_get('books?fields=id,title') ?? [];
+    // Books for create-group modal dropdown
+    // RabbitMQ action: 'book.list'
+    // Expected response: { books: [{ id, title }] }
+    $bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
+    $books_for_select = $bselect_res['books'] ?? [];
 }
 ?>
 
@@ -136,7 +149,6 @@ if ($view_id) {
         <p style="color:var(--text-muted); font-style:italic;">Circle not found.</p>
     <?php else: ?>
 
-    <!-- Breadcrumb -->
     <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">
         <a href="groups.php" style="color:var(--umber); text-decoration:none;">Circles</a>
         &nbsp;›&nbsp; <?php echo htmlspecialchars($group['name']); ?>
@@ -149,7 +161,6 @@ if ($view_id) {
                 <?php echo htmlspecialchars($group['description']); ?>
             </p>
 
-            <!-- Members -->
             <div class="mb-3 d-flex flex-wrap gap-2">
                 <?php foreach ($group['members'] as $m): ?>
                 <span class="member-pill">
@@ -165,14 +176,12 @@ if ($view_id) {
                 </span>
             </div>
 
-            <!-- Tabs -->
             <div class="tab-nav">
                 <a href="?id=<?php echo $view_id; ?>&tab=discuss"  class="tab-link <?php echo $tab === 'discuss'  ? 'active' : ''; ?>">Discussion Board</a>
                 <a href="?id=<?php echo $view_id; ?>&tab=schedule" class="tab-link <?php echo $tab === 'schedule' ? 'active' : ''; ?>">Gatherings</a>
                 <a href="?id=<?php echo $view_id; ?>&tab=members"  class="tab-link <?php echo $tab === 'members'  ? 'active' : ''; ?>">Members</a>
             </div>
 
-            <!-- ── DISCUSSION BOARD ── -->
             <?php if ($tab === 'discuss'): ?>
 
             <div class="mb-4">
@@ -186,7 +195,9 @@ if ($view_id) {
                             <div class="flex-grow-1">
                                 <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.4rem;">
                                     <strong style="color:var(--blush);"><?php echo htmlspecialchars($d['author']); ?></strong>
-                                    &nbsp;·&nbsp; <em><?php echo $dbook ? htmlspecialchars($dbook['title']) : ''; ?></em>
+                                    <?php if ($dbook): ?>
+                                    &nbsp;·&nbsp; <em><?php echo htmlspecialchars($dbook['title']); ?></em>
+                                    <?php endif; ?>
                                     &nbsp;·&nbsp; <?php echo $d['created']; ?>
                                 </div>
                                 <p style="margin-bottom:0.8rem;"><?php echo htmlspecialchars($d['content']); ?></p>
@@ -208,7 +219,6 @@ if ($view_id) {
                                 </div>
                                 <?php endif; ?>
 
-                                <!-- Reply form -->
                                 <form method="post" class="mt-2 d-flex gap-2">
                                     <input type="hidden" name="post_reply" value="1">
                                     <input type="hidden" name="discussion_id" value="<?php echo $d['id']; ?>">
@@ -225,34 +235,24 @@ if ($view_id) {
                 <?php endif; ?>
             </div>
 
-            <!-- New post form -->
             <div class="n-card p-4">
                 <h6 style="font-family:'IM Fell English',serif; margin-bottom:0.8rem;">Start a Discussion</h6>
                 <form method="post">
                     <input type="hidden" name="post_discussion" value="1">
-                    <div class="mb-2">
-                        <!-- Book selector: load group's books or all books -->
-                        <select class="form-select mb-2" name="discuss_book">
-                            <?php
-                            // Fetch books this group has read / is reading
-                            // Expected API response: [{ id, title }, ...]
-                            $group_books = api_get("groups/$view_id/books") ?? [];
-                            foreach ($group_books as $b):
-                            ?>
-                            <option value="<?php echo $b['id']; ?>"
-                                    <?php echo $b['id'] == $group['current_book_id'] ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($b['title']); ?>
-                            </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <select class="form-select mb-2" name="discuss_book">
+                        <?php foreach ($group_books as $b): ?>
+                        <option value="<?php echo $b['id']; ?>"
+                                <?php echo $b['id'] == $group['current_book_id'] ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($b['title']); ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
                     <textarea class="form-control mb-2" name="post_content" rows="3"
                               placeholder="What's on your mind about this book?"></textarea>
                     <button type="submit" class="btn-n btn">Post</button>
                 </form>
             </div>
 
-            <!-- ── GATHERINGS TAB ── -->
             <?php elseif ($tab === 'schedule'): ?>
 
             <?php foreach ($group_schedule as $ev):
@@ -281,26 +281,22 @@ if ($view_id) {
                             <?php echo htmlspecialchars($ev['notes']); ?>
                         </div>
                     </div>
+                    <?php if ($evb): ?>
                     <div class="col-auto">
-                        <?php if ($evb): ?>
                         <img src="<?php echo htmlspecialchars($evb['cover']); ?>"
-                             style="width:40px; height:60px; object-fit:cover; border:1px solid rgba(134,113,91,0.3); border-radius:1px;"
-                             alt="">
-                        <?php endif; ?>
+                             style="width:40px; height:60px; object-fit:cover; border:1px solid rgba(134,113,91,0.3); border-radius:1px;" alt="">
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php endforeach; ?>
-
             <?php if (empty($group_schedule)): ?>
             <p style="color:var(--text-muted); font-style:italic;">No gatherings scheduled yet.</p>
             <?php endif; ?>
-
             <a href="schedule.php?group_id=<?php echo $view_id; ?>" class="btn-n-outline btn mt-2">
                 <i class="bi bi-calendar-plus"></i> Schedule a Gathering
             </a>
 
-            <!-- ── MEMBERS TAB ── -->
             <?php elseif ($tab === 'members'): ?>
 
             <div class="row g-3">
@@ -322,16 +318,13 @@ if ($view_id) {
             <?php endif; ?>
         </div>
 
-        <!-- Right sidebar -->
         <div class="col-lg-4">
-
             <?php if ($current_book): ?>
             <div class="n-card p-4 mb-3">
                 <h6 style="letter-spacing:0.1em; font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.8rem;">Currently Reading</h6>
                 <a href="books.php?id=<?php echo $current_book['id']; ?>" class="d-flex gap-3 text-decoration-none">
                     <img src="<?php echo htmlspecialchars($current_book['cover']); ?>"
-                         style="width:60px; height:90px; object-fit:cover; border:1px solid rgba(134,113,91,0.3); border-radius:1px;"
-                         alt="">
+                         style="width:60px; height:90px; object-fit:cover; border:1px solid rgba(134,113,91,0.3); border-radius:1px;" alt="">
                     <div>
                         <div style="font-style:italic; color:var(--blush); font-family:'Cormorant Garamond',serif; font-size:1.05rem;">
                             <?php echo htmlspecialchars($current_book['title']); ?>
@@ -343,7 +336,6 @@ if ($view_id) {
             </div>
             <?php endif; ?>
 
-            <!-- Invite code -->
             <div class="n-card p-4 mb-3">
                 <h6 style="letter-spacing:0.1em; font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.8rem;">Invite Code</h6>
                 <div style="font-family:'IM Fell English',serif; font-size:1.6rem; letter-spacing:0.3em; color:var(--blush); text-align:center; padding:0.5rem; border:1px dashed rgba(134,113,91,0.4); border-radius:2px; margin-bottom:0.6rem;">
@@ -353,12 +345,8 @@ if ($view_id) {
                         onclick="navigator.clipboard.writeText('<?php echo $group['invite_code']; ?>'); this.textContent='Copied!'">
                     <i class="bi bi-clipboard"></i> Copy Code
                 </button>
-                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.5rem; text-align:center;">
-                    Share this code with friends to invite them.
-                </div>
             </div>
 
-            <!-- Stats -->
             <div class="n-card p-4">
                 <div class="d-flex justify-content-around">
                     <div class="text-center">
@@ -375,7 +363,6 @@ if ($view_id) {
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -383,7 +370,6 @@ if ($view_id) {
 
 <?php else: ?>
 
-<!-- ── ALL CIRCLES LIST ── -->
 <div class="d-flex justify-content-between align-items-end mb-4">
     <h2 class="page-heading mb-0">Reading Circles</h2>
     <button class="btn-n btn" data-bs-toggle="modal" data-bs-target="#createModal">
@@ -391,7 +377,6 @@ if ($view_id) {
     </button>
 </div>
 
-<!-- Join by invite code -->
 <div class="n-card p-4 mb-4">
     <h6 style="font-family:'IM Fell English',serif; margin-bottom:0.8rem;">Join a Circle</h6>
     <form method="post" class="d-flex gap-2">
@@ -403,7 +388,6 @@ if ($view_id) {
     </form>
 </div>
 
-<!-- Circles grid -->
 <div class="row g-4">
     <?php foreach ($groups as $g):
         $cb        = getBookById((int)$g['current_book_id']);
@@ -414,19 +398,12 @@ if ($view_id) {
             <?php if ($is_member): ?>
             <span class="n-badge" style="position:absolute; top:1rem; right:1rem;">Member</span>
             <?php endif; ?>
-
-            <h5 style="font-family:'IM Fell English',serif; margin-bottom:0.3rem;">
-                <?php echo htmlspecialchars($g['name']); ?>
-            </h5>
-            <p style="font-size:0.9rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;">
-                <?php echo htmlspecialchars($g['description']); ?>
-            </p>
-
+            <h5 style="font-family:'IM Fell English',serif; margin-bottom:0.3rem;"><?php echo htmlspecialchars($g['name']); ?></h5>
+            <p style="font-size:0.9rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;"><?php echo htmlspecialchars($g['description']); ?></p>
             <?php if ($cb): ?>
             <div class="d-flex gap-3 align-items-center mb-3">
                 <img src="<?php echo htmlspecialchars($cb['cover']); ?>"
-                     style="width:44px;height:66px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;"
-                     alt="">
+                     style="width:44px;height:66px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;" alt="">
                 <div>
                     <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Reading Now</div>
                     <div style="font-style:italic; font-size:0.95rem;"><?php echo htmlspecialchars($cb['title']); ?></div>
@@ -434,7 +411,6 @@ if ($view_id) {
                 </div>
             </div>
             <?php endif; ?>
-
             <div class="d-flex align-items-center justify-content-between">
                 <div style="font-size:0.82rem; color:var(--text-muted);">
                     <i class="bi bi-people"></i> <?php echo $g['member_count']; ?> members
@@ -444,15 +420,13 @@ if ($view_id) {
         </div>
     </div>
     <?php endforeach; ?>
-
     <?php if (empty($groups)): ?>
     <div class="col-12 text-center" style="color:var(--text-muted); padding:3rem; font-style:italic;">
-        No circles found. Create one or join one with an invite code.
+        No circles found. Create one or join with an invite code.
     </div>
     <?php endif; ?>
 </div>
 
-<!-- Create circle modal -->
 <div class="modal fade" id="createModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content" style="background:var(--card); border:1px solid rgba(134,113,91,0.3); border-radius:4px;">
@@ -465,13 +439,11 @@ if ($view_id) {
                     <input type="hidden" name="create_group" value="1">
                     <div class="mb-3">
                         <label class="form-label">Circle Name</label>
-                        <input type="text" class="form-control" name="group_name"
-                               placeholder="e.g. The Somnambulist Society" required>
+                        <input type="text" class="form-control" name="group_name" placeholder="e.g. The Somnambulist Society" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" name="group_desc" rows="3"
-                                  placeholder="What does your circle read?"></textarea>
+                        <textarea class="form-control" name="group_desc" rows="3" placeholder="What does your circle read?"></textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">First Book (optional)</label>

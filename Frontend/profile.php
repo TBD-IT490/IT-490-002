@@ -8,14 +8,14 @@ $tab = $_GET['tab'] ?? 'books';
 // ── POST HANDLER ──────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $result = api_put("users/{$_SESSION['id']}", [
+    // RabbitMQ action: 'user.update'
+    // Expected response: { success: true }
+    $result = rmq_rpc('user.update', [
         'display_name' => trim($_POST['display_name'] ?? ''),
         'email'        => trim($_POST['email']        ?? ''),
         'bio'          => trim($_POST['bio']           ?? ''),
         'preferences'  => $_POST['prefs']             ?? [],
     ]);
-    // Expected API response: { success: true }
-    //                     or { success: false, error: "..." }
     $msg = ($result['success'] ?? false)
         ? 'Profile updated.'
         : 'Could not save changes. Please try again.';
@@ -23,64 +23,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // ── DATA FETCHING ─────────────────────────────────────────────
 
-// Full profile data including stats
-// Expected API response:
+// Full profile + stats
+// RabbitMQ action: 'user.profile'
+// Expected response:
 // {
-//   id, username, display_name, email, bio, avatar_url,
-//   member_since,
+//   id, username, display_name, email, bio, avatar_url, member_since,
 //   stats: { books_rated, reviews_written, avg_rating, pages_read },
 //   genre_affinity: { "Mystery": 5, "Gothic": 3, ... }
 // }
-$profile = api_get("users/{$_SESSION['id']}/profile") ?? [];
-
-$stats        = $profile['stats']          ?? [];
-$genre_count  = $profile['genre_affinity'] ?? [];
+$profile_res = rmq_rpc('user.profile') ?? [];
+$stats       = $profile_res['stats']          ?? [];
+$genre_count = $profile_res['genre_affinity'] ?? [];
 arsort($genre_count);
 
-// Rated books for the "Rated Books" tab
-// Expected API response: [{ book: { id, title, author, cover }, rating }, ...]
-$my_ratings = $tab === 'books'
-    ? (api_get("users/{$_SESSION['id']}/ratings") ?? [])
-    : [];
+// Rated books — only fetched on the books tab
+// RabbitMQ action: 'user.ratings'
+// Expected response: { ratings: [{ book: { id, title, author, cover }, rating }, ...] }
+$my_ratings = [];
+if ($tab === 'books') {
+    $ratings_res = rmq_rpc('user.ratings') ?? [];
+    $my_ratings  = $ratings_res['ratings'] ?? [];
+}
 
-// Reviews for the "Reviews" tab
-// Expected API response: [{ id, book: { id, title, cover }, rating, title, body, created }, ...]
-$my_reviews = $tab === 'reviews'
-    ? (api_get("users/{$_SESSION['id']}/reviews") ?? [])
-    : [];
+// Written reviews — only fetched on the reviews tab
+// RabbitMQ action: 'user.reviews'
+// Expected response: { reviews: [{ id, book: { id, title, cover }, rating, title, body, created }, ...] }
+$my_reviews = [];
+if ($tab === 'reviews') {
+    $reviews_res = rmq_rpc('user.reviews') ?? [];
+    $my_reviews  = $reviews_res['reviews'] ?? [];
+}
 
-// $my_groups already fetched in data.php
-
-// User preferences (for settings tab checkboxes)
-// Expected API response: { preferences: ['Mystery', 'Gothic', ...], email: "...", bio: "...", display_name: "..." }
-$user_settings = $tab === 'settings'
-    ? (api_get("users/{$_SESSION['id']}/settings") ?? [])
-    : [];
+// Settings — only fetched on the settings tab
+// RabbitMQ action: 'user.settings'
+// Expected response: { display_name, email, bio, preferences: [...] }
+$user_settings = [];
+if ($tab === 'settings') {
+    $settings_res  = rmq_rpc('user.settings') ?? [];
+    $user_settings = $settings_res ?? [];
+}
 $saved_prefs = $user_settings['preferences'] ?? [];
+
+// $my_groups and $genres already fetched in data.php
 ?>
 
 <style>
 .profile-banner {
-    height: 120px;
-    background: linear-gradient(135deg, var(--moss) 0%, var(--card) 40%, #2a1f35 100%);
-    border-radius: 4px 4px 0 0;
-    position: relative;
-    border: 1px solid rgba(134,113,91,0.2);
-    border-bottom: none;
+    height:120px;
+    background:linear-gradient(135deg, var(--moss) 0%, var(--card) 40%, #2a1f35 100%);
+    border-radius:4px 4px 0 0;
+    border:1px solid rgba(134,113,91,0.2);
+    border-bottom:none;
 }
 .profile-avatar {
-    width: 80px; height: 80px;
-    border-radius: 50%;
-    background: var(--moss);
-    border: 3px solid var(--card);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'IM Fell English', serif;
-    font-size: 2rem;
-    color: var(--blush);
-    position: absolute;
-    bottom: -40px;
-    left: 1.5rem;
-    overflow: hidden;
+    width:80px; height:80px; border-radius:50%;
+    background:var(--moss); border:3px solid var(--card);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IM Fell English',serif; font-size:2rem; color:var(--blush);
+    position:absolute; bottom:-40px; left:1.5rem; overflow:hidden;
 }
 .profile-avatar img { width:100%; height:100%; object-fit:cover; }
 .rated-book { display:flex; align-items:center; gap:0.8rem; padding:0.6rem 0; border-bottom:1px solid rgba(134,113,91,0.12); }
@@ -106,8 +106,8 @@ $saved_prefs = $user_settings['preferences'] ?? [];
             <div class="profile-banner"></div>
             <div class="n-card p-4 pt-0" style="border-top:none; border-radius:0 0 4px 4px;">
                 <div class="profile-avatar">
-                    <?php if (!empty($profile['avatar_url'])): ?>
-                        <img src="<?php echo htmlspecialchars($profile['avatar_url']); ?>" alt="">
+                    <?php if (!empty($profile_res['avatar_url'])): ?>
+                        <img src="<?php echo htmlspecialchars($profile_res['avatar_url']); ?>" alt="">
                     <?php else: ?>
                         <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
                     <?php endif; ?>
@@ -115,15 +115,15 @@ $saved_prefs = $user_settings['preferences'] ?? [];
                 <div style="margin-left:calc(80px + 1.5rem + 0.8rem); padding-top:0.5rem;" class="d-flex justify-content-between align-items-start">
                     <div>
                         <h3 style="font-family:'IM Fell English',serif; margin:0;">
-                            <?php echo htmlspecialchars($profile['display_name'] ?? $_SESSION['username']); ?>
+                            <?php echo htmlspecialchars($profile_res['display_name'] ?? $_SESSION['username']); ?>
                         </h3>
                         <div style="font-size:0.82rem; color:var(--text-muted);">
                             @<?php echo htmlspecialchars($_SESSION['username']); ?>
-                            &nbsp;·&nbsp; Member since <?php echo $profile['member_since'] ?? '—'; ?>
+                            &nbsp;·&nbsp; Member since <?php echo $profile_res['member_since'] ?? '—'; ?>
                         </div>
-                        <?php if (!empty($profile['bio'])): ?>
+                        <?php if (!empty($profile_res['bio'])): ?>
                         <div style="font-size:0.95rem; color:var(--text-muted); font-style:italic; margin-top:0.4rem;">
-                            <?php echo htmlspecialchars($profile['bio']); ?>
+                            <?php echo htmlspecialchars($profile_res['bio']); ?>
                         </div>
                         <?php endif; ?>
                     </div>
@@ -133,7 +133,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
                        onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='rgba(134,113,91,0.3)'">
                         <i class="bi bi-box-arrow-right"></i> Log Out
                     </a>
-                </div>
                 </div>
             </div>
         </div>
@@ -155,24 +154,20 @@ $saved_prefs = $user_settings['preferences'] ?? [];
         </p>
         <?php else: ?>
             <?php foreach ($my_ratings as $entry):
-                // API returns { book: {...}, rating: 4 }
                 $b      = $entry['book']   ?? [];
                 $rating = $entry['rating'] ?? 0;
             ?>
             <div class="rated-book">
                 <a href="books.php?id=<?php echo $b['id']; ?>">
                     <img src="<?php echo htmlspecialchars($b['cover']); ?>"
-                         style="width:36px;height:54px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;"
-                         alt="">
+                         style="width:36px;height:54px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;" alt="">
                 </a>
                 <div class="flex-grow-1">
                     <a href="books.php?id=<?php echo $b['id']; ?>"
                        style="text-decoration:none; color:var(--blush); font-family:'Cormorant Garamond',serif; font-size:1rem;">
                         <?php echo htmlspecialchars($b['title']); ?>
                     </a>
-                    <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">
-                        <?php echo htmlspecialchars($b['author']); ?>
-                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;"><?php echo htmlspecialchars($b['author']); ?></div>
                 </div>
                 <div><?php echo renderStars($rating); ?></div>
             </div>
@@ -186,14 +181,12 @@ $saved_prefs = $user_settings['preferences'] ?? [];
         <p style="color:var(--text-muted); font-style:italic;">No reviews written yet.</p>
         <?php else: ?>
             <?php foreach ($my_reviews as $rv):
-                // API returns { id, book: {...}, rating, title, body, created }
                 $rvb = $rv['book'] ?? [];
             ?>
             <div style="border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:1.2rem; margin-bottom:1.2rem;">
                 <div class="d-flex gap-3 align-items-start">
                     <img src="<?php echo htmlspecialchars($rvb['cover'] ?? ''); ?>"
-                         style="width:50px;height:75px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;flex-shrink:0;"
-                         alt="">
+                         style="width:50px;height:75px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;flex-shrink:0;" alt="">
                     <div>
                         <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.2rem;">
                             <a href="books.php?id=<?php echo $rvb['id']; ?>"
@@ -230,27 +223,21 @@ $saved_prefs = $user_settings['preferences'] ?? [];
                          onmouseout="this.style.borderColor='rgba(134,113,91,0.2)'">
                         <?php if ($cb): ?>
                         <img src="<?php echo htmlspecialchars($cb['cover']); ?>"
-                             style="width:40px;height:60px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;flex-shrink:0;"
-                             alt="">
+                             style="width:40px;height:60px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;flex-shrink:0;" alt="">
                         <?php endif; ?>
                         <div>
                             <div style="font-family:'Cormorant Garamond',serif; font-size:1.05rem; color:var(--blush);">
                                 <?php echo htmlspecialchars($g['name']); ?>
                             </div>
                             <?php if ($cb): ?>
-                            <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">
-                                <?php echo htmlspecialchars($cb['title']); ?>
-                            </div>
+                            <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;"><?php echo htmlspecialchars($cb['title']); ?></div>
                             <?php endif; ?>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">
-                                <?php echo $g['member_count']; ?> members
-                            </div>
+                            <div style="font-size:0.75rem; color:var(--text-muted);"><?php echo $g['member_count']; ?> members</div>
                         </div>
                     </div>
                 </a>
             </div>
             <?php endforeach; ?>
-
             <?php if (empty($my_groups)): ?>
             <div class="col-12">
                 <p style="color:var(--text-muted); font-style:italic;">
@@ -310,32 +297,23 @@ $saved_prefs = $user_settings['preferences'] ?? [];
 
     <!-- Stats sidebar -->
     <div class="col-lg-4">
-
         <div class="n-card p-4 mb-4">
             <h6 style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--text-muted); margin-bottom:1.2rem;">Reading Statistics</h6>
             <div class="row g-3 text-center">
                 <div class="col-6">
-                    <div style="font-family:'IM Fell English',serif; font-size:2rem; line-height:1;">
-                        <?php echo $stats['books_rated'] ?? 0; ?>
-                    </div>
+                    <div style="font-family:'IM Fell English',serif; font-size:2rem; line-height:1;"><?php echo $stats['books_rated'] ?? 0; ?></div>
                     <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted);">Books Rated</div>
                 </div>
                 <div class="col-6">
-                    <div style="font-family:'IM Fell English',serif; font-size:2rem; line-height:1;">
-                        <?php echo $stats['reviews_written'] ?? 0; ?>
-                    </div>
+                    <div style="font-family:'IM Fell English',serif; font-size:2rem; line-height:1;"><?php echo $stats['reviews_written'] ?? 0; ?></div>
                     <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted);">Reviews</div>
                 </div>
                 <div class="col-6">
-                    <div style="font-family:'IM Fell English',serif; font-size:2rem; line-height:1;">
-                        <?php echo $stats['avg_rating'] ?? '—'; ?>
-                    </div>
+                    <div style="font-family:'IM Fell English',serif; font-size:2rem; line-height:1;"><?php echo $stats['avg_rating'] ?? '—'; ?></div>
                     <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted);">Avg Rating</div>
                 </div>
                 <div class="col-6">
-                    <div style="font-family:'IM Fell English',serif; font-size:2rem; line-height:1;">
-                        <?php echo number_format($stats['pages_read'] ?? 0); ?>
-                    </div>
+                    <div style="font-family:'IM Fell English',serif; font-size:2rem; line-height:1;"><?php echo number_format($stats['pages_read'] ?? 0); ?></div>
                     <div style="font-size:0.72rem; text-transform:uppercase; color:var(--text-muted);">Pages Read</div>
                 </div>
             </div>
@@ -380,7 +358,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
             <p style="font-size:0.85rem; color:var(--text-muted); font-style:italic;">No circles yet.</p>
             <?php endif; ?>
         </div>
-
     </div>
 </div>
 
