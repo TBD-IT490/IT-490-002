@@ -8,7 +8,6 @@ $msg = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['suggest_book'])) {
     // RabbitMQ action: 'suggestion.create'
-    // Expected response: { success: true }
     $result = rmq_rpc('suggestion.create', [
         'group_id' => (int)($_POST['sug_group'] ?? 0),
         'book_id'  => (int)($_POST['sug_book']  ?? 0),
@@ -22,24 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['suggest_book'])) {
 list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
 // ── DATA FETCHING ─────────────────────────────────────────────
-
 $personal_res = rmq_rpc('recommendation.personal') ?? [];
 $personal_recs = $personal_res['recommendations'] ?? [];
 $genre_score   = $personal_res['genre_affinity']  ?? [];
 $top_genres    = array_slice(array_keys($genre_score), 0, 3);
 
-// Group recommendations — one set per circle the user belongs to
-// RabbitMQ action: 'recommendation.groups'
-// Expected response:
-// {
-//   groups: [
-//     {
-//       group: { id, name, current_book_id },
-//       recommendations: [{ id, title, author, cover, genre[], rating, genre_overlap }, ...]
-//     },
-//     ...
-//   ]
-// }
 $group_recs_res  = rmq_rpc('recommendation.groups') ?? [];
 $group_recs_data = $group_recs_res['groups'] ?? [];
 

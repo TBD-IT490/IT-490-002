@@ -18,14 +18,17 @@ define('RABBITMQ_EXCHANGE', 'user_exchange');
 function rmq_rpc(string $action, array $payload = []): ?array {
     try {
         $connection = new AMQPStreamConnection(
-            RABBITMQ_HOST,
-            RABBITMQ_PORT,
-            RABBITMQ_USER,
-            RABBITMQ_PASS
-        );
+                '100.101.27.73',
+            //    'localhost',
+                5672,
+                'broker',
+                'test'
+            );
 
-        $channel = $connection->channel();
-        $channel->exchange_declare(RABBITMQ_EXCHANGE, 'direct', false, true, false);
+        $$channel = $connection->channel();
+        $channel->exchange_declare('user_exchange', 'direct', false, true, false);
+        $channel->queue_declare('user_events_queue', false, true, false, false);
+        $channel->basic_qos(null, 1, null);
 
         // Exclusive auto-delete callback queue for this request
         list($callback_queue,,) = $channel->queue_declare('', false, false, true, false);
@@ -53,7 +56,7 @@ function rmq_rpc(string $action, array $payload = []): ?array {
             ]
         );
 
-        $channel->basic_publish($msg, RABBITMQ_EXCHANGE, $action);
+        $channel->basic_publish($msg, 'user_exchange', $action);
 
         // Wait for reply (with a timeout safeguard)
         $waited = 0;
