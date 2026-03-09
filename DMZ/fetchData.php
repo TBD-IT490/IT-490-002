@@ -44,7 +44,7 @@ function processPublishBooks(array $data):void{
 	if(!isset($data['items']) || !is_array($data['items'])){
 		echo "No items field in response. \n";
 	}
-	$seenFile= __DIR__ . '/seen_books.txt';
+	$seenFile= __DIR__ . '/bookIDsInQueue.txt';
 	$seen = file_exists($seenFile) ? array_flip(file($seenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) : [];
 	$count=0;
 	foreach($data['items'] as $item){
