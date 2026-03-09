@@ -11,6 +11,10 @@ define('RABBITMQ_USER',     'broker');
 define('RABBITMQ_PASS',     'test');
 define('RABBITMQ_EXCHANGE', 'user_exchange');
 
+// ── DEBUG LOG ─────────────────────────────────────────────────
+// Stores all RPC calls and responses for console debugging
+$_DEBUG_LOG = [];
+
 // ── RPC HELPER ────────────────────────────────────────────────
 /**
  * Send a message to RabbitMQ and wait for a reply.
@@ -21,6 +25,7 @@ define('RABBITMQ_EXCHANGE', 'user_exchange');
  * Returns the decoded response array, or null on failure.
  */
 function rmq_rpc(string $action, array $payload = []): ?array {
+    global $_DEBUG_LOG;
     try {
         $connection = new AMQPStreamConnection(
             RABBITMQ_HOST,
@@ -38,18 +43,17 @@ function rmq_rpc(string $action, array $payload = []): ?array {
         list($callback_queue,,) = $channel->queue_declare('', false, false, true, false);
 
         $response = null;
-        $corr_id  = uniqid('', true);
-
-        $channel->basic_consume(
-            $callback_queue, '', false, true, false, false,
-            function ($msg) use ($corr_id, &$response) {
-                if ($msg->get('correlation_id') === $corr_id) {
-                    $response = $msg->getBody();
-                }
+        $corr_id  = uniqid();
+        $onResponse = function($msg) use($corr_id, &$response) {
+            if ($msg->get('correlation_id') === $corr_id) {
+                $response = $msg->getBody();
             }
-        );
+        };
+        $channel->basic_consume($callback_queue, '', false, true, false, false, $onResponse);
 
-        $payload['user_id'] = $_SESSION['id'] ?? null;
+        // Add session info to payload
+        $payload['user_id']  = $_SESSION['id'] ?? null;
+        $payload['username'] = $_SESSION['username'] ?? null;
 
         $msg = new AMQPMessage(
             json_encode($payload),
@@ -62,25 +66,33 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 
         $channel->basic_publish($msg, 'user_exchange', $action);
 
-        // Wait for reply (with a timeout safeguard)
-        $waited = 0;
-        while (!$response && $waited < 10) {
-            $channel->wait(null, false, 1);
-            $waited++;
+        // Wait for reply with timeout
+        while ($response === null) {
+            $channel->wait(null, false, 5); // 5 second timeout
         }
 
         $channel->close();
         $connection->close();
 
-        if (!$response) {
-            error_log("rmq_rpc: no response for action '$action' after {$waited}s");
-            return null;
-        }
-
-        return json_decode($response, true);
+        $decoded = json_decode($response, true);
+        
+        // Log the RPC call for debugging
+        $_DEBUG_LOG[] = [
+            'action'   => $action,
+            'request'  => $payload,
+            'response' => $decoded,
+            'raw'      => $response,
+        ];
+        
+        return $decoded;
 
     } catch (\Exception $e) {
         error_log("rmq_rpc error for '$action': " . $e->getMessage());
+        $_DEBUG_LOG[] = [
+            'action'  => $action,
+            'request' => $payload,
+            'error'   => $e->getMessage(),
+        ];
         return null;
     }
 }

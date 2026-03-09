@@ -1,8 +1,10 @@
 <?php
 // Mock session for demo - in real app this would be set by login
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header("Location: index.php");
+    exit();
 }
+
 
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 ?>
