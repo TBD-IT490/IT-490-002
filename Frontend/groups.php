@@ -42,9 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             //'userid'        => $_SESSION['created_by'] ?? 0,
         ]);
         if ($result['success'] ?? false) {
-            $name = htmlspecialchars($result['group']['name'] ?? '');
-            $creator = htmlspecialchars($result['group']['creator'] ?? '');
-            $code = htmlspecialchars($result['group']['invite_code'] ?? '');
+            $name = htmlspecialchars($result['group_name'] ?? '');
+            $creator = htmlspecialchars($result['creator'] ?? '');
+            $code = htmlspecialchars($result['invite_code'] ?? '');
             $msg  = "success:Circle <em>$name</em> created! Your invite code is: <strong>$code</strong>";
         } else {
             $msg = 'error:Could not create circle. Please try again.';
