@@ -111,7 +111,7 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 // RabbitMQ action: 'group.list_for_user'
 // Expected response: { "groups": [{ id, name, description, member_count, current_book_id, invite_code }, ...] }
 
-//$groups_response = rmq_rpc('group.list_for_user');
+$groups_response = rmq_rpc('group.list_for_user');
 $my_groups = $groups_response['groups'] ?? [];
 
 // ── IN-MEMORY CACHE ───────────────────────────────────────────
