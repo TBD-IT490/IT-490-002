@@ -57,16 +57,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         );
 
         $channel->basic_publish($msg, 'user_exchange', 'user.login');
-        while (!$response) {
-            $channel->wait();
+        
+        // Wait for the response from RabbitMQ
+        while ($response === null) {
+            $channel->wait(null, false, 5); // 5 second timeout
         }
+        
         $result = json_decode($response, true);
 
         if (isset($result['success']) && $result['success'] == true) {
             session_regenerate_id(true);
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $username;
-            $_SESSION['id']       = $result['id'];
             $channel->close();
             $connection->close();
             header("Location: dashboard.php");

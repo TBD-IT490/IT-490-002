@@ -1,4 +1,12 @@
 <?php
+session_start();
+
+// If user is NOT logged in, redirect to login page
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header("Location: index.php");
+    exit();
+}
+
 require_once 'includes/data.php';
 require_once 'includes/header.php';
 
@@ -30,8 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
 list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
 // ── DATA FETCHING ─────────────────────────────────────────────
-$sched_res        = rmq_rpc('schedule.list', ['group_id' => $filter_group ?: null]);
-$filtered_schedule = $sched_res['events'] ?? [];
 
 // Books for modal dropdown
 // RabbitMQ action: 'book.list'

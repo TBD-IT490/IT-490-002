@@ -13,12 +13,32 @@ $username = $_SESSION['username'];
 require_once 'includes/data.php';
 require_once 'includes/header.php';
 
+// Fetch dashboard data via RabbitMQ
 // Recent reviews across all users
+$reviews_res = rmq_rpc('review.recent') ?? [];
+$user_reviews = $reviews_res['reviews'] ?? [];
 $recent_reviews = array_slice($user_reviews, -3);
+
+// Schedule/gatherings
+$schedule_res = rmq_rpc('schedule.list') ?? [];
+$schedule = $schedule_res['events'] ?? [];
+
+// Books for the library strip
+$books_res = rmq_rpc('book.list') ?? [];
+$books = $books_res['books'] ?? [];
+
+// Recent discussions
+$discussions_res = rmq_rpc('discussion.recent') ?? [];
+$discussions = $discussions_res['discussions'] ?? [];
+
+// User ratings count
+$ratings_res = rmq_rpc('user.ratings') ?? [];
+$user_ratings = $ratings_res['ratings'] ?? [];
+
 // Upcoming gathering
-$next_event = $schedule[0];
-$next_book = getBookById($next_event['book_id']);
-$next_group = getGroupById($next_event['group_id']);
+$next_event = $schedule[0] ?? null;
+$next_book = $next_event ? getBookById($next_event['book_id']) : null;
+$next_group = $next_event ? getGroupById($next_event['group_id']) : null;
 
 ?>
 
@@ -78,8 +98,8 @@ $next_group = getGroupById($next_event['group_id']);
 <!-- Stats row -->
 <div class="row g-3 mb-4">
     <?php
-    $my_groups = array_filter($groups, fn($g) => in_array($_SESSION['username'], $g['members']));
-    $my_rated = count($user_ratings[$_SESSION['id']] ?? []);
+    // $my_groups is already fetched in data.php via 'group.list_for_user'
+    $my_rated = count($user_ratings);
     ?>
     <div class="col-6 col-md-3">
         <div class="n-card p-3 text-center">
@@ -182,6 +202,7 @@ $next_group = getGroupById($next_event['group_id']);
         <!-- Next gathering -->
         <div class="n-card p-4 mb-4">
             <h6 style="letter-spacing:0.12em; text-transform:uppercase; font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">Next Gathering</h6>
+            <?php if ($next_event && $next_book): ?>
             <div style="font-family:'IM Fell English',serif; font-size:1.2rem; margin-bottom:0.4rem;">
                 <?php echo htmlspecialchars($next_event['title']); ?>
             </div>
@@ -196,6 +217,9 @@ $next_group = getGroupById($next_event['group_id']);
                 </div>
             </div>
             <div style="font-size:0.82rem; color:var(--text-muted);"><i class="bi bi-geo-alt"></i> <?php echo $next_event['format']; ?></div>
+            <?php else: ?>
+            <p style="color:var(--text-muted); font-style:italic;">No upcoming gatherings scheduled.</p>
+            <?php endif; ?>
             <a href="schedule.php" class="btn-n-outline btn w-100 mt-3">View All Gatherings</a>
         </div>
 

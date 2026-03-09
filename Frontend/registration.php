@@ -5,6 +5,13 @@ require_once __DIR__ . "/vendor/autoload.php";
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+
+// RabbitMQ Configuration
+define('RABBITMQ_HOST', '100.101.27.73');
+define('RABBITMQ_PORT', 5672);
+define('RABBITMQ_USER', 'broker');
+define('RABBITMQ_PASS', 'test');
+
 $error = "";
 
 if (isset($_POST["register"])) {
@@ -21,10 +28,10 @@ if (isset($_POST["register"])) {
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
     $connection = new AMQPStreamConnection(
-        "100.101.27.73",
-        5672,
-        "broker",
-        "test",
+        RABBITMQ_HOST,
+        RABBITMQ_PORT,
+        RABBITMQ_USER,
+        RABBITMQ_PASS
     );
     $channel = $connection->channel();
 
@@ -49,7 +56,6 @@ if (isset($_POST["register"])) {
         if ($rep->get("correlation_id") === $corr_id) {
             $response = $rep->getBody();
         }
-        $error = "fuck";
     };
     $channel->basic_consume($callback_queue,'',false,true,false,false, $onResponse);
     $msg = new AMQPMessage(json_encode($message), [
@@ -59,7 +65,6 @@ if (isset($_POST["register"])) {
     ]);
     $channel->basic_publish($msg, "user_exchange", "user.register");
     while (!$response) {
-        $error = "waiting for someone";
         $channel->wait();
     }
 
@@ -68,8 +73,7 @@ if (isset($_POST["register"])) {
         session_regenerate_id(true);
         $_SESSION["loggedin"] = true;
         $_SESSION["username"] = $username;
-        //$_SESSION["id"] = $insert_stmt->insert_id;
-        $error = "it worked";
+        $_SESSION["id"] = $result["id"] ?? null;
         header("Location: index.php");
 
         $channel->close();
@@ -321,6 +325,26 @@ function checkStrength(val) {
     label.textContent = l.text;
     label.style.color = l.color;
 }
+
+// DEBUG: Registration Response
+(function() {
+    <?php if (isset($result)): ?>
+    const regResult = <?php echo json_encode($result ?? null, JSON_PRETTY_PRINT); ?>;
+    const regRequest = <?php echo json_encode($message ?? null, JSON_PRETTY_PRINT); ?>;
+    
+    console.group('%c[Registration Debug]', 'color: #86715B; font-weight: bold; font-size: 14px;');
+    console.log('%cRequest:', 'color: #74c0fc; font-weight: bold;', regRequest);
+    console.log('%cResponse:', regResult && regResult.success ? 'color: #69db7c;' : 'color: #ff6b6b;', regResult);
+    if (!regResult) {
+        console.warn('%c[WARNING] Response is null - backend may not be responding', 'color: #ffa94d;');
+    } else if (!regResult.success) {
+        console.warn('%c[WARNING] Registration failed: ' + (regResult.message || 'No error message'), 'color: #ffa94d;');
+    }
+    console.groupEnd();
+    <?php else: ?>
+    console.log('%c[Registration page loaded (no submission yet)]', 'color: #86715B;');
+    <?php endif; ?>
+})();
 </script>
 </body>
 </html>
