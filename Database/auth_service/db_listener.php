@@ -107,6 +107,9 @@ function handleLogin($data) {
 	return ['success' => true, 'session_key' => $sessionKey, 'username' => $username, 'message' => 'Logged in!'];
 }
 
+// CREATE SEARCH FUNCTION TO GET BOOKS FOR BOOK CLUBS PAGE (MAYBE NOT NEEDED? FE SAYS MAYBE NOT NEEDED, BUT I THINK IT WOULD BE HELPFUL TO HAVE A FUNCTION TO GET BOOK INFO FROM DB FOR CLUBS PAGE, SO I'LL PROBABLY END UP MAKING THIS ANYWAYS LOL) *****
+
+
 //Handling creating a club*****
 function handleCreateClub($data) {
 	$conn = connectDB();
@@ -137,7 +140,7 @@ function handleCreateClub($data) {
 		$stmt2->execute();
 
 		echo "SUCCESS: Club created: $group_name\n";
-		return ['success' => true, 'club_id' => $club_id, 'invite_code' => $invite_code, 'message' => 'Club created!'];
+		return ['success' => true, 'group_name' => $group_name, 'club_id' => $club_id, 'invite_code' => $invite_code, 'message' => 'Club created!'];
 	}
 
 	return ['success' => false, 'message' => 'Failed to create club.'];
