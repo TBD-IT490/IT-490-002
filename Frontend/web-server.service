@@ -1,1 +1,14 @@
+[Unit]
+Description=Taryn's Web Server For Noetic
+After=network.target
 
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/systemctl start apache2.service
+ExecStop=/usr/bin/systemctl stop apache2.service
+ExecReload=/usr/bin/systemctl reload apache2.service
+
+
+[Install]
+WantedBy=multi-user.target

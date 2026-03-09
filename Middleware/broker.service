@@ -1,1 +1,13 @@
 
+[Unit]
+Description=Broker Service For Noetic
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /path/to/my-script.py
+Restart=always
+User=myuser
+Group=mygroup
+
+[Install]
+WantedBy=multi-user.target
