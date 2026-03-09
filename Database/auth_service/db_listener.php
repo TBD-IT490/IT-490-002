@@ -115,6 +115,7 @@ function handleCreateClub($data) {
 	}
 
 	//VARIABLES CHANGED - 3/8 8:16PM ;-;
+	// TODO FIGURE OUT WAY TO ASSOCIATE USER_ID W/O TARYN SENDING IT IN REQ (have her send session_key) 
 	$group_name = $data['name']; 
     $description = $data['group_desc']; 
     $book = $data['book_id']; 
@@ -150,7 +151,9 @@ function handleJoinClub($data) {
 	}
 	//change variablessss
 	$invite_code = $data['invite_code'];
-    $user_id = $data['user_id'];
+	
+	// TODO FIGURE OUT WAY TO ASSOCIATE USER_ID W/O TARYN SENDING IT IN REQ (have her send session_key) ~~
+    //$user_id = $data['user_id'];
 
 	//get invite code
 	$stmt = $conn->prepare("SELECT club_id FROM book_clubs WHERE invite_code = ?");
@@ -162,15 +165,18 @@ function handleJoinClub($data) {
 		return ['success' => false, 'message' => 'Invalid invite code.'];
 	}
 
+	// TODO getting club id from db ->but change this to group_id once db gets updated
 	$club = $result->fetch_assoc();
 	$club_id = $club['club_id'];
 
+	// TODO: here similarly to getting club id, get user id from session key (have taryn send session key in req, then query db for user id) ~~
+	
 	//adding member - woohoo!
 	$stmt = $conn->prepare("INSERT INTO club_members (club_id, user_id) VALUES (?, ?)");
 	$stmt->bind_param("ii", $club_id, $user_id);
 
 	if ($stmt->execute()) {
-		echo "SUCCESS: User $user_id joined club $club_id\n"; //CHANGE VARIABLES
+		echo "SUCCESS: User joined club $club_id\n"; //CHANGE VARIABLES -> once changed make it User $user_id joined club $club_id\n
 		return ['success' => true, 'club_id' => $club_id, 'message' => 'Joined club!'];
 	}
 
@@ -190,19 +196,23 @@ function handleScheduleMeeting($data) {
 	}
 
 	//CHANGE ACCORDING TO TARYN'S VARIABLES (ANY THAT ARE LEFT)
-	$club_id = $data['club_id'];
+	$club_id = $data['club_id']; //TODO make group_id once db gets updated
 	$event_title = $data['event_title'];
 	$event_date = $data['event_date'];
 	$event_time = $data['event_time'];
 	$event_format = $data['event_format'];
 	$created_by = $data['created_by'];
+	//added these 2 from what taryn sends, but lowkey idk where to put them ;-;
+	$book = $data['book_id'];
+	$notes = $data['notes'];
 
+	//change club_id to group_id once db gets updated ~~
 	$stmt = $conn->prepare("INSERT INTO meetings (club_id, event_title, event_date, event_time, event_format, created_by) VALUES (?, ?, ?, ?, ?, ?)");
 	$stmt->bind_param("issssi", $club_id, $event_title, $event_date, $event_time, $event_format, $created_by);
 	
 	if ($stmt->execute()) {
 		echo "SUCCESS: Meeting scheduled for club $club_id\n"; //CHANGE VARIABLES
-		return ['success' => true, 'message' => 'Meeting scheduled!'];
+		return ['success' => true, 'message' => 'Meeting scheduled!']; // TODO: add if needed, am i returning title, date, time, format, book, notes back to taryn?
 	}
 	
 	return ['success' => false, 'message' => 'Failed to schedule meeting.'];
