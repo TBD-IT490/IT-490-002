@@ -325,6 +325,26 @@ function checkStrength(val) {
     label.textContent = l.text;
     label.style.color = l.color;
 }
+
+// DEBUG: Registration Response
+(function() {
+    <?php if (isset($result)): ?>
+    const regResult = <?php echo json_encode($result ?? null, JSON_PRETTY_PRINT); ?>;
+    const regRequest = <?php echo json_encode($message ?? null, JSON_PRETTY_PRINT); ?>;
+    
+    console.group('%c[Registration Debug]', 'color: #86715B; font-weight: bold; font-size: 14px;');
+    console.log('%cRequest:', 'color: #74c0fc; font-weight: bold;', regRequest);
+    console.log('%cResponse:', regResult && regResult.success ? 'color: #69db7c;' : 'color: #ff6b6b;', regResult);
+    if (!regResult) {
+        console.warn('%c[WARNING] Response is null - backend may not be responding', 'color: #ffa94d;');
+    } else if (!regResult.success) {
+        console.warn('%c[WARNING] Registration failed: ' + (regResult.message || 'No error message'), 'color: #ffa94d;');
+    }
+    console.groupEnd();
+    <?php else: ?>
+    console.log('%c[Registration page loaded (no submission yet)]', 'color: #86715B;');
+    <?php endif; ?>
+})();
 </script>
 </body>
 </html>
