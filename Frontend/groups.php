@@ -39,13 +39,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = rmq_rpc('group.create', [
             'name'          => trim($_POST['group_name'] ?? ''),
             'description'   => trim($_POST['group_desc'] ?? ''),
-            'first_book_id' => !empty($_POST['first_book']) ? (int)$_POST['first_book'] : null,
+            //'userid'        => $_SESSION['created_by'] ?? 0,
         ]);
         if ($result['success'] ?? false) {
             $name = htmlspecialchars($result['group']['name'] ?? '');
             $creator = htmlspecialchars($result['group']['creator'] ?? '');
             $code = htmlspecialchars($result['group']['invite_code'] ?? '');
-            $msg  = "success:Circle <em>$name</em> created by <em>$creator</em>! Your invite code is: <strong>$code</strong>";
+            $msg  = "success:Circle <em>$name</em> created! Your invite code is: <strong>$code</strong>";
         } else {
             $msg = 'error:Could not create circle. Please try again.';
         }
@@ -453,15 +453,6 @@ if ($view_id) {
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" name="group_desc" rows="3" placeholder="What does your circle read?"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">First Book (optional)</label>
-                        <select class="form-select" name="first_book">
-                            <option value="">Choose a book…</option>
-                            <?php foreach ($books_for_select as $b): ?>
-                            <option value="<?php echo $b['id']; ?>"><?php echo htmlspecialchars($b['title']); ?></option>
-                            <?php endforeach; ?>
-                        </select>
                     </div>
                     <button type="submit" class="btn-n btn w-100">Create Circle</button>
                 </form>

@@ -66,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             session_regenerate_id(true);
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $username;
-            $_SESSION['id']       = $result['id'];
             $channel->close();
             $connection->close();
             header("Location: dashboard.php");

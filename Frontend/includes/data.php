@@ -38,16 +38,13 @@ function rmq_rpc(string $action, array $payload = []): ?array {
         list($callback_queue,,) = $channel->queue_declare('', false, false, true, false);
 
         $response = null;
-        $corr_id  = uniqid('', true);
-
-        $channel->basic_consume(
-            $callback_queue, '', false, true, false, false,
-            function ($msg) use ($corr_id, &$response) {
-                if ($msg->get('correlation_id') === $corr_id) {
-                    $response = $msg->getBody();
-                }
+        $corr_id  = uniqid();
+        $onResponse = function($msg) use($corr_id, &$response) {
+            if ($msg->get('correlation_id') === $corr_id) {
+                $response = $msg->getBody();
             }
-        );
+        };
+        $channel->basic_consume($callback_queue, '', false, true, false, false, $onResponse);
 
         $payload['user_id'] = $_SESSION['id'] ?? null;
 
@@ -62,20 +59,13 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 
         $channel->basic_publish($msg, 'user_exchange', $action);
 
-        // Wait for reply (with a timeout safeguard)
-        $waited = 0;
-        while (!$response && $waited < 10) {
-            $channel->wait(null, false, 1);
-            $waited++;
+        // Wait for reply
+        while (!$response) {
+            $channel->wait();
         }
 
         $channel->close();
         $connection->close();
-
-        if (!$response) {
-            error_log("rmq_rpc: no response for action '$action' after {$waited}s");
-            return null;
-        }
 
         return json_decode($response, true);
 
