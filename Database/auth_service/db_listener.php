@@ -129,14 +129,15 @@ function getUserId($conn, $data) {
 	return null; //if no session key or invalid session key
 }
 
-// CREATE SEARCH FUNCTION TO GET BOOKS FOR BOOK CLUBS PAGE (MAYBE NOT NEEDED? FE SAYS MAYBE NOT NEEDED, BUT I THINK IT WOULD BE HELPFUL TO HAVE A FUNCTION TO GET BOOK INFO FROM DB FOR CLUBS PAGE, SO I'LL PROBABLY END UP MAKING THIS ANYWAYS LOL) *****
+// CREATE SEARCH FUNCTION TO GET BOOKS
 function handleSearchBooks($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
 
-	$search_query = $data['search']; //CHANGE TO TARYN'S VARIABLES
+	//TODO: figure out why this is empty
+	$search_query = $data['search']; //CHANGED to match front end - woohoo
 
 	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ? OR cover_url LIKE ?");
 	$like_query = '%' . $search_query . '%';
@@ -146,10 +147,12 @@ function handleSearchBooks($data) {
 
 	$books = [];
 	while ($row = $result->fetch_assoc()) {
-		$books[] = ['book_id' => $row['book_id'], 'title' => $row['title'], 'author' => $row['author'], 'cover_url' => $row['cover_url']]; //TODO add more rows for other stuff needed for return
+		//TODO add more rows for other stuff needed for return
+		$books[] = ['book_id' => $row['book_id'], 'title' => $row['title'], 'author' => $row['author'], 'cover_url' => $row['cover_url']];
 	}
 
-	echo "SUCCESS: Book search for query '$search_query', found " . count($books) . " results\n"; //CHANGE VARIABLES
+	//echo "SUCCESS: Book search for query '$search_query', found " . count($books) . " results\n";
+	echo "SUCCESS: Book search for query, found " . count($books) . " results\n";
 	return ['success' => true, 'books' => $books, 'message' => 'Book search completed!'];
 }
 
@@ -161,7 +164,7 @@ function handleCreateClub($data) {
 	}
 
 	//VARIABLES CHANGED - 3/8 8:16PM ;-;
-	// TODO FIGURE OUT WAY TO ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have her send session_key)
+	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from getUser)!'];
@@ -170,7 +173,6 @@ function handleCreateClub($data) {
 	$group_name = $data['name']; 
     $description = $data['group_desc']; 
     $book = $data['book_id'] ?? null; 
-	//$user_id = $data['created_by'];
     $invite_code = strtoupper(substr(md5(uniqid(rand(), true)),0,8));
 
 	echo "DEBUG: Create Club Data: " . print_r($data, true) . "\n"; //debug
@@ -182,7 +184,7 @@ function handleCreateClub($data) {
 
 		//make creator admin
 		$stmt2 = $conn->prepare("INSERT INTO club_members (club_id, user_id, role) VALUES (?, ?, 'admin')");
-		//$stmt2 = $conn->prepare("INSERT INTO club_members (club_id, role) VALUES (?, 'admin')"); //CHANGE TO TARYN'S VARIABLES (NO USER ID??)
+		//$stmt2 = $conn->prepare("INSERT INTO club_members (club_id, role) VALUES (?, 'admin')"); //CHANGE TO FE'S VARIABLES (NO USER ID??)
 
 		$stmt2->bind_param("ii", $club_id, $user_id);
 		$stmt2->execute();
@@ -200,11 +202,10 @@ function handleJoinClub($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-	//change variablessss
+	//changed variables
 	$invite_code = $data['invite_code'];
 	
-	// TODO FIGURE OUT WAY TO ASSOCIATE USER_ID W/O TARYN SENDING IT IN REQ (have her send session_key) ~~
-    //$user_id = $data['user_id'];
+	// ASSOCIATE USER_ID W/O FE SENDING IT IN REQ (have her send session_key) ~~
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not found (from getUser)!]'];
@@ -224,7 +225,6 @@ function handleJoinClub($data) {
 	$club = $result->fetch_assoc();
 	$club_id = $club['club_id'];
 
-	// TODO: here similarly to getting club id, get user id from session key (have taryn send session key in req, then query db for user id) ~~
 	
 	//getting group name from db
 	$stmt2 = $conn->prepare("SELECT club_name FROM book_clubs WHERE club_id = ?");
@@ -239,7 +239,7 @@ function handleJoinClub($data) {
 	$stmt->bind_param("ii", $club_id, $user_id);
 
 	if ($stmt->execute()) {
-		echo "SUCCESS: User $user_id joined club $club_id\n"; //CHANGE VARIABLES -> once changed make it User $user_id joined club $club_id\n
+		echo "SUCCESS: User $user_id joined club $club_id\n"; //CHANGED VARIABLES -> once changed make it User $user_id joined club $club_id\n
 		return ['success' => true, 'groups' => $group_name, 'username' => $user_id, 'club_id' => $club_id, 'message' => 'Joined club!'];
 	}
 
@@ -258,6 +258,12 @@ function handleScheduleMeeting($data) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
 	}
 
+	//GETTING USER_ID FROM DB
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna schedule meeting)!]'];
+	}
+
 	//CHANGE ACCORDING TO TARYN'S VARIABLES (ANY THAT ARE LEFT)
 	$club_id = $data['club_id']; //TODO make group_id once db gets updated
 	$event_title = $data['event_title'];
@@ -271,7 +277,7 @@ function handleScheduleMeeting($data) {
 
 	//change club_id to group_id once db gets updated ~~
 	$stmt = $conn->prepare("INSERT INTO meetings (club_id, event_title, event_date, event_time, event_format, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-	$stmt->bind_param("issssi", $club_id, $event_title, $event_date, $event_time, $event_format, $created_by);
+	$stmt->bind_param("issssi", $club_id, $event_title, $event_date, $event_time, $event_format, $user_id);
 	
 	if ($stmt->execute()) {
 		echo "SUCCESS: Meeting scheduled for club $club_id\n"; //CHANGE VARIABLES
@@ -288,8 +294,13 @@ function handleCreateReview($data) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
 
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not logged in or authenticated (tryna create review)!]'];
+	}
+
 	//CHANGE TO TARYN'S VARIABLES
-	$user_id = $data['user_id'];
+	//$user_id = $data['user_id'];
 	$book_id = $data['book_id'];
 	$rating = $data['rating'];
 	$review_text = $data['review_text'];
@@ -299,6 +310,7 @@ function handleCreateReview($data) {
 
 	if ($stmt->execute()) {
 		echo "SUCCESS: Review created for book $book_id by user $user_id\n"; //CHANGE VARIABLES
+		//TODO ADD RETURN VARIABLES THAT FRONT END NEEDS
 		return ['success' => true, 'message' => 'Review submitted!'];
 	}
 
@@ -312,6 +324,11 @@ function handleDiscussions($data) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
 
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not logged in or authenticated (tryna post discussion message)!]'];
+	}
+
 	//CHANGE TO TARYN'S VARIABLES
 	$club_id = $data['club_id'];
 	$user_id = $data['user_id'];
@@ -322,6 +339,7 @@ function handleDiscussions($data) {
 
 	if ($stmt->execute()) {
 		echo "SUCCESS: Discussion message posted in club $club_id by user $user_id\n"; //CHANGE VARIABLES
+		//TODO add any variables front end needs
 		return ['success' => true, 'message' => 'Message posted!'];
 	}
 	return ['success' => false, 'message' => 'Failed to post discussion message.'];
