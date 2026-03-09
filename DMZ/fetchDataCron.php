@@ -3,6 +3,7 @@
 require_once __DIR__ . '/fetchData.php';
 require_once __DIR__ . '/config.php';
 
+$searchTerms = DEFAULT_SEARCH_TERM;
 $data=fetchBooks($searchTerms);
 echo "[" . date('c'). "] Starting cron job. \n";
 if($data==null){
