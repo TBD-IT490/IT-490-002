@@ -67,7 +67,7 @@ $savedPreferences = $userSettings['preferences'] ?? [];
 
         <div style="position:relative; margin-bottom:3rem;">
             <div class="profile-banner"></div>
-            <div class="n-card p-4 pt-0" style="border-top:none; border-radius:0 0 4px 4px;">
+            <div class="n-card p-4 pt-0 profile-banner-border">
                 <div class="profile-avatar">
                     <?php if (!empty($profile_res['avatar_url'])): ?>
                         <img src="<?php echo htmlspecialchars($profile_res['avatar_url']); ?>" alt="">
