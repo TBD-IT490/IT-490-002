@@ -411,7 +411,7 @@ function handleBookCache($data) {
     content_version,
 	pages
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-	$stmt->bind_param("iiis", $isbn, $title, $author, $description, $cover_url, $api_book_id, $subtitle,$publisher,$published_year,$genre, $maturity_rating, $content_version, $pages);
+	$stmt->bind_param("ssssssssssssi", $isbn, $title, $author, $description, $cover_url, $api_book_id, $subtitle, $publisher, $published_year, $genre, $maturity_rating, $content_version, $pages);
 
 	if ($stmt->execute()) {
 		echo "SUCCESS: Books have been cached\n"; //CHANGE VARIABLES
