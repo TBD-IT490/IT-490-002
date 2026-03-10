@@ -15,7 +15,7 @@ require_once 'includes/header.php';
 
 // Fetch dashboard data via RabbitMQ
 // Recent reviews across all users
-$reviews_res = rmq_rpc('review.recent') ?? [];
+$reviews_res = rmq_rpc(action: 'review.recent') ?? [];
 $user_reviews = $reviews_res['reviews'] ?? [];
 $recent_reviews = array_slice($user_reviews, -3);
 
@@ -142,7 +142,7 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
                 <?php foreach (array_slice($books, 0, 8) as $b): ?>
                 <a href="books.php?id=<?php echo $b['id']; ?>" class="book-strip-item text-decoration-none">
                     <img src="<?php echo $b['cover']; ?>" alt="<?php echo htmlspecialchars($b['title']); ?>"
-                         onerror="this.src='https://via.placeholder.com/90x134/39304A/DCBCCE?text=?'">
+                         onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'">
                     <div class="title"><?php echo htmlspecialchars($b['title']); ?></div>
                 </a>
                 <?php endforeach; ?>
