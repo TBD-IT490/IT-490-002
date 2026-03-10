@@ -171,15 +171,14 @@ function handleGetBook($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-	//debug
-	//echo "DEBUG: Get Book Data: " . print_r($data, true) . "\n";
-	$book_id = $data['book_id']; //CHANGED to match front end - woohoo
 	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from get book)!'];
 	}
-
+	//echo "DEBUG: Get Book Data: " . print_r($data, true) . "\n";
+	$book_id = $data['book_id']; 
+	
 	$stmt = $conn->prepare("SELECT * FROM books WHERE book_id = ?");
 	$stmt->bind_param("i", $book_id);
 	$stmt->execute();
@@ -200,14 +199,14 @@ function handleGetGroupBooks($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-	//debug
-	//echo "DEBUG: Get Group Books Data: " . print_r($data, true) . "\n";
-	$group_id = $data['group_id']; //CHANGED to match front end - woohoo
 	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from get group books)!'];
 	}
+
+	//echo "DEBUG: Get Group Books Data: " . print_r($data, true) . "\n";
+	$group_id = $data['group_id'];
 
 	$stmt = $conn->prepare("SELECT b.book_id, b.title, b.author FROM books b JOIN club_books cb ON b.book_id = cb.book_id WHERE cb.club_id = ?");
 	$stmt->bind_param("i", $group_id);
@@ -229,12 +228,10 @@ function handleCreateClub($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
-	//VARIABLES CHANGED - 3/8 8:16PM ;-;
-	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
+	//get user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
-		return ['success' => false, 'message' => 'User not authenticated (from getUser - from create club)!'];
+		return ['success' => false, 'message' => 'User not authenticated (from create club)!'];
 	}
 	
 	$group_name = $data['name']; 
@@ -251,8 +248,6 @@ function handleCreateClub($data) {
 
 		//make creator admin
 		$stmt2 = $conn->prepare("INSERT INTO club_members (club_id, user_id, role) VALUES (?, ?, 'admin')");
-		//$stmt2 = $conn->prepare("INSERT INTO club_members (club_id, role) VALUES (?, 'admin')"); //CHANGE TO FE'S VARIABLES (NO USER ID??)
-
 		$stmt2->bind_param("ii", $club_id, $user_id);
 		$stmt2->execute();
 
@@ -263,7 +258,7 @@ function handleCreateClub($data) {
 	return ['success' => false, 'message' => 'Failed to create club.'];
 }
 
-//handle get all groups*****
+//getting all groups*****
 function handleGetGroups($data) {
 	$conn = connectDB();
 	if(!$conn) {
@@ -272,7 +267,7 @@ function handleGetGroups($data) {
 	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
-		return ['success' => false, 'message' => 'User not authenticated (from getUser -- getting groups)!'];
+		return ['success' => false, 'message' => 'User not authenticated (getting groups)!'];
 	}
 
 	$stmt = $conn->prepare("SELECT club_id, club_name, group_desc FROM book_clubs");
@@ -286,22 +281,21 @@ function handleGetGroups($data) {
 	return ['success' => true, 'groups' => $groups, 'message' => 'Groups retrieved!'];
 }
 
-//Handling joining a club*****
+//joining a club*****
 function handleJoinClub($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-	//changed variables
-	$invite_code = $data['invite_code'];
-	
-	// ASSOCIATE USER_ID W/O FE SENDING IT IN REQ (have her send session_key) ~~
+	// ASSOCIATE USER_ID W/O FE SENDING IT IN REQ (have her send username) ~~
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not found (from getUser - join club)!'];
 	}
 
-	//get invite code
+	$invite_code = $data['invite_code'];
+
+	//get invite code from db
 	$stmt = $conn->prepare("SELECT club_id FROM book_clubs WHERE invite_code = ?");
 	$stmt->bind_param("s", $invite_code);
 	$stmt->execute();
@@ -311,7 +305,6 @@ function handleJoinClub($data) {
 		return ['success' => false, 'message' => 'Invalid invite code.'];
 	}
 
-	// TODO getting club id from db ->but change this to group_id once db gets updated
 	$club = $result->fetch_assoc();
 	$club_id = $club['club_id']; //from db
 
@@ -329,67 +322,61 @@ function handleJoinClub($data) {
 	$stmt->bind_param("ii", $club_id, $user_id);
 
 	if ($stmt->execute()) {
-		echo "SUCCESS: User $user_id joined club $club_id\n"; //CHANGED VARIABLES -> once changed make it User $user_id joined club $club_id\n
+		echo "SUCCESS: User $user_id joined club $club_id\n";
 		return ['success' => true, 'groups' => $group_name, 'username' => $user_id, 'group_id' => $club_id, 'message' => 'Joined club!'];
 	}
 
 	return ['success' => false, 'message' => 'Already a member...or error :/'];
 }
 
-//handle scheduling a meeting*****
+//scheduling a meeting*****
 function handleScheduleMeeting($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
 	//validate fields
 	if(!isset($data['club_id'], $data['scheduled_time'], $data['agenda'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
 	}
-
-	//GETTING USER_ID FROM DB
+	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
-		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna schedule meeting)!]'];
+		return ['success' => false, 'message' => 'User not authenticated (tryna schedule meeting)!]'];
 	}
 
-	//CHANGE ACCORDING TO TARYN'S VARIABLES (ANY THAT ARE LEFT)
-	$club_id = $data['club_id']; //TODO make group_id once db gets updated
+	//var from front end
+	$club_id = $data['club_id']; 
 	$event_title = $data['event_title'];
 	$event_date = $data['event_date'];
 	$event_time = $data['event_time'];
 	$event_format = $data['event_format'];
 	$created_by = $data['created_by'];
-	//added these 2 from what taryn sends, but lowkey idk where to put them ;-;
 	$book = $data['book_id'];
 	$notes = $data['notes'];
 
 	//change club_id to group_id once db gets updated ~~
-	$stmt = $conn->prepare("INSERT INTO meetings (club_id, event_title, event_date, event_time, event_format, created_by) VALUES (?, ?, ?, ?, ?, ?)");
+	$stmt = $conn->prepare("INSERT INTO club_meetings (club_id, event_title, event_date, event_time, event_format, created_by) VALUES (?, ?, ?, ?, ?, ?)");
 	$stmt->bind_param("issssi", $club_id, $event_title, $event_date, $event_time, $event_format, $user_id);
 	
 	if ($stmt->execute()) {
-		echo "SUCCESS: Meeting scheduled for club $club_id\n"; //CHANGE VARIABLES
-		return ['success' => true, 'message' => 'Meeting scheduled!']; // TODO: add if needed, am i returning title, date, time, format, book, notes back to taryn?
+		echo "SUCCESS: Meeting scheduled for club $club_id\n";
+		return ['success' => true, 'message' => 'Meeting scheduled!'];
 	}
 	
 	return ['success' => false, 'message' => 'Failed to schedule meeting.'];
 }
 
-//schedule.list - gets all meeting for a club_id, returns arraay of id, book_id, title, date, time, format, notes
+//geting all meetings for a club_id, returning arraay of id, book_id, title, date, time, format, notes
 function handleScheduleList($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
-	//validate fields
 	if(!isset($data['club_id'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
 	}
-
-	//GETTING USER_ID FROM DB
+	//useer from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list meetings)!]'];
@@ -419,20 +406,18 @@ function handleScheduleList($data) {
 	return ['success' => true, 'meetings' => $meetings, 'message' => 'Meetings retrieved!'];
 }
 
-//handle creating a review****
+//creating a review*****
 function handleCreateReview($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
+	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
-		return ['success' => false, 'message' => 'User not logged in or authenticated (tryna create review)!]'];
+		return ['success' => false, 'message' => 'User not authenticated (tryna create review)!]'];
 	}
 
-	//CHANGE TO TARYN'S VARIABLES
-	//$user_id = $data['user_id'];
 	$book_id = $data['book_id'];
 	$rating = $data['rating'];
 	$review_text = $data['review_text'];
@@ -441,30 +426,27 @@ function handleCreateReview($data) {
 	$stmt->bind_param("iiis", $user_id, $book_id, $rating, $review_text);
 
 	if ($stmt->execute()) {
-		echo "SUCCESS: Review created for book $book_id by user $user_id\n"; //CHANGE VARIABLES
-		//TODO ADD RETURN VARIABLES THAT FRONT END NEEDS
+		echo "SUCCESS: Review created for book $book_id by user $user_id\n"; //TODO get actual name
 		return ['success' => true, 'message' => 'Review submitted!'];
 	}
 
 	return ['success' => false, 'message' => 'Failed to submit review.'];
 }
 
-//review.list - gets all reviews from a single book based on book_id returns user, rating, review_text, created
+//getting all reviews from a single book based on book_id returning user, rating, review_text, created
 function handleReviewList($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
 	//validate fields
 	if(!isset($data['book_id'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
 	}
-
-	//GETTING USER_ID FROM DB
+	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
-		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list reviews)!]'];
+		return ['success' => false, 'message' => 'User not authenticated (tryna list reviews)!]'];
 	}
 
 	$book_id = $data['book_id'];
@@ -488,19 +470,19 @@ function handleReviewList($data) {
 	return ['success' => true, 'reviews' => $reviews, 'message' => 'Reviews retrieved!'];
 }
 
-//handle discussions*****
+//posting discussions*****
 function handleDiscussions($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
+	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not logged in or authenticated (tryna post discussion message)!]'];
 	}
 
-	//CHANGE TO TARYN'S VARIABLES
+	//from front end
 	$club_id = $data['club_id'];
 	//$user_id = $data['user_id'];
 	$message = $data['message'];
@@ -509,35 +491,33 @@ function handleDiscussions($data) {
 	$stmt->bind_param("iis", $club_id, $user_id, $message);
 
 	if ($stmt->execute()) {
-		echo "SUCCESS: Discussion message posted in club $club_id by user $user_id\n"; //CHANGE VARIABLES
-		//TODO add any variables front end needs
+		echo "SUCCESS: Discussion message posted in club $club_id by user $user_id\n";
 		return ['success' => true, 'message' => 'Message posted!'];
 	}
 	return ['success' => false, 'message' => 'Failed to post discussion message.'];
 }
 
-//discussion.reply - inserts a reply to the discussion by discussion id
+//discussion.reply - inserts a reply to the discussion by discussion_id
 function handleDiscussionReply($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
+	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not logged in or authenticated (tryna post discussion reply)!]'];
 	}
 
-	//CHANGE TO TARYN'S VARIABLES
+	//from front end
 	$discussion_id = $data['discussion_id'];
 	//$user_id = $data['user_id'];
 	$message = $data['message'];
 
 	$stmt = $conn->prepare("INSERT INTO discussion_replies (discussion_id, user_id, message) VALUES (?, ?, ?)");
 	$stmt->bind_param("iis", $discussion_id, $user_id, $message);
-
 	if ($stmt->execute()) {
-		echo "SUCCESS: Discussion reply posted for discussion $discussion_id by user $user_id\n"; //CHANGE VARIABLES
+		echo "SUCCESS: Discussion reply posted for discussion $discussion_id by user $user_id\n";
 		//TODO add any variables front end needs
 		return ['success' => true, 'message' => 'Reply posted!'];
 	}
@@ -550,16 +530,13 @@ function handleDiscussionList($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
-	//validate fields
 	if(!isset($data['club_id'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
 	}
-
-	//GETTING USER_ID FROM DB
+	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
-		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list discussions)!]'];
+		return ['success' => false, 'message' => 'User not authenticated (tryna list discussions)!]'];
 	}
 
 	$club_id = $data['club_id'];
@@ -576,7 +553,7 @@ function handleDiscussionList($data) {
 			'message' => $row['discussion_message'],
 			'created_at' => $row['discussion_created'],
 			'username' => $row['username']
-			//TODO add replies if needed
+			//TODO add any other var from fe
 		];
 	}
 
@@ -620,14 +597,14 @@ function handleBookCache($data) {
     maturity_rating,
     content_version,
 	pages
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	$stmt->bind_param("ssssssssssssi", $isbn, $title, $author, $description, $cover_url, $api_book_id, $subtitle, $publisher, $published_year, $genre, $maturity_rating, $content_version, $pages);
 	try {
 		if ($stmt->execute()) {
 			echo "SUCCESS: Books have been cached\n"; //CHANGE VARIABLES
 			return ['success' => true, 'message' => 'Books have been cached!'];
 		}
-	} catch (mysqli_sql_exception $e) {
+	} catch (mysqli_sql_exception $e) { //fix
 		// Handle duplicate entry error (error code 1062)
 		if ($e->getCode() == 1062) {
 			echo "INFO: Book with API ID $api_book_id already exists in cache.\n";
@@ -641,9 +618,8 @@ function handleBookCache($data) {
 	return ['success' => false, 'message' => 'Failed to cache books.'];
 }
 //RMQ processing
-//PROCESS MSG HAS BEEN UPDATED TO HANDLE MAIN KEYS FROM TARYN'S VARIABLES - 3/8 7:52PM ;-;
 function processMessage($req) {
-	echo "HELLO!!\n";
+	//echo "HELLO!!\n";
 	$routing_key = $req->delivery_info['routing_key'];
 	$message = json_decode($req->body, true);
 	if($routing_key==='user.login') {
@@ -652,45 +628,45 @@ function processMessage($req) {
 	}elseif($routing_key==='user.register') {
 		$response = handleRegistration($message);
 
-	}elseif($routing_key==='book.list') { //add new route for book search*****
+	}elseif($routing_key==='book.list') { //book search
 		$response = handleSearchBooks($message);
 
-	}elseif($routing_key==='book.get') { //add new route for getting single book details*****
+	}elseif($routing_key==='book.get') { //getting single book
 		$response = handleGetBook($message);
 
-	}elseif($routing_key==='group.books') { //add new route for getting books for a group*****
+	}elseif($routing_key==='group.books') { //getting books for a group
 		$response = handleGetGroupBooks($message);
 
-	}elseif($routing_key==='group.get') { //add new route for list all groups*****
+	}elseif($routing_key==='group.get') { //list all groups
 		$response = handleGetGroups($message);
 
-	}elseif($routing_key==='group.create') { //add new route for creating club*****
+	}elseif($routing_key==='group.create') { //creating club
 		$response = handleCreateClub($message);
 
-	}elseif($routing_key==='group.join') { //add new route for joining club*****
+	}elseif($routing_key==='group.join') { //joining club
 		$response = handleJoinClub($message);
 
-	}elseif($routing_key==='schedule.create') { //add new route for scheduling meeting*****
+	}elseif($routing_key==='schedule.create') { //scheduling meeting
 		$response = handleScheduleMeeting($message);
 
-	}elseif($routing_key==='schedule.list') { //TODO if needed - add new route for listing meetings/schedule*****
+	}elseif($routing_key==='schedule.list') { //TODO add new route for pulling up scheduled meetings*****
 		//$response = handleScheduleList($message);
 	
-	}elseif($routing_key==='review.create') { //add new route for creating review*****
+	}elseif($routing_key==='review.create') { //creating review
 		$response = handleCreateReview($message);
 
-	}elseif($routing_key==='review.list') { //TODO if needed - add new route for listing meetings/schedule*****
+	}elseif($routing_key==='review.list') { //pulling up the reviews
 		$response = handleReviewList($message);
 	
-	}elseif($routing_key==='discussion.create') { //add new route for discussions*****
+	}elseif($routing_key==='discussion.create') { //creating discussion
 		$response = handleDiscussions($message);
 
-	}elseif($routing_key==='discussion.list') { //TODO if needed - add new route for listing discussion messages*****
+	}elseif($routing_key==='discussion.list') { //listing discussions
 		$response = handleDiscussionList($message);
 	
-	}elseif($routing_key==='discussion.reply') { //TODO if needed - add new route for replying to discussion messages*****
+	}elseif($routing_key==='discussion.reply') { //replying to discussions
 		$response = handleDiscussionReply($message);
-	
+
 	}elseif($routing_key==='api.cache') {
 		$response = handleBookCache($message);
 	} else {
@@ -716,7 +692,6 @@ $channel->queue_declare('user_events_queue', false, true, false, false); //creat
 $channel->basic_qos(null, 1, null); //process one msg at a time
 $channel->queue_bind('user_events_queue', 'user_exchange', 'user.register');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'user.login');
-//ADDED ALL QUEUE BINDS FOR NEW ROUTES - 3/8 7:53PM ;-;
 $channel->queue_bind('user_events_queue', 'user_exchange', 'book.list');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'book.get');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.books');
@@ -724,7 +699,7 @@ $channel->queue_bind('user_events_queue', 'user_exchange', 'group.get');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.join');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.create');
-//$channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.list'); //TODO if needed
+//$channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.list'); //TODO once review and discussions has been tested
 $channel->queue_bind('user_events_queue', 'user_exchange', 'review.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'review.list'); 
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.create');
