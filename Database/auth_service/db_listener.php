@@ -137,7 +137,9 @@ function handleSearchBooks($data) {
 	}
 
 	//TODO: figure out why this is empty
-	$search_query = $data['search']; //CHANGED to match front end - woohoo
+	//print data - debug
+	//echo "DEBUG: Search Books Data: " . print_r($data, true) . "\n";
+	$search = $data['search']; //CHANGED to match front end - woohoo
 	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -145,8 +147,7 @@ function handleSearchBooks($data) {
 	}
 
 	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
-	//$search_query = 'z'; //debug
-	$like_query = '%' . $search_query . '%';
+	$like_query = '%' . $search . '%';
 	$stmt->bind_param("ss", $like_query, $like_query);
 	$stmt->execute();
 	$result = $stmt->get_result();
@@ -158,10 +159,68 @@ function handleSearchBooks($data) {
 	}
 
 	//debug search
-	echo "DEBUG: Search query: '$search_query'\n" . print_r($search_query, true) . "\n";
-	//echo "SUCCESS: Book search for query '$search_query', found " . count($books) . " results\n";
+	echo "DEBUG: Search query: '$search'\n" . print_r($search, true) . "\n";
+	//echo "SUCCESS: Book search for query '$search', found " . count($books) . " results\n";
 	echo "SUCCESS: Book search for query, found " . count($books) . " results\n";
 	return ['success' => true, 'books' => $books, 'message' => 'Book search completed!'];
+}
+
+//book.get - gets a single book by id and returns full details
+function handleGetBook($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//debug
+	//echo "DEBUG: Get Book Data: " . print_r($data, true) . "\n";
+	$book_id = $data['book_id']; //CHANGED to match front end - woohoo
+	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from get book)!'];
+	}
+
+	$stmt = $conn->prepare("SELECT * FROM books WHERE book_id = ?");
+	$stmt->bind_param("i", $book_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	if ($result->num_rows === 0) {
+		return ['success' => false, 'message' => 'Book not found.'];
+	}
+
+	$book = $result->fetch_assoc();
+	echo "SUCCESS: Retrieved details for book id: $book_id\n";
+	return ['success' => true, 'book' => $book, 'message' => 'Book details retrieved!'];
+}
+
+//group.books - gets all of the books associated with a certain group_id
+function handleGetGroupBooks($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//debug
+	//echo "DEBUG: Get Group Books Data: " . print_r($data, true) . "\n";
+	$group_id = $data['group_id']; //CHANGED to match front end - woohoo
+	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from get group books)!'];
+	}
+
+	$stmt = $conn->prepare("SELECT b.book_id, b.title, b.author FROM books b JOIN club_books cb ON b.book_id = cb.book_id WHERE cb.club_id = ?");
+	$stmt->bind_param("i", $group_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	$books = [];
+	while ($row = $result->fetch_assoc()) {
+		$books[] = ['book_id' => $row['book_id'], 'title' => $row['title'], 'author' => $row['author']];
+	}
+
+	echo "SUCCESS: Retrieved " . count($books) . " books for group id: $group_id\n";
+	return ['success' => true, 'books' => $books, 'message' => 'Group books retrieved!'];
 }
 
 //Handling creating a club*****
@@ -183,7 +242,7 @@ function handleCreateClub($data) {
     $book = $data['book_id'] ?? null; 
     $invite_code = strtoupper(substr(md5(uniqid(rand(), true)),0,8));
 
-	echo "DEBUG: Create Club Data: " . print_r($data, true) . "\n"; //debug
+	//echo "DEBUG: Create Club Data: " . print_r($data, true) . "\n"; //debug
 	$stmt = $conn->prepare("INSERT INTO book_clubs (club_name, group_desc, invite_code) VALUES (?, ?, ?)");
     $stmt->bind_param("sss", $group_name, $description, $invite_code);
 
@@ -198,7 +257,7 @@ function handleCreateClub($data) {
 		$stmt2->execute();
 
 		echo "SUCCESS: Club created: $group_name by: $user_id\n";
-		return ['success' => true, 'group_name' => $group_name, 'club_id' => $club_id, 'invite_code' => $invite_code, 'message' => 'Club created!'];
+		return ['success' => true, 'group_name' => $group_name, 'group_id' => $club_id, 'invite_code' => $invite_code, 'message' => 'Club created!'];
 	}
 
 	return ['success' => false, 'message' => 'Failed to create club.'];
@@ -221,7 +280,7 @@ function handleGetGroups($data) {
 	$result = $stmt->get_result();
 	$groups = [];
 	while ($row = $result->fetch_assoc()) {
-		$groups[] = ['club_id' => $row['group_id'], 'club_name' => $row['group_name'], 'group_desc' => $row['group_desc']];
+		$groups[] = ['group_id' => $row['club_id'], 'group_name' => $row['club_name'], 'group_desc' => $row['group_desc']];
 	}
 	echo "SUCCESS: Retrieved all groups, found " . count($groups) . " results\n";
 	return ['success' => true, 'groups' => $groups, 'message' => 'Groups retrieved!'];
@@ -254,7 +313,7 @@ function handleJoinClub($data) {
 
 	// TODO getting club id from db ->but change this to group_id once db gets updated
 	$club = $result->fetch_assoc();
-	$club_id = $club['club_id'];
+	$club_id = $club['club_id']; //from db
 
 	
 	//getting group name from db
@@ -263,7 +322,7 @@ function handleJoinClub($data) {
 	$stmt2->execute();
 	$result2 = $stmt2->get_result();
 	$club_info = $result2->fetch_assoc();
-	$group_name = $club_info['club_name'];
+	$group_name = $club_info['club_name']; //from db
 
 	//adding member - woohoo!
 	$stmt = $conn->prepare("INSERT INTO club_members (club_id, user_id) VALUES (?, ?)");
@@ -271,7 +330,7 @@ function handleJoinClub($data) {
 
 	if ($stmt->execute()) {
 		echo "SUCCESS: User $user_id joined club $club_id\n"; //CHANGED VARIABLES -> once changed make it User $user_id joined club $club_id\n
-		return ['success' => true, 'groups' => $group_name, 'username' => $user_id, 'club_id' => $club_id, 'message' => 'Joined club!'];
+		return ['success' => true, 'groups' => $group_name, 'username' => $user_id, 'group_id' => $club_id, 'message' => 'Joined club!'];
 	}
 
 	return ['success' => false, 'message' => 'Already a member...or error :/'];
@@ -318,6 +377,48 @@ function handleScheduleMeeting($data) {
 	return ['success' => false, 'message' => 'Failed to schedule meeting.'];
 }
 
+//schedule.list - gets all meeting for a club_id, returns arraay of id, book_id, title, date, time, format, notes
+function handleScheduleList($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+
+	//validate fields
+	if(!isset($data['club_id'])) {
+		return ['success' => false, 'message' => 'Missing required fields!'];
+	}
+
+	//GETTING USER_ID FROM DB
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list meetings)!]'];
+	}
+
+	$club_id = $data['club_id']; //TODO change to group_id once db gets updated
+
+	$stmt = $conn->prepare("SELECT meeting_id, book_id, event_title, event_date, event_time, event_format, notes FROM club_meetings WHERE club_id = ?");
+	$stmt->bind_param("i", $club_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	$meetings = [];
+	while ($row = $result->fetch_assoc()) {
+		$meetings[] = [
+			'meeting_id' => $row['meeting_id'],
+			'book_id' => $row['book_id'],
+			'title' => $row['event_title'],
+			'date' => $row['event_date'],
+			'time' => $row['event_time'],
+			'format' => $row['event_format'],
+			'notes' => $row['notes']
+		];
+	}
+
+	echo "SUCCESS: Retrieved " . count($meetings) . " meetings for club id: $club_id\n";
+	return ['success' => true, 'meetings' => $meetings, 'message' => 'Meetings retrieved!'];
+}
+
 //handle creating a review****
 function handleCreateReview($data) {
 	$conn = connectDB();
@@ -348,6 +449,45 @@ function handleCreateReview($data) {
 	return ['success' => false, 'message' => 'Failed to submit review.'];
 }
 
+//review.list - gets all reviews from a single book based on book_id returns user, rating, review_text, created
+function handleReviewList($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+
+	//validate fields
+	if(!isset($data['book_id'])) {
+		return ['success' => false, 'message' => 'Missing required fields!'];
+	}
+
+	//GETTING USER_ID FROM DB
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list reviews)!]'];
+	}
+
+	$book_id = $data['book_id'];
+
+	$stmt = $conn->prepare("SELECT r.rating, r.review_text, r.created_at, u.username FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.book_id = ?");
+	$stmt->bind_param("i", $book_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	$reviews = [];
+	while ($row = $result->fetch_assoc()) {
+		$reviews[] = [
+			'rating' => $row['rating'],
+			'review_text' => $row['review_text'],
+			'created_at' => $row['created_at'],
+			'username' => $row['username']
+		];
+	}
+
+	echo "SUCCESS: Retrieved " . count($reviews) . " reviews for book id: $book_id\n";
+	return ['success' => true, 'reviews' => $reviews, 'message' => 'Reviews retrieved!'];
+}
+
 //handle discussions*****
 function handleDiscussions($data) {
 	$conn = connectDB();
@@ -362,7 +502,7 @@ function handleDiscussions($data) {
 
 	//CHANGE TO TARYN'S VARIABLES
 	$club_id = $data['club_id'];
-	$user_id = $data['user_id'];
+	//$user_id = $data['user_id'];
 	$message = $data['message'];
 
 	$stmt = $conn->prepare("INSERT INTO discussions (club_id, user_id, message) VALUES (?, ?, ?)");
@@ -376,8 +516,38 @@ function handleDiscussions($data) {
 	return ['success' => false, 'message' => 'Failed to post discussion message.'];
 }
 
+//discussion.reply - inserts a reply to the discussion by discussion id
+function handleDiscussionReply($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not logged in or authenticated (tryna post discussion reply)!]'];
+	}
+
+	//CHANGE TO TARYN'S VARIABLES
+	$discussion_id = $data['discussion_id'];
+	//$user_id = $data['user_id'];
+	$message = $data['message'];
+
+	$stmt = $conn->prepare("INSERT INTO discussion_replies (discussion_id, user_id, message) VALUES (?, ?, ?)");
+	$stmt->bind_param("iis", $discussion_id, $user_id, $message);
+
+	if ($stmt->execute()) {
+		echo "SUCCESS: Discussion reply posted for discussion $discussion_id by user $user_id\n"; //CHANGE VARIABLES
+		//TODO add any variables front end needs
+		return ['success' => true, 'message' => 'Reply posted!'];
+	}
+	return ['success' => false, 'message' => 'Failed to post discussion reply.'];
+}
 
 function handleBookCache($data) {
+	//debug
+	//echo "DEBUG: Caching book data: " . print_r($data, true) . "\n";
+
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
@@ -412,13 +582,23 @@ function handleBookCache($data) {
 	pages
 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 	$stmt->bind_param("ssssssssssssi", $isbn, $title, $author, $description, $cover_url, $api_book_id, $subtitle, $publisher, $published_year, $genre, $maturity_rating, $content_version, $pages);
-
-	if ($stmt->execute()) {
-		echo "SUCCESS: Books have been cached\n"; //CHANGE VARIABLES
-		return ['success' => true, 'message' => 'Books have been cached!'];
+	try {
+		if ($stmt->execute()) {
+			echo "SUCCESS: Books have been cached\n"; //CHANGE VARIABLES
+			return ['success' => true, 'message' => 'Books have been cached!'];
+		}
+	} catch (mysqli_sql_exception $e) {
+		// Handle duplicate entry error (error code 1062)
+		if ($e->getCode() == 1062) {
+			echo "INFO: Book with API ID $api_book_id already exists in cache.\n";
+			return ['success' => true, 'message' => 'Book already cached.'];
+		} else {
+			echo "ERROR: Failed to cache book: " . $e->getMessage() . "\n";
+			return ['success' => false, 'message' => 'Failed to cache book due to database error.'];
+		}
 	}
-		return ['success' => false, 'message' => 'Failed to cache books.'];
-
+	
+	return ['success' => false, 'message' => 'Failed to cache books.'];
 }
 //RMQ processing
 //PROCESS MSG HAS BEEN UPDATED TO HANDLE MAIN KEYS FROM TARYN'S VARIABLES - 3/8 7:52PM ;-;
@@ -435,7 +615,13 @@ function processMessage($req) {
 	}elseif($routing_key==='book.list') { //add new route for book search*****
 		$response = handleSearchBooks($message);
 
-	}elseif($routing_key==='group.list') { //add new route for list all groups*****
+	}elseif($routing_key==='book.get') { //add new route for getting single book details*****
+		$response = handleGetBook($message);
+
+	}elseif($routing_key==='group.books') { //add new route for getting books for a group*****
+		$response = handleGetGroupBooks($message);
+
+	}elseif($routing_key==='group.get') { //add new route for list all groups*****
 		$response = handleGetGroups($message);
 
 	}elseif($routing_key==='group.create') { //add new route for creating club*****
@@ -447,12 +633,25 @@ function processMessage($req) {
 	}elseif($routing_key==='schedule.create') { //add new route for scheduling meeting*****
 		$response = handleScheduleMeeting($message);
 
+	}elseif($routing_key==='schedule.list') { //TODO if needed - add new route for listing meetings/schedule*****
+		//$response = handleScheduleList($message);
+	
 	}elseif($routing_key==='review.create') { //add new route for creating review*****
 		$response = handleCreateReview($message);
 
+	}elseif($routing_key==='review.list') { //TODO if needed - add new route for listing meetings/schedule*****
+		$response = handleReviewList($message);
+	
 	}elseif($routing_key==='discussion.create') { //add new route for discussions*****
 		$response = handleDiscussions($message);
-	} elseif($routing_key==='api.cache') {
+
+	}elseif($routing_key==='discussion.list') { //TODO if needed - add new route for listing discussion messages*****
+		//TODO $response = handleDiscussionList($message);
+	
+	}elseif($routing_key==='discussion.reply') { //TODO if needed - add new route for replying to discussion messages*****
+		//TODO $response = handleDiscussionReply($message);
+	
+	}elseif($routing_key==='api.cache') {
 		$response = handleBookCache($message);
 	} else {
 		echo "SOMEONE FORGOT ROUTING KEY >:(\n";
@@ -479,11 +678,18 @@ $channel->queue_bind('user_events_queue', 'user_exchange', 'user.register');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'user.login');
 //ADDED ALL QUEUE BINDS FOR NEW ROUTES - 3/8 7:53PM ;-;
 $channel->queue_bind('user_events_queue', 'user_exchange', 'book.list');
+$channel->queue_bind('user_events_queue', 'user_exchange', 'book.get');
+$channel->queue_bind('user_events_queue', 'user_exchange', 'group.books');
+$channel->queue_bind('user_events_queue', 'user_exchange', 'group.get');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.join');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.create');
+//$channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.list'); //TODO if needed
 $channel->queue_bind('user_events_queue', 'user_exchange', 'review.create');
+//$channel->queue_bind('user_events_queue', 'user_exchange', 'review.list'); //TODO if needed
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.create');
+//$channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.list'); //TODO if needed
+//$channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.reply'); //TODO if needed
 $channel->queue_bind('user_events_queue', 'user_exchange', 'api.cache');
 $channel->basic_consume('user_events_queue', '', false, false, false, false, 'processMessage');
 
