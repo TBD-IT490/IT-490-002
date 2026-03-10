@@ -122,7 +122,7 @@ if ($view_id) {
             <img src="<?php echo htmlspecialchars($book['cover']); ?>"
                  class="book-cover-lg mb-3"
                  alt="<?php echo htmlspecialchars($book['title']); ?>"
-                 onerror="this.src='https://via.placeholder.com/200x300/39304A/DCBCCE?text=?'">
+                 onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'">
 
             <form method="post" class="d-grid gap-2 mb-3">
                 <button type="submit" name="reading_list" class="btn-n btn">+ Reading List</button>
@@ -265,7 +265,7 @@ if ($view_id) {
                 <img src="<?php echo htmlspecialchars($b['cover']); ?>"
                      style="width:100%; height:200px; object-fit:cover; border-radius:1px; margin-bottom:0.75rem;"
                      alt="<?php echo htmlspecialchars($b['title']); ?>"
-                     onerror="this.src='https://via.placeholder.com/180x200/39304A/DCBCCE?text=?'">
+                     onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'">
                 <div style="font-family:'Cormorant Garamond',serif; font-size:1.05rem; color:var(--blush); margin-bottom:0.2rem; line-height:1.3;">
                     <?php echo htmlspecialchars($b['title']); ?>
                 </div>
