@@ -1,11 +1,11 @@
 <?php
-session_start();
+//session_start();
 
 // If user is NOT logged in, redirect to login page
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("Location: index.php");
-    exit();
-}
+//if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+  //  header("Location: index.php");
+    //exit();
+//}
 
 require_once 'includes/data.php';
 require_once 'includes/header.php';
@@ -25,11 +25,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'invite_code' => strtoupper(trim($_POST['invite_code'] ?? '')),
         ]);
         if ($result['success'] ?? false) {
-            $name = htmlspecialchars($result['group']['name'] ?? '');
-            $msg  = "success:You have joined <em>$name</em>. Welcome to the circle.";
-        } else {
-            $msg = 'error:Invalid invite code. Please check and try again.';
-        }
+    $joined_id = $result['group']['id'] ?? null;
+    $name = htmlspecialchars($result['group']['name'] ?? '');
+    if ($joined_id) {
+        header("Location: groups.php?id=" . (int)$joined_id . "&joined=1");
+        exit();
+    }
+    $msg = "success:You have joined <em>$name</em>. Welcome to the circle.";
+} else {
+    $msg = 'error:Invalid invite code. Please check and try again.';
+}
     }
 
     // Create a new circle
@@ -39,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = rmq_rpc('group.create', [
             'name'          => trim($_POST['group_name'] ?? ''),
             'description'   => trim($_POST['group_desc'] ?? ''),
-            //'userid'        => $_SESSION['created_by'] ?? 0,
+            'userid'        => trim($_POST['username'] ?? ''),
         ]);
         if ($result['success'] ?? false) {
-            $name = htmlspecialchars($result['group_name'] ?? '');
+            $name = htmlspecialchars($result['name'] ?? '');
             $creator = htmlspecialchars($result['creator'] ?? '');
             $code = htmlspecialchars($result['invite_code'] ?? '');
             $msg  = "success:Circle <em>$name</em> created! Your invite code is: <strong>$code</strong>";
@@ -453,6 +458,10 @@ if ($view_id) {
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" name="group_desc" rows="3" placeholder="What does your circle read?"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <textarea class="form-control" name="username" rows="3" placeholder="Who is creating this?"></textarea>
                     </div>
                     <button type="submit" class="btn-n btn w-100">Create Circle</button>
                 </form>

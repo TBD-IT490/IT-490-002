@@ -103,12 +103,14 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 // All genres for filter dropdowns
 // RabbitMQ action: 'genre.list'
 // Expected response: { "genres": ["Literary Fiction", "Mystery", ...] }
-$genres_response = rmq_rpc('genre.list');
-$genres = $genres_response['genres'] ?? [];
+
+//$genres_response = rmq_rpc('genre.list');
+//$genres = $genres_response['genres'] ?? [];
 
 // Current user's groups — used in nav, schedule filter, recommendations
 // RabbitMQ action: 'group.list_for_user'
 // Expected response: { "groups": [{ id, name, description, member_count, current_book_id, invite_code }, ...] }
+
 $groups_response = rmq_rpc('group.list_for_user');
 $my_groups = $groups_response['groups'] ?? [];
 
