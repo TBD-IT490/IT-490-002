@@ -383,7 +383,21 @@ function handleBookCache($data) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
 
-	$stmt = $conn->prepare("INSERT INTO books (user_id, book_id, rating, review_text) VALUES (?, ?, ?, ?)");
+	$stmt = $conn->prepare(query: "INSERT INTO books (
+    api_book_id,
+    isbn,
+    title,
+    author,
+    description,
+    cover_url,
+    api_book_id,
+    subtitle,
+    publisher,
+    published_year,
+    genre,
+    maturity_rating,
+    content_version
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, )");
 	$stmt->bind_param("iiis", $user_id, $book_id, $rating, $review_text);
 
 	if ($stmt->execute()) {
