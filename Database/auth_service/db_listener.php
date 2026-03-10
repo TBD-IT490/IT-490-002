@@ -138,10 +138,16 @@ function handleSearchBooks($data) {
 
 	//TODO: figure out why this is empty
 	$search_query = $data['search']; //CHANGED to match front end - woohoo
+	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from search)!'];
+	}
 
-	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ? OR cover_url LIKE ?");
+	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
+	$search_query = 'z'; //debug
 	$like_query = '%' . $search_query . '%';
-	$stmt->bind_param("sss", $like_query, $like_query, $like_query);
+	$stmt->bind_param("ss", $like_query, $like_query);
 	$stmt->execute();
 	$result = $stmt->get_result();
 
@@ -151,6 +157,8 @@ function handleSearchBooks($data) {
 		$books[] = ['book_id' => $row['book_id'], 'title' => $row['title'], 'author' => $row['author'], 'cover_url' => $row['cover_url']];
 	}
 
+	//debug search
+	echo "DEBUG: Search query: '$search_query'\n" . print_r($search_query, true) . "\n";
 	//echo "SUCCESS: Book search for query '$search_query', found " . count($books) . " results\n";
 	echo "SUCCESS: Book search for query, found " . count($books) . " results\n";
 	return ['success' => true, 'books' => $books, 'message' => 'Book search completed!'];
@@ -167,7 +175,7 @@ function handleCreateClub($data) {
 	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
-		return ['success' => false, 'message' => 'User not authenticated (from getUser)!'];
+		return ['success' => false, 'message' => 'User not authenticated (from getUser - from create club)!'];
 	}
 	
 	$group_name = $data['name']; 
@@ -196,6 +204,29 @@ function handleCreateClub($data) {
 	return ['success' => false, 'message' => 'Failed to create club.'];
 }
 
+//handle get all groups*****
+function handleGetGroups($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from getUser -- getting groups)!'];
+	}
+
+	$stmt = $conn->prepare("SELECT club_id, club_name, group_desc FROM book_clubs");
+	$stmt->execute();
+	$result = $stmt->get_result();
+	$groups = [];
+	while ($row = $result->fetch_assoc()) {
+		$groups[] = ['club_id' => $row['group_id'], 'club_name' => $row['group_name'], 'group_desc' => $row['group_desc']];
+	}
+	echo "SUCCESS: Retrieved all groups, found " . count($groups) . " results\n";
+	return ['success' => true, 'groups' => $groups, 'message' => 'Groups retrieved!'];
+}
+
 //Handling joining a club*****
 function handleJoinClub($data) {
 	$conn = connectDB();
@@ -208,7 +239,7 @@ function handleJoinClub($data) {
 	// ASSOCIATE USER_ID W/O FE SENDING IT IN REQ (have her send session_key) ~~
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
-		return ['success' => false, 'message' => 'User not found (from getUser)!]'];
+		return ['success' => false, 'message' => 'User not found (from getUser - join club)!'];
 	}
 
 	//get invite code
@@ -359,6 +390,9 @@ function processMessage($req) {
 
 	}elseif($routing_key==='book.list') { //add new route for book search*****
 		$response = handleSearchBooks($message);
+
+	}elseif($routing_key==='group.list') { //add new route for list all groups*****
+		$response = handleGetGroups($message);
 
 	}elseif($routing_key==='group.create') { //add new route for creating club*****
 		$response = handleCreateClub($message);
