@@ -38,13 +38,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
 // ── DATA FETCHING ─────────────────────────────────────────────
 
 if ($view_id) {
-    // Single book detail — pulled from local data helper since
-    // book.get / review.list / book.get_rating are not in the listener yet
-    $book = getBookById($view_id);
+    // Single book detail
+    // RabbitMQ action: 'book.get'
+    // Expected response: { success: true, book: { book_id, title, author, cover_url, description, isbn, published_year, genre, ... } }
+    $book_res = rmq_rpc('book.get', [
+        'book_id'  => $view_id,
+        'username' => $_SESSION['username'] ?? '',
+    ]);
+    $book = $book_res['book'] ?? null;
 
     if ($book) {
-        $book_reviews = $book['reviews_list'] ?? [];
-        $my_rating    = 0; // no listener endpoint yet for per-user rating
+        // Normalise field names from listener to what the template expects
+        $book['id']    = $book['book_id']        ?? $view_id;
+        $book['cover'] = $book['cover_url']      ?? '';
+        $book['year']  = $book['published_year'] ?? '';
+
+        $book_reviews = []; // review.list not in listener yet
+        $my_rating    = 0;  // book.get_rating not in listener yet
     }
 
 } else {
