@@ -19,36 +19,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Join by invite code
     // RabbitMQ action: 'group.join'
-    // Expected response: { success: true, group: { id, name } }
+    // Expected response: { success: true, club_id, groups: <name string>, username, message }
     if (isset($_POST['join_code'])) {
         $result = rmq_rpc('group.join', [
             'invite_code' => strtoupper(trim($_POST['invite_code'] ?? '')),
+            'username'    => $_SESSION['username'] ?? '',
         ]);
         if ($result['success'] ?? false) {
-    $joined_id = $result['group']['id'] ?? null;
-    $name = htmlspecialchars($result['group']['name'] ?? '');
-    if ($joined_id) {
-        header("Location: groups.php?id=" . (int)$joined_id . "&joined=1");
-        exit();
-    }
-    $msg = "success:You have joined <em>$name</em>. Welcome to the circle.";
-} else {
-    $msg = 'error:Invalid invite code. Please check and try again.';
-}
+            $club_id = $result['club_id'] ?? null;
+            if ($club_id) {
+                header("Location: groups.php?joined=1");
+                exit();
+            }
+        }
+        $msg = 'error:Invalid invite code. Please check and try again.';
     }
 
     // Create a new circle
     // RabbitMQ action: 'group.create'
-    // Expected response: { success: true, group: { id, name, invite_code } }
+    // Expected response: { success: true, group_name, club_id, invite_code, message }
     if (isset($_POST['create_group'])) {
         $result = rmq_rpc('group.create', [
-            'name'          => trim($_POST['group_name'] ?? ''),
-            'description'   => trim($_POST['group_desc'] ?? ''),
-            'userid'        => trim($_POST['username'] ?? ''),
+            'name'       => trim($_POST['group_name'] ?? ''),
+            'group_desc' => trim($_POST['group_desc'] ?? ''),
+            'username'   => $_SESSION['username'] ?? '',
         ]);
         if ($result['success'] ?? false) {
-            $name = htmlspecialchars($result['name'] ?? '');
-            $creator = htmlspecialchars($result['creator'] ?? '');
+            $name = htmlspecialchars($result['group_name'] ?? '');
             $code = htmlspecialchars($result['invite_code'] ?? '');
             $msg  = "success:Circle <em>$name</em> created! Your invite code is: <strong>$code</strong>";
         } else {
@@ -64,6 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'group_id' => $view_id,
             'book_id'  => (int)($_POST['discuss_book'] ?? 0),
             'content'  => trim($_POST['post_content'] ?? ''),
+            'username' => $_SESSION['username'] ?? '',
         ]);
         $msg = ($result['success'] ?? false)
             ? 'success:Your discussion has been posted.'
@@ -77,6 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         rmq_rpc('discussion.reply', [
             'discussion_id' => (int)($_POST['discussion_id'] ?? 0),
             'content'       => trim($_POST['reply'] ?? ''),
+            'username'      => $_SESSION['username'] ?? '',
         ]);
     }
 }
@@ -89,28 +88,40 @@ if ($view_id) {
     // Single group
     // RabbitMQ action: 'group.get'
     // Expected response: { group: { id, name, description, members[], member_count, current_book_id, invite_code, created } }
-    $group_res = rmq_rpc('group.get', ['group_id' => $view_id]);
-    $group     = $group_res['group'] ?? null;
+    $group_res = rmq_rpc('group.get', [
+        'group_id' => $view_id,
+        'username' => $_SESSION['username'] ?? '',
+    ]);
+    $group = $group_res['group'] ?? null;
 
     if ($group) {
-        $current_book = getBookById((int)$group['current_book_id']);
+        $current_book = getBookById((int)($group['current_book_id'] ?? 0));
 
         // Discussions
         // RabbitMQ action: 'discussion.list'
         // Expected response: { discussions: [{ id, book_id, author, content, created, replies[] }] }
-        $disc_res          = rmq_rpc('discussion.list', ['group_id' => $view_id]);
+        $disc_res          = rmq_rpc('discussion.list', [
+            'group_id' => $view_id,
+            'username' => $_SESSION['username'] ?? '',
+        ]);
         $group_discussions = $disc_res['discussions'] ?? [];
 
         // Schedule
         // RabbitMQ action: 'schedule.list'
         // Expected response: { events: [{ id, book_id, title, date, time, format, notes }] }
-        $sched_res      = rmq_rpc('schedule.list', ['group_id' => $view_id]);
+        $sched_res      = rmq_rpc('schedule.list', [
+            'group_id' => $view_id,
+            'username' => $_SESSION['username'] ?? '',
+        ]);
         $group_schedule = $sched_res['events'] ?? [];
 
         // Books this group has read (for discussion post dropdown)
         // RabbitMQ action: 'group.books'
         // Expected response: { books: [{ id, title }] }
-        $gbooks_res  = rmq_rpc('group.books', ['group_id' => $view_id]);
+        $gbooks_res  = rmq_rpc('group.books', [
+            'group_id' => $view_id,
+            'username' => $_SESSION['username'] ?? '',
+        ]);
         $group_books = $gbooks_res['books'] ?? [];
 
         $gathering_count  = count($group_schedule);
@@ -121,16 +132,27 @@ if ($view_id) {
 
 } else {
     // All circles
-    // RabbitMQ action: 'group.list_all'
-    // Expected response: { groups: [{ id, name, description, members[], member_count, current_book_id, invite_code }] }
-    $all_groups_res = rmq_rpc('group.list_all');
-    $groups         = $all_groups_res['groups'] ?? [];
+    // RabbitMQ action: 'group.list'
+    // Expected response: { success: true, groups: [{ club_id, club_name, group_desc }] }
+    $all_groups_res = rmq_rpc('group.list', [
+        'username' => $_SESSION['username'] ?? '',
+    ]);
+    $groups = $all_groups_res['groups'] ?? [];
 
     // Books for create-group modal dropdown
     // RabbitMQ action: 'book.list'
     // Expected response: { books: [{ id, title }] }
-    $bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
+    $bselect_res      = rmq_rpc('book.list', [
+        'fields'   => 'id,title',
+        'username' => $_SESSION['username'] ?? '',
+    ]);
     $books_for_select = $bselect_res['books'] ?? [];
+
+    // Flash message after join redirect
+    if (isset($_GET['joined'])) {
+        $msg_type = 'success';
+        $msg_text = 'You have joined the circle. Welcome!';
+    }
 }
 ?>
 
@@ -256,7 +278,7 @@ if ($view_id) {
                     <select class="form-select mb-2" name="discuss_book">
                         <?php foreach ($group_books as $b): ?>
                         <option value="<?php echo $b['id']; ?>"
-                                <?php echo $b['id'] == $group['current_book_id'] ? 'selected' : ''; ?>>
+                                <?php echo $b['id'] == ($group['current_book_id'] ?? 0) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($b['title']); ?>
                         </option>
                         <?php endforeach; ?>
@@ -404,7 +426,7 @@ if ($view_id) {
 
 <div class="row g-4">
     <?php foreach ($groups as $g):
-        $cb        = getBookById((int)$g['current_book_id']);
+        $cb        = getBookById((int)($g['current_book_id'] ?? 0));
         $is_member = in_array($_SESSION['username'], $g['members'] ?? []);
     ?>
     <div class="col-md-6 col-lg-4">
@@ -412,8 +434,12 @@ if ($view_id) {
             <?php if ($is_member): ?>
             <span class="n-badge" style="position:absolute; top:1rem; right:1rem;">Member</span>
             <?php endif; ?>
-            <h5 style="font-family:'IM Fell English',serif; margin-bottom:0.3rem;"><?php echo htmlspecialchars($g['name']); ?></h5>
-            <p style="font-size:0.9rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;"><?php echo htmlspecialchars($g['description']); ?></p>
+            <h5 style="font-family:'IM Fell English',serif; margin-bottom:0.3rem;">
+                <?php echo htmlspecialchars($g['club_name'] ?? $g['name'] ?? ''); ?>
+            </h5>
+            <p style="font-size:0.9rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;">
+                <?php echo htmlspecialchars($g['group_desc'] ?? $g['description'] ?? ''); ?>
+            </p>
             <?php if ($cb): ?>
             <div class="d-flex gap-3 align-items-center mb-3">
                 <img src="<?php echo htmlspecialchars($cb['cover']); ?>"
@@ -427,9 +453,9 @@ if ($view_id) {
             <?php endif; ?>
             <div class="d-flex align-items-center justify-content-between">
                 <div style="font-size:0.82rem; color:var(--text-muted);">
-                    <i class="bi bi-people"></i> <?php echo $g['member_count']; ?> members
+                    <i class="bi bi-people"></i> <?php echo $g['member_count'] ?? 0; ?> members
                 </div>
-                <a href="groups.php?id=<?php echo $g['id']; ?>" class="btn-n-outline btn btn-sm">Enter Circle</a>
+                <a href="groups.php?id=<?php echo $g['club_id'] ?? $g['id']; ?>" class="btn-n-outline btn btn-sm">Enter Circle</a>
             </div>
         </div>
     </div>
@@ -458,10 +484,6 @@ if ($view_id) {
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea class="form-control" name="group_desc" rows="3" placeholder="What does your circle read?"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <textarea class="form-control" name="username" rows="3" placeholder="Who is creating this?"></textarea>
                     </div>
                     <button type="submit" class="btn-n btn w-100">Create Circle</button>
                 </form>
