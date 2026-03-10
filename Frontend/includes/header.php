@@ -1,9 +1,9 @@
 <?php
-// Mock session for demo - in real app this would be set by login
-//if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-   // header("Location: index.php");
-  //  exit();
-//}
+
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+   header("Location: index.php");
+   exit();
+}
 
 
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
@@ -41,7 +41,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
                 radial-gradient(ellipse at 80% 20%, rgba(36,46,15,0.2) 0%, transparent 50%);
         }
 
-        /* ── NAVBAR ── */
+
         .noetic-nav {
             background: rgba(32,32,48,0.92);
             backdrop-filter: blur(12px);
@@ -79,7 +79,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             border-bottom: 1px solid var(--umber);
         }
 
-        /* ── CARDS ── */
         .n-card {
             background: var(--card);
             border: 1px solid rgba(134,113,91,0.2);
@@ -88,7 +87,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         }
         .n-card:hover { border-color: rgba(134,113,91,0.5); }
 
-        /* ── BUTTONS ── */
         .btn-n {
             background: var(--moss);
             color: var(--blush);
@@ -116,7 +114,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         }
         .btn-n-outline:hover { background: var(--umber); color: var(--deep); }
 
-        /* ── FORM CONTROLS ── */
         .form-control, .form-select {
             background: var(--deep);
             border: 1px solid rgba(134,113,91,0.35);
@@ -133,11 +130,10 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         .form-control::placeholder { color: var(--text-muted); }
         .form-label { color: var(--text-muted); font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; }
 
-        /* ── STARS ── */
         .stars { color: var(--umber); letter-spacing: 2px; }
         .stars .filled { color: #c9a87c; }
 
-        /* ── PAGE HEADING ── */
+
         .page-heading {
             font-family: 'IM Fell English', serif;
             font-size: 2.2rem;
@@ -147,7 +143,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             margin-bottom: 1.5rem;
         }
 
-        /* ── BADGE ── */
         .n-badge {
             background: rgba(134,113,91,0.25);
             color: var(--blush);
@@ -159,7 +154,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             text-transform: uppercase;
         }
 
-        /* ── DIVIDER ── */
         .ornament {
             text-align: center;
             color: var(--umber);
@@ -168,7 +162,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             font-size: 0.8rem;
         }
 
-        /* ── ALERT ── */
         .n-alert {
             background: rgba(134,113,91,0.2);
             border: 1px solid var(--umber);
@@ -177,10 +170,8 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             padding: 0.75rem 1rem;
         }
 
-        /* ── MAIN WRAP ── */
         .main-wrap { padding: 2.5rem 0 4rem; }
 
-        /* ── AVATAR ── */
         .avatar-ring {
             width: 38px; height: 38px;
             border-radius: 50%;
@@ -193,7 +184,6 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             flex-shrink: 0;
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--deep); }
         ::-webkit-scrollbar-thumb { background: var(--umber); border-radius: 3px; }

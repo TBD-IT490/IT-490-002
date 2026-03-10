@@ -12,10 +12,9 @@ require_once 'includes/header.php';
 
 $msg = '';
 
-// ── POST HANDLER ──────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['suggest_book'])) {
-    // RabbitMQ action: 'suggestion.create'
+    
     $result = rmq_rpc('suggestion.create', [
         'group_id' => (int)($_POST['sug_group'] ?? 0),
         'book_id'  => (int)($_POST['sug_book']  ?? 0),
@@ -28,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['suggest_book'])) {
 
 list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
-// ── DATA FETCHING ─────────────────────────────────────────────
 $personal_res = rmq_rpc('recommendation.personal') ?? [];
 $personal_recs = $personal_res['recommendations'] ?? [];
 $genre_score   = $personal_res['genre_affinity']  ?? [];
@@ -37,13 +35,9 @@ $top_genres    = array_slice(array_keys($genre_score), 0, 3);
 $group_recs_res  = rmq_rpc('recommendation.groups') ?? [];
 $group_recs_data = $group_recs_res['groups'] ?? [];
 
-// Books for the "suggest to a circle" dropdown
-// RabbitMQ action: 'book.list'
-// Expected response: { books: [{ id, title }] }
 $bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
 $books_for_select = $bselect_res['books'] ?? [];
 
-// $my_groups already fetched in data.php
 ?>
 
 <style>
@@ -81,7 +75,6 @@ $books_for_select = $bselect_res['books'] ?? [];
 </div>
 <?php endif; ?>
 
-<!-- Genre affinity bars -->
 <?php if (!empty($genre_score)): ?>
 <div class="n-card p-4 mb-4">
     <h6 style="font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); margin-bottom:1rem;">
@@ -108,7 +101,6 @@ $books_for_select = $bselect_res['books'] ?? [];
 
 <div class="row g-4">
 
-    <!-- Personal recommendations -->
     <div class="col-lg-6">
         <div class="n-card p-4 mb-4">
             <h5 style="font-family:'IM Fell English',serif; margin-bottom:0.3rem;">For You</h5>
@@ -158,7 +150,6 @@ $books_for_select = $bselect_res['books'] ?? [];
         </div>
     </div>
 
-    <!-- Group recommendations -->
     <div class="col-lg-6">
         <?php foreach ($group_recs_data as $gr):
             $grp      = $gr['group']           ?? [];
@@ -220,7 +211,6 @@ $books_for_select = $bselect_res['books'] ?? [];
     </div>
 </div>
 
-<!-- Suggest a book to a circle -->
 <div class="n-card p-4">
     <h5 style="font-family:'IM Fell English',serif; margin-bottom:0.8rem;">Suggest a Book to a Circle</h5>
     <form class="row g-2" method="post">

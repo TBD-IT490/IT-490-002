@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// If user is NOT logged in, redirect to login page
+//REDIRECT TO LOGIN IF NOT LOGGED IN PROPERLY (so you can't access without signing in hehe)
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: index.php");
     exit();
@@ -13,11 +13,9 @@ require_once 'includes/header.php';
 $msg = '';
 $tab = $_GET['tab'] ?? 'books';
 
-// ── POST HANDLER ──────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // RabbitMQ action: 'user.update'
-    // Expected response: { success: true }
+
     $result = rmq_rpc('user.update', [
         'display_name' => trim($_POST['display_name'] ?? ''),
         'email'        => trim($_POST['email']        ?? ''),
@@ -29,42 +27,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         : 'Could not save changes. Please try again.';
 }
 
-// ── DATA FETCHING ─────────────────────────────────────────────
-
-// Full profile + stats
-// RabbitMQ action: 'user.profile'
-// Expected response:
-// {
-//   id, username, display_name, email, bio, avatar_url, member_since,
-//   stats: { books_rated, reviews_written, avg_rating, pages_read },
-//   genre_affinity: { "Mystery": 5, "Gothic": 3, ... }
-// }
 $profile_res = rmq_rpc('user.profile') ?? [];
 $stats       = $profile_res['stats']          ?? [];
 $genre_count = $profile_res['genre_affinity'] ?? [];
 arsort($genre_count);
 
-// Rated books — only fetched on the books tab
-// RabbitMQ action: 'user.ratings'
-// Expected response: { ratings: [{ book: { id, title, author, cover }, rating }, ...] }
+
 $my_ratings = [];
 if ($tab === 'books') {
     $ratings_res = rmq_rpc('user.ratings') ?? [];
     $my_ratings  = $ratings_res['ratings'] ?? [];
 }
 
-// Written reviews — only fetched on the reviews tab
-// RabbitMQ action: 'user.reviews'
-// Expected response: { reviews: [{ id, book: { id, title, cover }, rating, title, body, created }, ...] }
 $my_reviews = [];
 if ($tab === 'reviews') {
     $reviews_res = rmq_rpc('user.reviews') ?? [];
     $my_reviews  = $reviews_res['reviews'] ?? [];
 }
 
-// Settings — only fetched on the settings tab
-// RabbitMQ action: 'user.settings'
-// Expected response: { display_name, email, bio, preferences: [...] }
 $user_settings = [];
 if ($tab === 'settings') {
     $settings_res  = rmq_rpc('user.settings') ?? [];
@@ -72,7 +52,6 @@ if ($tab === 'settings') {
 }
 $saved_prefs = $user_settings['preferences'] ?? [];
 
-// $my_groups and $genres already fetched in data.php
 ?>
 
 <style>
@@ -109,7 +88,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
 <div class="row g-4">
     <div class="col-lg-8">
 
-        <!-- Profile header -->
         <div style="position:relative; margin-bottom:3rem;">
             <div class="profile-banner"></div>
             <div class="n-card p-4 pt-0" style="border-top:none; border-radius:0 0 4px 4px;">
@@ -145,7 +123,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
             </div>
         </div>
 
-        <!-- Tabs -->
         <div class="tab-nav">
             <a href="?tab=books"    class="tab-link <?php echo $tab === 'books'    ? 'active' : ''; ?>">Rated Books</a>
             <a href="?tab=reviews"  class="tab-link <?php echo $tab === 'reviews'  ? 'active' : ''; ?>">Reviews</a>
@@ -153,7 +130,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
             <a href="?tab=settings" class="tab-link <?php echo $tab === 'settings' ? 'active' : ''; ?>">Settings</a>
         </div>
 
-        <!-- ── RATED BOOKS ── -->
         <?php if ($tab === 'books'): ?>
 
         <?php if (empty($my_ratings)): ?>
@@ -182,7 +158,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
             <?php endforeach; ?>
         <?php endif; ?>
 
-        <!-- ── REVIEWS ── -->
         <?php elseif ($tab === 'reviews'): ?>
 
         <?php if (empty($my_reviews)): ?>
@@ -216,7 +191,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
             <?php endforeach; ?>
         <?php endif; ?>
 
-        <!-- ── CIRCLES ── -->
         <?php elseif ($tab === 'circles'): ?>
 
         <div class="row g-3">
@@ -256,7 +230,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
             <?php endif; ?>
         </div>
 
-        <!-- ── SETTINGS ── -->
         <?php elseif ($tab === 'settings'): ?>
 
         <div class="n-card p-4">
@@ -303,7 +276,6 @@ $saved_prefs = $user_settings['preferences'] ?? [];
         <?php endif; ?>
     </div>
 
-    <!-- Stats sidebar -->
     <div class="col-lg-4">
         <div class="n-card p-4 mb-4">
             <h6 style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--text-muted); margin-bottom:1.2rem;">Reading Statistics</h6>

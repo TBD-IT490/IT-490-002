@@ -70,7 +70,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
-// ── DATA FETCHING ─────────────────────────────────────────────
 
 if ($view_id) {
    

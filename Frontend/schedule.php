@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// If user is NOT logged in, redirect to login page
+//REDIRECT TO LOGIN IF NOT LOGGED IN PROPERLY (so you can't access without signing in hehe)
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: index.php");
     exit();
@@ -13,11 +13,9 @@ require_once 'includes/header.php';
 $filter_group = isset($_GET['group_id']) ? (int)$_GET['group_id'] : 0;
 $msg          = '';
 
-// ── POST HANDLER ──────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
-    // RabbitMQ action: 'schedule.create'
-    // Expected response: { success: true }
+
     $result = rmq_rpc('schedule.create', [
         'group_id' => (int)($_POST['group_id']    ?? 0),
         'book_id'  => (int)($_POST['book_id']     ?? 0),
@@ -37,11 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
 
 list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
-// ── DATA FETCHING ─────────────────────────────────────────────
-
-// Books for modal dropdown
-// RabbitMQ action: 'book.list'
-// Expected response: { books: [{ id, title }] }
 $bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
 $books_for_select = $bselect_res['books'] ?? [];
 ?>

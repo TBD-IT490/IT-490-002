@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// If user is NOT logged in, redirect to login page
+//REDIRECT TO LOGIN IF NOT LOGGED IN PROPERLY (so you can't access without signing in hehe)
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: index.php");
     exit();
@@ -15,13 +15,9 @@ $search       = trim($_GET['search'] ?? '');
 $genre_filter = $_GET['genre'] ?? '';
 $review_msg   = '';
 
-// ── POST HANDLERS ─────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
 
-    // Submit a full written review
-    // RabbitMQ action: 'review.create'
-    // Expected response: { success: true, message }
     if (isset($_POST['submit_review'])) {
         $result = rmq_rpc('review.create', [
             'book_id'     => $view_id,
@@ -35,12 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
     }
 }
 
-// ── DATA FETCHING ─────────────────────────────────────────────
 
 if ($view_id) {
-    // Single book detail
-    // RabbitMQ action: 'book.get'
-    // Expected response: { success: true, book: { book_id, title, author, cover_url, description, isbn, published_year, genre, ... } }
+
     $book_res = rmq_rpc('book.get', [
         'book_id'  => $view_id,
         'username' => $_SESSION['username'] ?? '',
@@ -48,27 +41,23 @@ if ($view_id) {
     $book = $book_res['book'] ?? null;
 
     if ($book) {
-        // Normalise field names from listener to what the template expects
+
         $book['id']    = $book['book_id']        ?? $view_id;
         $book['cover'] = $book['cover_url']      ?? '';
         $book['year']  = $book['published_year'] ?? '';
 
-        $book_reviews = []; // review.list not in listener yet
-        $my_rating    = 0;  // book.get_rating not in listener yet
+        $book_reviews = [];
+        $my_rating    = 0;  
     }
 
 } else {
-    // Library browse
-    // RabbitMQ action: 'book.list'
-    // Expected response: { success: true, books: [{ book_id, title, author, cover_url }] }
+
     $books_res = rmq_rpc('book.list', [
         'search'   => $search,
         'username' => $_SESSION['username'] ?? '',
     ]);
     $filtered = $books_res['books'] ?? [];
 
-    // Normalise field names from listener (book_id/cover_url) to what the
-    // template expects (id/cover) so the rest of the HTML needs no changes
     $filtered = array_map(function($b) {
         return [
             'id'     => $b['book_id'] ?? $b['id'] ?? null,
@@ -80,7 +69,6 @@ if ($view_id) {
         ];
     }, $filtered);
 
-    // Genre filter applied client-side since listener doesn't support it yet
     if ($genre_filter) {
         $filtered = array_filter($filtered, function($b) use ($genre_filter) {
             return in_array($genre_filter, (array)$b['genre']);
@@ -122,7 +110,6 @@ if ($view_id) {
                  alt="<?php echo htmlspecialchars($book['title']); ?>"
                  onerror="this.src=''">
 
-            <!-- Quick star rating (display only — no listener endpoint yet) -->
             <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.5rem;">Your Rating</div>
             <div class="rating-input justify-content-center">
                 <?php for ($i = 5; $i >= 1; $i--): ?>
@@ -196,7 +183,6 @@ if ($view_id) {
                 <p style="color:var(--text-muted); font-style:italic;">No reviews yet. Be the first.</p>
             <?php endif; ?>
 
-            <!-- Write a review -->
             <div class="n-card p-4 mt-4">
                 <h5 style="font-family:'IM Fell English',serif; margin-bottom:1rem;">Write a Review</h5>
                 <form method="post">
