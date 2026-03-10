@@ -437,7 +437,7 @@ function handleCreateReview($data) {
 	$rating = $data['rating'];
 	$review_text = $data['review_text'];
 
-	$stmt = $conn->prepare("INSERT INTO reviews (user_id, book_id, rating, review_text) VALUES (?, ?, ?, ?)");
+	$stmt = $conn->prepare("INSERT INTO book_reviews (user_id, book_id, rating, review_text) VALUES (?, ?, ?, ?)");
 	$stmt->bind_param("iiis", $user_id, $book_id, $rating, $review_text);
 
 	if ($stmt->execute()) {
@@ -469,7 +469,7 @@ function handleReviewList($data) {
 
 	$book_id = $data['book_id'];
 
-	$stmt = $conn->prepare("SELECT r.rating, r.review_text, r.created_at, u.username FROM reviews r JOIN users u ON r.user_id = u.id WHERE r.book_id = ?");
+	$stmt = $conn->prepare("SELECT r.rating, r.review_text, r.created_at, u.username FROM book_reviews r JOIN users u ON r.user_id = u.id WHERE r.book_id = ?");
 	$stmt->bind_param("i", $book_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
@@ -542,6 +542,46 @@ function handleDiscussionReply($data) {
 		return ['success' => true, 'message' => 'Reply posted!'];
 	}
 	return ['success' => false, 'message' => 'Failed to post discussion reply.'];
+}
+
+//discussion.list - gets all discussions for group_id returns id, author, content, created, replies
+function handleDiscussionList($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+
+	//validate fields
+	if(!isset($data['club_id'])) {
+		return ['success' => false, 'message' => 'Missing required fields!'];
+	}
+
+	//GETTING USER_ID FROM DB
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list discussions)!]'];
+	}
+
+	$club_id = $data['club_id'];
+
+	$stmt = $conn->prepare("SELECT d.discussion_id, d.message AS discussion_message, d.created_at AS discussion_created, u.username FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.club_id = ?");
+	$stmt->bind_param("i", $club_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	$discussions = [];
+	while ($row = $result->fetch_assoc()) {
+		$discussions[] = [
+			'discussion_id' => $row['discussion_id'],
+			'message' => $row['discussion_message'],
+			'created_at' => $row['discussion_created'],
+			'username' => $row['username']
+			//TODO add replies if needed
+		];
+	}
+
+	echo "SUCCESS: Retrieved " . count($discussions) . " discussions for club id: $club_id\n";
+	return ['success' => true, 'discussions' => $discussions, 'message' => 'Discussions retrieved!'];
 }
 
 function handleBookCache($data) {
@@ -646,10 +686,10 @@ function processMessage($req) {
 		$response = handleDiscussions($message);
 
 	}elseif($routing_key==='discussion.list') { //TODO if needed - add new route for listing discussion messages*****
-		//TODO $response = handleDiscussionList($message);
+		$response = handleDiscussionList($message);
 	
 	}elseif($routing_key==='discussion.reply') { //TODO if needed - add new route for replying to discussion messages*****
-		//TODO $response = handleDiscussionReply($message);
+		$response = handleDiscussionReply($message);
 	
 	}elseif($routing_key==='api.cache') {
 		$response = handleBookCache($message);
@@ -686,10 +726,10 @@ $channel->queue_bind('user_events_queue', 'user_exchange', 'group.join');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.create');
 //$channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.list'); //TODO if needed
 $channel->queue_bind('user_events_queue', 'user_exchange', 'review.create');
-//$channel->queue_bind('user_events_queue', 'user_exchange', 'review.list'); //TODO if needed
+$channel->queue_bind('user_events_queue', 'user_exchange', 'review.list'); 
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.create');
-//$channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.list'); //TODO if needed
-//$channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.reply'); //TODO if needed
+$channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.list'); 
+$channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.reply'); 
 $channel->queue_bind('user_events_queue', 'user_exchange', 'api.cache');
 $channel->basic_consume('user_events_queue', '', false, false, false, false, 'processMessage');
 
