@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// If user is NOT logged in, redirect to login page
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     header("Location: index.php");
     exit();
@@ -13,13 +12,9 @@ require_once 'includes/header.php';
 $view_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $msg     = '';
 
-// ── POST HANDLERS ─────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    // Join by invite code
-    // RabbitMQ action: 'group.join'
-    // Expected response: { success: true, club_id, groups: <name string>, username, message }
     if (isset($_POST['join_code'])) {
         $result = rmq_rpc('group.join', [
             'invite_code' => strtoupper(trim($_POST['invite_code'] ?? '')),
@@ -35,9 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = 'error:Invalid invite code. Please check and try again.';
     }
 
-    // Create a new circle
-    // RabbitMQ action: 'group.create'
-    // Expected response: { success: true, group_name, club_id, invite_code, message }
+
     if (isset($_POST['create_group'])) {
         $result = rmq_rpc('group.create', [
             'name'       => trim($_POST['group_name'] ?? ''),
@@ -53,9 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // Post a new discussion
-    // RabbitMQ action: 'discussion.create'
-    // Expected response: { success: true }
     if (isset($_POST['post_discussion']) && $view_id) {
         $result = rmq_rpc('discussion.create', [
             'group_id' => $view_id,
@@ -68,9 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             : 'error:Could not post. Please try again.';
     }
 
-    // Reply to a discussion
-    // RabbitMQ action: 'discussion.reply'
-    // Expected response: { success: true }
+
     if (isset($_POST['post_reply']) && $view_id) {
         rmq_rpc('discussion.reply', [
             'discussion_id' => (int)($_POST['discussion_id'] ?? 0),
@@ -85,9 +73,7 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 // ── DATA FETCHING ─────────────────────────────────────────────
 
 if ($view_id) {
-    // Single group
-    // RabbitMQ action: 'group.get'
-    // Expected response: { group: { id, name, description, members[], member_count, current_book_id, invite_code, created } }
+   
     $group_res = rmq_rpc('group.get', [
         'group_id' => $view_id,
         'username' => $_SESSION['username'] ?? '',
@@ -97,27 +83,18 @@ if ($view_id) {
     if ($group) {
         $current_book = getBookById((int)($group['current_book_id'] ?? 0));
 
-        // Discussions
-        // RabbitMQ action: 'discussion.list'
-        // Expected response: { discussions: [{ id, book_id, author, content, created, replies[] }] }
         $disc_res          = rmq_rpc('discussion.list', [
             'group_id' => $view_id,
             'username' => $_SESSION['username'] ?? '',
         ]);
         $group_discussions = $disc_res['discussions'] ?? [];
 
-        // Schedule
-        // RabbitMQ action: 'schedule.list'
-        // Expected response: { events: [{ id, book_id, title, date, time, format, notes }] }
         $sched_res      = rmq_rpc('schedule.list', [
             'group_id' => $view_id,
             'username' => $_SESSION['username'] ?? '',
         ]);
         $group_schedule = $sched_res['events'] ?? [];
 
-        // Books this group has read (for discussion post dropdown)
-        // RabbitMQ action: 'group.books'
-        // Expected response: { books: [{ id, title }] }
         $gbooks_res  = rmq_rpc('group.books', [
             'group_id' => $view_id,
             'username' => $_SESSION['username'] ?? '',
@@ -131,24 +108,18 @@ if ($view_id) {
     $tab = $_GET['tab'] ?? 'discuss';
 
 } else {
-    // All circles
-    // RabbitMQ action: 'group.list'
-    // Expected response: { success: true, groups: [{ club_id, club_name, group_desc }] }
+  
     $all_groups_res = rmq_rpc('group.list', [
         'username' => $_SESSION['username'] ?? '',
     ]);
     $groups = $all_groups_res['groups'] ?? [];
 
-    // Books for create-group modal dropdown
-    // RabbitMQ action: 'book.list'
-    // Expected response: { books: [{ id, title }] }
     $bselect_res      = rmq_rpc('book.list', [
         'fields'   => 'id,title',
         'username' => $_SESSION['username'] ?? '',
     ]);
     $books_for_select = $bselect_res['books'] ?? [];
 
-    // Flash message after join redirect
     if (isset($_GET['joined'])) {
         $msg_type = 'success';
         $msg_text = 'You have joined the circle. Welcome!';

@@ -1,5 +1,5 @@
-</div><!-- /container -->
-</div><!-- /main-wrap -->
+</div>
+</div>
 
 <footer style="border-top:1px solid rgba(134,113,91,0.2); padding:1.5rem 0; margin-top:3rem;">
     <div class="container text-center" style="color:var(--text-muted); font-size:0.82rem; letter-spacing:0.08em;">
@@ -11,7 +11,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- DEBUG: RabbitMQ RPC Calls -->
+
 <script>
 (function() {
     const DEBUG_DATA = <?php echo json_encode($_DEBUG_LOG ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES); ?>;
@@ -37,7 +37,6 @@
         console.groupEnd();
     });
     
-    // Highlight any failed calls
     const failed = DEBUG_DATA.filter(function(item) {
         return item.error || (item.response && item.response.success === false);
     });

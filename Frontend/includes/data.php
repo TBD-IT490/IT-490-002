@@ -4,26 +4,14 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-// ── RABBITMQ CONFIGURATION ───────────────────────────────────
 define('RABBITMQ_HOST',     '100.101.27.73');
 define('RABBITMQ_PORT',     5672);
 define('RABBITMQ_USER',     'broker');
 define('RABBITMQ_PASS',     'test');
 define('RABBITMQ_EXCHANGE', 'user_exchange');
 
-// ── DEBUG LOG ─────────────────────────────────────────────────
-// Stores all RPC calls and responses for console debugging
 $_DEBUG_LOG = [];
 
-// ── RPC HELPER ────────────────────────────────────────────────
-/**
- * Send a message to RabbitMQ and wait for a reply.
- *
- * $action    — the routing key, e.g. 'book.get', 'group.list'
- * $payload   — associative array, will be JSON-encoded
- *
- * Returns the decoded response array, or null on failure.
- */
 function rmq_rpc(string $action, array $payload = []): ?array {
     global $_DEBUG_LOG;
     try {
@@ -39,7 +27,6 @@ function rmq_rpc(string $action, array $payload = []): ?array {
         $channel->queue_declare('user_events_queue', false, true, false, false);
         $channel->basic_qos(null, 1, null);
 
-        // Exclusive auto-delete callback queue for this request
         list($callback_queue,,) = $channel->queue_declare('', false, false, true, false);
 
         $response = null;
@@ -51,7 +38,6 @@ function rmq_rpc(string $action, array $payload = []): ?array {
         };
         $channel->basic_consume($callback_queue, '', false, true, false, false, $onResponse);
 
-        // Add session info to payload
         $payload['user_id']  = $_SESSION['id'] ?? null;
         $payload['username'] = $_SESSION['username'] ?? null;
 
@@ -66,9 +52,8 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 
         $channel->basic_publish($msg, 'user_exchange', $action);
 
-        // Wait for reply with timeout
         while ($response === null) {
-            $channel->wait(null, false, 5); // 5 second timeout
+            $channel->wait(null, false, 5); 
         }
 
         $channel->close();
@@ -76,7 +61,6 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 
         $decoded = json_decode($response, true);
         
-        // Log the RPC call for debugging
         $_DEBUG_LOG[] = [
             'action'   => $action,
             'request'  => $payload,
@@ -97,33 +81,17 @@ function rmq_rpc(string $action, array $payload = []): ?array {
     }
 }
 
-// ── GLOBAL DATA ───────────────────────────────────────────────
-// Fetched once per page load, used across multiple pages.
+$genres_response = rmq_rpc('genre.list');
+$genres = $genres_response['genres'] ?? [];
 
-// All genres for filter dropdowns
-// RabbitMQ action: 'genre.list'
-// Expected response: { "genres": ["Literary Fiction", "Mystery", ...] }
-
-//$genres_response = rmq_rpc('genre.list');
-//$genres = $genres_response['genres'] ?? [];
-
-// Current user's groups — used in nav, schedule filter, recommendations
-// RabbitMQ action: 'group.list_for_user'
-// Expected response: { "groups": [{ id, name, description, member_count, current_book_id, invite_code }, ...] }
 
 $groups_response = rmq_rpc('group.list_for_user');
 $my_groups = $groups_response['groups'] ?? [];
 
-// ── IN-MEMORY CACHE ───────────────────────────────────────────
-// Prevents the same book/group being fetched twice in one page load.
 $_book_cache  = [];
 $_group_cache = [];
 
-/**
- * Fetch a single book by ID, with caching.
- * RabbitMQ action: 'book.get'
- * Expected response: { id, title, author, cover, genre[], year, pages, rating, reviews, description, isbn }
- */
+
 function getBookById(int $id): ?array {
     global $_book_cache;
     if (isset($_book_cache[$id])) return $_book_cache[$id];
@@ -133,11 +101,7 @@ function getBookById(int $id): ?array {
     return $book;
 }
 
-/**
- * Fetch a single group by ID, with caching.
- * RabbitMQ action: 'group.get'
- * Expected response: { id, name, description, members[], member_count, current_book_id, invite_code, created }
- */
+
 function getGroupById(int $id): ?array {
     global $_group_cache;
     if (isset($_group_cache[$id])) return $_group_cache[$id];
@@ -146,8 +110,6 @@ function getGroupById(int $id): ?array {
     if ($group) $_group_cache[$id] = $group;
     return $group;
 }
-
-// ── RENDER HELPERS ────────────────────────────────────────────
 
 function renderStars(float $rating): string {
     $full  = (int) floor($rating);

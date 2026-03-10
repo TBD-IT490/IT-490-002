@@ -58,9 +58,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $channel->basic_publish($msg, 'user_exchange', 'user.login');
         
-        // Wait for the response from RabbitMQ
+        
         while ($response === null) {
-            $channel->wait(null, false, 5); // 5 second timeout
+            $channel->wait(null, false, 5); 
         }
         
         $result = json_decode($response, true);
@@ -87,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Noetic — Login</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -112,8 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             align-items: center;
             justify-content: center;
             background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(57,48,74,0.4) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 20%, rgba(36,46,15,0.2) 0%, transparent 50%);
+                radial-gradient(ellipse at 20% 50%, rgba(57,48,74,0.4) 0%, transparent 60%);
         }
 
         .login-card {
@@ -241,13 +240,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5 col-xl-4">
+        <div class="col-md-6 col-lg-5">
 
             <div class="login-card shadow-lg p-4 p-md-5">
 
-                <div class="brand">Noetic<span>.</span></div>
-                <div class="brand-sub">a society of readers</div>
+                <div class="brand">Noetic</div>
 
+                <!--from https://www.w3schools.com/php/func_string_htmlspecialchars.asp -->
                 <?php if (!empty($error)) : ?>
                     <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
                 <?php endif; ?>
