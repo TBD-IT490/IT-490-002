@@ -14,9 +14,7 @@ function buildURL(string $searchTerm): string
 function cleanData($data){
 
 	/// print array
-$book = [];
-
-    $book['book_id'] = $data['id'] ?? null;
+	$book = [];
     $book['api_book_id'] = $data['id'] ?? null;
 
     $book['isbn'] = $data['volumeInfo']['industryIdentifiers'][1]['identifier'] ?? null;
@@ -30,8 +28,6 @@ $book = [];
 
     $book['cover_url'] = $data['volumeInfo']['imageLinks']['thumbnail'] ?? null;
 
-    $book['created_at'] = date("Y-m-d H:i:s");
-
     $book['publisher'] = $data['volumeInfo']['publisher'] ?? null;
 
     $book['published_year'] = $data['volumeInfo']['publishedDate'] ?? null;
@@ -41,8 +37,7 @@ $book = [];
     $book['maturity_rating'] = $data['volumeInfo']['maturityRating'] ?? null;
 
     $book['content_version'] = $data['volumeInfo']['contentVersion'] ?? null;
-
-    $book['country'] = $data['saleInfo']['country'] ?? null;
+	$book['pages'] = $data['volumeInfo']['pageCount'] ?? 0 ;
 
     return $book;
 

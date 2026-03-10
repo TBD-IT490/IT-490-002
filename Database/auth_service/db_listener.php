@@ -145,7 +145,7 @@ function handleSearchBooks($data) {
 	}
 
 	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
-	$search_query = 'z'; //debug
+	//$search_query = 'z'; //debug
 	$like_query = '%' . $search_query . '%';
 	$stmt->bind_param("ss", $like_query, $like_query);
 	$stmt->execute();
@@ -382,9 +382,21 @@ function handleBookCache($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
+	$api_book_id = $data['api_book_id'];
+	$isbn = $data['isbn'];
+	$title = $data['title'];
+	$subtitle = $data['subtitle'];
+	$author = $data['author'];
+	$description = $data['description'];
+	$cover_url = $data['cover_url'];
+	$publisher = $data['publisher'];
+	$published_year = $data['published_year'];
+	$genre = $data['genre'];
+	$maturity_rating = $data['maturity_rating'];
+	$content_version = $data['content_version'];
+	$pages = $data['pages'];
 
 	$stmt = $conn->prepare(query: "INSERT INTO books (
-    api_book_id,
     isbn,
     title,
     author,
@@ -396,9 +408,10 @@ function handleBookCache($data) {
     published_year,
     genre,
     maturity_rating,
-    content_version
-) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, )");
-	$stmt->bind_param("iiis", $user_id, $book_id, $rating, $review_text);
+    content_version,
+	pages
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+	$stmt->bind_param("iiis", $isbn, $title, $author, $description, $cover_url, $api_book_id, $subtitle,$publisher,$published_year,$genre, $maturity_rating, $content_version, $pages);
 
 	if ($stmt->execute()) {
 		echo "SUCCESS: Books have been cached\n"; //CHANGE VARIABLES
