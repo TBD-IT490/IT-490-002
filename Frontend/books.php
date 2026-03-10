@@ -19,76 +19,64 @@ $review_msg   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
 
-    // Save a quick star rating
-    // RabbitMQ action: 'book.rate'
-    // Expected response: { success: true }
-    if (isset($_POST['my_rating'])) {
-        rmq_rpc('book.rate', [
-            'book_id' => $view_id,
-            'rating'  => (int)$_POST['my_rating'],
-        ]);
-    }
-
     // Submit a full written review
     // RabbitMQ action: 'review.create'
-    // Expected response: { success: true }
+    // Expected response: { success: true, message }
     if (isset($_POST['submit_review'])) {
         $result = rmq_rpc('review.create', [
-            'book_id' => $view_id,
-            'rating'  => (int)($_POST['rating'] ?? 0),
-            'title'   => trim($_POST['rev_title'] ?? ''),
-            'body'    => trim($_POST['rev_body']  ?? ''),
+            'book_id'     => $view_id,
+            'rating'      => (int)($_POST['rating'] ?? 0),
+            'review_text' => trim($_POST['rev_body'] ?? ''),
+            'username'    => $_SESSION['username'] ?? '',
         ]);
         $review_msg = ($result['success'] ?? false)
             ? 'Your review has been recorded. Thank you.'
             : 'Something went wrong. Please try again.';
-    }
-
-    // Add to reading list
-    // RabbitMQ action: 'user.reading_list.add'
-    if (isset($_POST['reading_list'])) {
-        rmq_rpc('user.reading_list.add', ['book_id' => $view_id]);
-    }
-
-    // Mark as read
-    // RabbitMQ action: 'user.mark_read'
-    if (isset($_POST['mark_read'])) {
-        rmq_rpc('user.mark_read', ['book_id' => $view_id]);
     }
 }
 
 // ── DATA FETCHING ─────────────────────────────────────────────
 
 if ($view_id) {
-    // Single book detail
-    // RabbitMQ action: 'book.get'
-    // Expected response: { book: { id, title, author, cover, genre[], year, pages, rating, reviews, description, isbn } }
-    $book_res = rmq_rpc('book.get', ['book_id' => $view_id]);
-    $book     = $book_res['book'] ?? null;
+    // Single book detail — pulled from local data helper since
+    // book.get / review.list / book.get_rating are not in the listener yet
+    $book = getBookById($view_id);
 
     if ($book) {
-        // Reviews for this book
-        // RabbitMQ action: 'review.list'
-        // Expected response: { reviews: [{ id, user, rating, title, body, created }, ...] }
-        $reviews_res  = rmq_rpc('review.list', ['book_id' => $view_id]);
-        $book_reviews = $reviews_res['reviews'] ?? [];
-
-        // Current user's rating for this book
-        // RabbitMQ action: 'book.get_rating'
-        // Expected response: { rating: 4 }  or { rating: null }
-        $rating_res = rmq_rpc('book.get_rating', ['book_id' => $view_id]);
-        $my_rating  = $rating_res['rating'] ?? 0;
+        $book_reviews = $book['reviews_list'] ?? [];
+        $my_rating    = 0; // no listener endpoint yet for per-user rating
     }
 
 } else {
     // Library browse
     // RabbitMQ action: 'book.list'
-    // Expected response: { books: [{ id, title, author, cover, genre[], rating }, ...] }
+    // Expected response: { success: true, books: [{ book_id, title, author, cover_url }] }
     $books_res = rmq_rpc('book.list', [
-        'search' => $search,
-        'genre'  => $genre_filter,
+        'search'   => $search,
+        'username' => $_SESSION['username'] ?? '',
     ]);
     $filtered = $books_res['books'] ?? [];
+
+    // Normalise field names from listener (book_id/cover_url) to what the
+    // template expects (id/cover) so the rest of the HTML needs no changes
+    $filtered = array_map(function($b) {
+        return [
+            'id'     => $b['book_id'] ?? $b['id'] ?? null,
+            'title'  => $b['title']   ?? '',
+            'author' => $b['author']  ?? '',
+            'cover'  => $b['cover_url'] ?? $b['cover'] ?? '',
+            'genre'  => $b['genre']   ?? [],
+            'rating' => $b['rating']  ?? 0,
+        ];
+    }, $filtered);
+
+    // Genre filter applied client-side since listener doesn't support it yet
+    if ($genre_filter) {
+        $filtered = array_filter($filtered, function($b) use ($genre_filter) {
+            return in_array($genre_filter, (array)$b['genre']);
+        });
+        $filtered = array_values($filtered);
+    }
 }
 ?>
 
@@ -119,55 +107,55 @@ if ($view_id) {
 
     <div class="row g-5">
         <div class="col-md-3 text-center">
-            <img src="<?php echo htmlspecialchars($book['cover']); ?>"
+            <img src="<?php echo htmlspecialchars($book['cover'] ?? $book['cover_url'] ?? ''); ?>"
                  class="book-cover-lg mb-3"
                  alt="<?php echo htmlspecialchars($book['title']); ?>"
-                 onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'">
+                 onerror="this.src=''">
 
-            <form method="post" class="d-grid gap-2 mb-3">
-                <button type="submit" name="reading_list" class="btn-n btn">+ Reading List</button>
-                <button type="submit" name="mark_read" class="btn-n-outline btn">Mark as Read</button>
-            </form>
-
-            <!-- Quick star rating -->
-            <form method="post">
-                <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.5rem;">Your Rating</div>
-                <div class="rating-input justify-content-center">
-                    <?php for ($i = 5; $i >= 1; $i--): ?>
-                    <input type="radio" name="my_rating" id="star<?php echo $i; ?>"
-                           value="<?php echo $i; ?>"
-                           <?php echo $my_rating == $i ? 'checked' : ''; ?>
-                           onchange="this.form.submit()">
-                    <label for="star<?php echo $i; ?>" title="<?php echo $i; ?>">★</label>
-                    <?php endfor; ?>
-                </div>
-                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;">
-                    <?php echo $my_rating ? "You rated: $my_rating / 5" : 'Not yet rated'; ?>
-                </div>
-            </form>
+            <!-- Quick star rating (display only — no listener endpoint yet) -->
+            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.5rem;">Your Rating</div>
+            <div class="rating-input justify-content-center">
+                <?php for ($i = 5; $i >= 1; $i--): ?>
+                <input type="radio" name="my_rating_display" id="star<?php echo $i; ?>"
+                       value="<?php echo $i; ?>"
+                       <?php echo $my_rating == $i ? 'checked' : ''; ?>>
+                <label for="star<?php echo $i; ?>" title="<?php echo $i; ?>">★</label>
+                <?php endfor; ?>
+            </div>
+            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;">
+                <?php echo $my_rating ? "You rated: $my_rating / 5" : 'Not yet rated'; ?>
+            </div>
         </div>
 
         <div class="col-md-9">
             <div style="font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.4rem;">
-                <?php echo implode(' · ', $book['genre']); ?>
+                <?php echo implode(' · ', (array)($book['genre'] ?? [])); ?>
             </div>
             <h1 class="page-heading" style="font-size:2.6rem; border:none; margin-bottom:0.2rem;">
                 <?php echo htmlspecialchars($book['title']); ?>
             </h1>
             <div style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;">
-                by <?php echo htmlspecialchars($book['author']); ?>, <?php echo $book['year']; ?>
+                by <?php echo htmlspecialchars($book['author']); ?>
+                <?php if (!empty($book['year'])): ?>, <?php echo $book['year']; ?><?php endif; ?>
             </div>
             <div class="d-flex align-items-center gap-3 mb-3">
-                <?php echo renderStars($book['rating']); ?>
+                <?php echo renderStars($book['rating'] ?? 0); ?>
                 <span style="font-size:0.9rem; color:var(--text-muted);">
-                    <?php echo $book['rating']; ?> · <?php echo number_format($book['reviews']); ?> ratings
+                    <?php echo $book['rating'] ?? 0; ?>
+                    <?php if (!empty($book['reviews'])): ?>
+                    · <?php echo number_format($book['reviews']); ?> ratings
+                    <?php endif; ?>
                 </span>
+                <?php if (!empty($book['pages'])): ?>
                 <span class="n-badge"><?php echo $book['pages']; ?> pages</span>
+                <?php endif; ?>
             </div>
             <p style="font-size:1.05rem; line-height:1.75; margin-bottom:1.5rem;">
-                <?php echo htmlspecialchars($book['description']); ?>
+                <?php echo htmlspecialchars($book['description'] ?? ''); ?>
             </p>
+            <?php if (!empty($book['isbn'])): ?>
             <div style="font-size:0.82rem; color:var(--text-muted);">ISBN: <?php echo $book['isbn']; ?></div>
+            <?php endif; ?>
 
             <div class="ornament mt-4">· · ·</div>
 
@@ -187,10 +175,10 @@ if ($view_id) {
                         <span style="font-size:0.8rem; color:var(--text-muted);"><?php echo $rv['created']; ?></span>
                     </div>
                     <div style="font-style:italic; color:var(--blush); font-size:1rem; margin-bottom:0.3rem;">
-                        "<?php echo htmlspecialchars($rv['title']); ?>"
+                        "<?php echo htmlspecialchars($rv['title'] ?? ''); ?>"
                     </div>
                     <p style="font-size:0.98rem; margin:0; color:var(--text-muted);">
-                        <?php echo htmlspecialchars($rv['body']); ?>
+                        <?php echo htmlspecialchars($rv['body'] ?? $rv['review_text'] ?? ''); ?>
                     </p>
                 </div>
                 <?php endforeach; ?>
@@ -211,10 +199,6 @@ if ($view_id) {
                             <label for="nstar<?php echo $i; ?>" title="<?php echo $i; ?>">★</label>
                             <?php endfor; ?>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Review Title</label>
-                        <input type="text" class="form-control" name="rev_title" placeholder="A brief title for your thoughts…">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Your Review</label>
@@ -265,7 +249,7 @@ if ($view_id) {
                 <img src="<?php echo htmlspecialchars($b['cover']); ?>"
                      style="width:100%; height:200px; object-fit:cover; border-radius:1px; margin-bottom:0.75rem;"
                      alt="<?php echo htmlspecialchars($b['title']); ?>"
-                     onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'">
+                     onerror="this.style.display='none'">
                 <div style="font-family:'Cormorant Garamond',serif; font-size:1.05rem; color:var(--blush); margin-bottom:0.2rem; line-height:1.3;">
                     <?php echo htmlspecialchars($b['title']); ?>
                 </div>
@@ -277,7 +261,7 @@ if ($view_id) {
                     <span style="font-size:0.78rem; color:var(--text-muted);"><?php echo $b['rating']; ?></span>
                 </div>
                 <div class="mt-2 d-flex flex-wrap gap-1">
-                    <?php foreach ($b['genre'] as $g): ?>
+                    <?php foreach ((array)$b['genre'] as $g): ?>
                     <span class="n-badge" style="font-size:0.65rem;"><?php echo htmlspecialchars($g); ?></span>
                     <?php endforeach; ?>
                 </div>
