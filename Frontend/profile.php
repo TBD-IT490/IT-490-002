@@ -58,58 +58,6 @@ $savedPreferences = $userSettings['preferences'] ?? [];
 
 ?>
 
-<style>
-.profile-banner {
-    height:120px;
-    background:linear-gradient(135deg, var(--moss) 0%, var(--card) 40%, #2a1f35 100%);
-    border-radius:4px 4px 0 0;
-    border:1px solid rgba(134,113,91,0.2);
-    border-bottom:none;
-}
-
-.profile-avatar {
-    width:80px; height:80px; border-radius:50%;
-    background:var(--moss); border:3px solid var(--card);
-    display:flex; align-items:center; justify-content:center;
-    font-family:'IM Fell English',serif; font-size:2rem; color:var(--blush);
-    position:absolute; bottom:-40px; left:1.5rem; overflow:hidden;
-}
-
-.profile-avatar img { 
-    width:100%; 
-    height:100%; 
-    object-fit:cover; 
-}
-
-.rated-book { 
-    display:flex; 
-    align-items:center; 
-    gap:0.8rem; 
-    padding:0.6rem 0; 
-    border-bottom:1px solid rgba(134,113,91,0.12); 
-}
-
-.tab-nav { 
-    display:flex; 
-    gap:0; 
-    border-bottom:1px solid rgba(134,113,91,0.3); 
-    margin-bottom:1.5rem; 
-}
-
-.tab-link {
-    padding:0.5rem 1.2rem; font-size:0.8rem; letter-spacing:0.1em;
-    text-transform:uppercase; color:var(--text-muted); text-decoration:none;
-    border-bottom:2px solid transparent; margin-bottom:-1px;
-    transition:color 0.2s, border-color 0.2s;
-}
-
-.tab-link.active, .tab-link:hover { 
-    color:var(--blush); 
-    border-bottom-color:var(--umber); 
-}
-
-</style>
-
 <?php if ($msg): ?>
 <div class="n-alert mb-3"><?php echo htmlspecialchars($msg); ?></div>
 <?php endif; ?>
@@ -153,10 +101,10 @@ $savedPreferences = $userSettings['preferences'] ?? [];
         </div>
 
         <div class="tab-nav">
-            <a href="?tab=books"    class="tab-link <?php echo $tab === 'books'    ? 'active' : ''; ?>">Rated Books</a>
-            <a href="?tab=reviews"  class="tab-link <?php echo $tab === 'reviews'  ? 'active' : ''; ?>">Reviews</a>
-            <a href="?tab=circles"  class="tab-link <?php echo $tab === 'circles'  ? 'active' : ''; ?>">Circles</a>
-            <a href="?tab=settings" class="tab-link <?php echo $tab === 'settings' ? 'active' : ''; ?>">Settings</a>
+            <a href="?tab=books"    class="tab-link-profile <?php echo $tab === 'books' ? 'active' : ''; ?>">Rated Books</a>
+            <a href="?tab=reviews"  class="tab-link-profile <?php echo $tab === 'reviews' ? 'active' : ''; ?>">Reviews</a>
+            <a href="?tab=circles"  class="tab-link-profile <?php echo $tab === 'circles' ? 'active' : ''; ?>">Circles</a>
+            <a href="?tab=settings" class="tab-link-profile <?php echo $tab === 'settings' ? 'active' : ''; ?>">Settings</a>
         </div>
 
         <?php if ($tab === 'books'): ?>
