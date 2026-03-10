@@ -376,6 +376,23 @@ function handleDiscussions($data) {
 	return ['success' => false, 'message' => 'Failed to post discussion message.'];
 }
 
+
+function handleBookCache($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+
+	$stmt = $conn->prepare("INSERT INTO books (user_id, book_id, rating, review_text) VALUES (?, ?, ?, ?)");
+	$stmt->bind_param("iiis", $user_id, $book_id, $rating, $review_text);
+
+	if ($stmt->execute()) {
+		echo "SUCCESS: Books have been cached\n"; //CHANGE VARIABLES
+		return ['success' => true, 'message' => 'Books have been cached!'];
+	}
+		return ['success' => false, 'message' => 'Failed to cache books.'];
+
+}
 //RMQ processing
 //PROCESS MSG HAS BEEN UPDATED TO HANDLE MAIN KEYS FROM TARYN'S VARIABLES - 3/8 7:52PM ;-;
 function processMessage($req) {
@@ -408,7 +425,9 @@ function processMessage($req) {
 
 	}elseif($routing_key==='discussion.create') { //add new route for discussions*****
 		$response = handleDiscussions($message);
-	}else {
+	} elseif($routing_key==='api.cache') {
+		$response = handleBookCache($message);
+	} else {
 		echo "SOMEONE FORGOT ROUTING KEY >:(\n";
 		echo "UNKNOWN ROUTING KEY: ". $routing_key . "\n";
 	}
@@ -438,6 +457,7 @@ $channel->queue_bind('user_events_queue', 'user_exchange', 'group.join');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'review.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.create');
+$channel->queue_bind('user_events_queue', 'user_exchange', 'api.cache');
 $channel->basic_consume('user_events_queue', '', false, false, false, false, 'processMessage');
 
 echo "[*] Connected to RMQ\n";

@@ -27,6 +27,11 @@ $schedule = $schedule_res['events'] ?? [];
 $books_res = rmq_rpc('book.list') ?? [];
 $books = $books_res['books'] ?? [];
 
+// Groups for create
+$groups_response = rmq_rpc('group.list_all');
+$my_groups = $groups_response['groups'] ?? [];
+
+
 // Recent discussions
 $discussions_res = rmq_rpc('discussion.recent') ?? [];
 $discussions = $discussions_res['discussions'] ?? [];

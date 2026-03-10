@@ -12,7 +12,7 @@ function publishToRabbit( string $json): void{
 	$channel = $connection->channel();
 	$channel->queue_declare(RABBITMQ_QUEUE, false, true, false, false);
 	$msg = new AMQPMessage($json, ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
-	$channel -> basic_publish($msg, '', RABBITMQ_QUEUE);
+	$channel -> basic_publish($msg, 'user_exchange', 'api.cache');
 
 	$channel->close();
 	$connection->close(); 

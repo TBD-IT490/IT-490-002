@@ -11,6 +11,43 @@ function buildURL(string $searchTerm): string
 	return API_BASE . '?' . $query;
 }
 
+function cleanData($data){
+
+	/// print array
+$book = [];
+
+    $book['book_id'] = $data['id'] ?? null;
+    $book['api_book_id'] = $data['id'] ?? null;
+
+    $book['isbn'] = $data['volumeInfo']['industryIdentifiers'][1]['identifier'] ?? null;
+
+    $book['title'] = $data['volumeInfo']['title'] ?? null;
+    $book['subtitle'] = $data['volumeInfo']['subtitle'] ?? null;
+
+    $book['author'] = $data['volumeInfo']['authors'][0] ?? null;
+
+    $book['description'] = $data['volumeInfo']['description'] ?? null;
+
+    $book['cover_url'] = $data['volumeInfo']['imageLinks']['thumbnail'] ?? null;
+
+    $book['created_at'] = date("Y-m-d H:i:s");
+
+    $book['publisher'] = $data['volumeInfo']['publisher'] ?? null;
+
+    $book['published_year'] = $data['volumeInfo']['publishedDate'] ?? null;
+
+    $book['genre'] = $data['volumeInfo']['categories'][0] ?? null;
+
+    $book['maturity_rating'] = $data['volumeInfo']['maturityRating'] ?? null;
+
+    $book['content_version'] = $data['volumeInfo']['contentVersion'] ?? null;
+
+    $book['country'] = $data['saleInfo']['country'] ?? null;
+
+    return $book;
+
+}
+
 //uses curl to get all the books from api
 function fetchBooks(string $searchTerm): ?array{
 	$url=buildURL($searchTerm);
@@ -90,6 +127,7 @@ if($data==null){
 	echo "Failed to fetch data D:\n";
 	exit(1);
 }
-processPublishBooks($data);
+$clean_data = cleanData($data);
+processPublishBooks($clean_data);
 echo "Done!! :D\n";
 ?>
