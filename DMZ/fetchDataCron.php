@@ -10,6 +10,9 @@ if($data==null){
 	echo"[" . date('c'). "] Cron failed to fetch data :c \n";
 	exit(1);
 }
-processPublishBooks($data);
+
+//Debug
+$clean_data = cleanData($data);
+processPublishBooks($clean_data);
 echo "[" . date('c') . "] Cron finsihed *dabs*\n";
 ?>

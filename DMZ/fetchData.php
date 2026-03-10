@@ -12,40 +12,36 @@ function buildURL(string $searchTerm): string
 }
 
 function cleanData($data){
-
-	/// print array
 	$book = [];
-    $book['api_book_id'] = $data['id'] ?? null;
-
-    $book['isbn'] = $data['volumeInfo']['industryIdentifiers'][1]['identifier'] ?? null;
-
-    $book['title'] = $data['volumeInfo']['title'] ?? null;
-    $book['subtitle'] = $data['volumeInfo']['subtitle'] ?? null;
-
-    $book['author'] = $data['volumeInfo']['authors'][0] ?? null;
-
-    $book['description'] = $data['volumeInfo']['description'] ?? null;
-
-    $book['cover_url'] = $data['volumeInfo']['imageLinks']['thumbnail'] ?? null;
-
-    $book['publisher'] = $data['volumeInfo']['publisher'] ?? null;
-
-    $book['published_year'] = $data['volumeInfo']['publishedDate'] ?? null;
-
-    $book['genre'] = $data['volumeInfo']['categories'][0] ?? null;
-
-    $book['maturity_rating'] = $data['volumeInfo']['maturityRating'] ?? null;
-
-    $book['content_version'] = $data['volumeInfo']['contentVersion'] ?? null;
-	$book['pages'] = $data['volumeInfo']['pageCount'] ?? 0 ;
-
+	for($i = 0; $i < count($data["items"]); $i++) {
+	/// print array
+    $book[$i]['api_book_id'] = $data["items"][$i]['id'] ?? null;
+    $book[$i]['isbn'] = $data["items"][$i]['volumeInfo']['industryIdentifiers'][1]['identifier'] ?? null;
+    $book[$i]['title'] = $data["items"][$i]['volumeInfo']['title'] ?? null;
+    $book[$i]['subtitle'] = $data["items"][$i]['volumeInfo']['subtitle'] ?? null;
+    $book[$i]['author'] = $data["items"][$i]['volumeInfo']['authors'][0] ?? null;
+    $book[$i]['description'] = $data["items"][$i]['volumeInfo']['description'] ?? null;
+    $book[$i]['cover_url'] = $data["items"][$i]['volumeInfo']['imageLinks']['thumbnail'] ?? null;
+    $book[$i]['publisher'] = $data["items"][$i]['volumeInfo']['publisher'] ?? null;
+    $published_date = $data["items"][$i]['volumeInfo']['publishedDate'] ?? null;
+	if (strlen($published_date) != 4){ 
+		$published_date = date("Y", strtotime($published_date));
+	}
+	$book[$i]['published_year'] = $published_date;
+	
+	$book[$i]['genre'] = $data["items"][$i]['volumeInfo']['categories'][0] ?? null;
+    $book[$i]['maturity_rating'] = $data["items"][$i]['volumeInfo']['maturityRating'] ?? null;
+    $book[$i]['content_version'] = $data["items"][$i]['volumeInfo']['contentVersion'] ?? null;
+	$book[$i]['pages'] = $data["items"][$i]['volumeInfo']['pageCount'] ?? 0 ;
+	}
+	echo '' . print_r($book, true) .'';
     return $book;
-
 }
 
 //uses curl to get all the books from api
 function fetchBooks(string $searchTerm): ?array{
 	$url=buildURL($searchTerm);
+	echo''.$url.'';
 	$ch=curl_init($url);
 	curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT=>10]);
 	$response=curl_exec($ch);
@@ -73,36 +69,17 @@ function fetchBooks(string $searchTerm): ?array{
 
 //gets each book to send to rabbit
 function processPublishBooks(array $data):void{
-	if(!isset($data['items']) || !is_array($data['items'])){
-		echo "No items field in response. \n";
-	}
 	$seenFile= __DIR__ . '/bookIDsInQueue.txt';
 	$seen = file_exists($seenFile) ? array_flip(file($seenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) : [];
 	$count=0;
-	foreach($data['items'] as $item){
-		if(!isset($item['id'])){
-			continue;
-		}
-		$bookID=$item['id'];
-		//skips duplicates
-		if(isset($seen[$bookID])){
-			continue;
-		}
+	foreach($data as $book){
+
 		//turns book entry into json string
-		$json=json_encode($item);
-		if($json == false){
-			continue;
-		}
+		$json=json_encode($book);
+
 
 		publishToRabbit($json);
 		$count++;
-		
-		//puts seen books in a separate file
-		file_put_contents($seenFile,$bookID . "\n", FILE_APPEND);
-		$seen[$bookID] = true;
-
-		//slows down publishing to not overload queue
-		usleep(50000); //50ms delay
 	}
 
 	echo "Published $count books to RabbitMQ :D !!\n";
