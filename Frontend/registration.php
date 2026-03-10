@@ -6,7 +6,6 @@ require_once __DIR__ . "/vendor/autoload.php";
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-// RabbitMQ Configuration
 define('RABBITMQ_HOST', '100.101.27.73');
 define('RABBITMQ_PORT', 5672);
 define('RABBITMQ_USER', 'broker');
@@ -15,12 +14,11 @@ define('RABBITMQ_PASS', 'test');
 $error = "";
 
 if (isset($_POST["register"])) {
-    // Sanitize input
+
     $username = filter_input(INPUT_POST, "username", FILTER_SANITIZE_STRING);
     $email = filter_input(INPUT_POST, "email", FILTER_SANITIZE_EMAIL);
     $password = $_POST["password"];
 
-    // Validate inputs
     if (empty($username) || empty($email) || empty($password)) {
         die("Please fill all fields!");
     }
@@ -222,7 +220,7 @@ if (isset($_POST["register"])) {
         }
         .footer-link a:hover { color: var(--blush); }
 
-        /* Password strength meter */
+
         .strength-bar {
             height: 3px;
             border-radius: 2px;
@@ -259,11 +257,13 @@ if (isset($_POST["register"])) {
                 <div class="p-4 p-md-5">
 
                     <?php if (!empty($error)): ?>
+                    <!--error message display-->
                         <div class="error-message"><?php echo htmlspecialchars($error); ?></div>
                     <?php endif; ?>
 
                     <form action="registration.php" method="POST">
 
+                    <!--username and email inputs-->
                         <div class="mb-3">
                             <label for="username" class="form-label">Username</label>
                             <input type="text" class="form-control" id="username" name="username" required>
@@ -274,6 +274,7 @@ if (isset($_POST["register"])) {
                             <input type="email" class="form-control" id="email" name="email" required>
                         </div>
 
+                    <!--password and strength meter i wrote below-->
                         <div class="mb-4">
                             <label for="password" class="form-label">Password</label>
                             <input type="password" class="form-control" id="password" name="password"
@@ -283,6 +284,8 @@ if (isset($_POST["register"])) {
                             </div>
                             <div class="strength-label" id="strengthLabel"></div>
                         </div>
+
+                    <!--button :)-->
 
                         <div class="d-grid">
                             <button type="submit" name="register" class="btn btn-theme btn-lg">
@@ -294,6 +297,7 @@ if (isset($_POST["register"])) {
                 </div>
             </div>
 
+            <!-- Already have an account?? Click here!!! Don't waste your time registering again :) -->
             <div class="footer-link">
                 Already have an account? <a href="index.php">Log in here</a>
             </div>
@@ -303,48 +307,59 @@ if (isset($_POST["register"])) {
 </div>
 
 <script>
-function checkStrength(val) {
-    const bar = document.getElementById('strengthBar');
-    const fill = document.getElementById('strengthFill');
-    const label = document.getElementById('strengthLabel');
-    bar.style.display = val.length ? 'block' : 'none';
-    let score = 0;
-    if (val.length >= 8) score++;
-    if (/[A-Z]/.test(val)) score++;
-    if (/[0-9]/.test(val)) score++;
-    if (/[^A-Za-z0-9]/.test(val)) score++;
-    const levels = [
-        { w: '25%', color: '#86715B', text: 'Weak' },
-        { w: '50%', color: '#a08060', text: 'Fair' },
-        { w: '75%', color: '#b09050', text: 'Good' },
-        { w: '100%', color: '#c9a87c', text: 'Strong' },
-    ];
-    const l = levels[Math.max(0, score - 1)];
-    fill.style.width = l.w;
-    fill.style.background = l.color;
-    label.textContent = l.text;
-    label.style.color = l.color;
-}
+    //strength bar for passwords, more visual than anything tbh I liked it
+    function checkStrength(val) {
+        const strengthBar = document.getElementById('strengthBar');
+        const strengnthFill = document.getElementById('strengthFill');
+        const strengthLabel = document.getElementById('strengthLabel');
 
-// DEBUG: Registration Response
-(function() {
-    <?php if (isset($result)): ?>
-    const regResult = <?php echo json_encode($result ?? null, JSON_PRETTY_PRINT); ?>;
-    const regRequest = <?php echo json_encode($message ?? null, JSON_PRETTY_PRINT); ?>;
+    //showing password strength bar
+        strengthBar.style.display = val.length ? 'block' : 'none';
+
+        let strengthScore = 0;
     
-    console.group('%c[Registration Debug]', 'color: #86715B; font-weight: bold; font-size: 14px;');
-    console.log('%cRequest:', 'color: #74c0fc; font-weight: bold;', regRequest);
-    console.log('%cResponse:', regResult && regResult.success ? 'color: #69db7c;' : 'color: #ff6b6b;', regResult);
-    if (!regResult) {
-        console.warn('%c[WARNING] Response is null - backend may not be responding', 'color: #ffa94d;');
-    } else if (!regResult.success) {
-        console.warn('%c[WARNING] Registration failed: ' + (regResult.message || 'No error message'), 'color: #ffa94d;');
-    }
-    console.groupEnd();
-    <?php else: ?>
-    console.log('%c[Registration page loaded (no submission yet)]', 'color: #86715B;');
-    <?php endif; ?>
-})();
+        //checking password conditions
+        if (password.length >= 8){
+            strengthScore +=1;
+       }
+
+        if (/[A-Z]/.test(password)){
+            strengthScore +=1;
+        }
+
+        if (/[0-9]/.test(password)){
+            strengthScore+=1;
+     }
+
+        if (/[^A-Za-z0-9]/.test(password)){
+            strengthScore+=1;
+        }
+
+        let width = "25%";
+        let color = "red";
+        let text = "Weak";
+
+        if (strengthScore === 2) {
+            width = "50%";
+            color = "orange";
+            text = "Fair";
+        } 
+        else if (strengthScore === 3) {
+            width = "75%";
+            color = "yellow";
+            text = "Good";
+        } 
+        else if (strengthScore >= 4) {
+            width = "100%";
+            color = "green";
+            text = "Strong";
+        }
+
+        strengthFill.style.width = width;
+        strengthFill.style.background = color;
+        strengthLabel.textContent = text;
+        strengthLabel.style.color = color;
+}
 </script>
 </body>
 </html>

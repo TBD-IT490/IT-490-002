@@ -15,7 +15,6 @@ $search       = trim($_GET['search'] ?? '');
 $genre_filter = $_GET['genre'] ?? '';
 $review_msg   = '';
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
 
     if (isset($_POST['submit_review'])) {
@@ -140,7 +139,7 @@ if ($view_id) {
                 <span style="font-size:0.9rem; color:var(--text-muted);">
                     <?php echo $book['rating'] ?? 0; ?>
                     <?php if (!empty($book['reviews'])): ?>
-                    · <?php echo number_format($book['reviews']); ?> ratings
+                        <?php echo number_format($book['reviews']); ?> ratings
                     <?php endif; ?>
                 </span>
                 <?php if (!empty($book['pages'])): ?>

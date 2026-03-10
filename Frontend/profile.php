@@ -7,6 +7,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit();
 }
 
+//functions and headers
 require_once 'includes/data.php';
 require_once 'includes/header.php';
 
@@ -14,43 +15,46 @@ $msg = '';
 $tab = $_GET['tab'] ?? 'books';
 
 
+//ALL OF THIS MUST MATCH NAT'S BACKEND CODE
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $result = rmq_rpc('user.update', [
-        'display_name' => trim($_POST['display_name'] ?? ''),
-        'email'        => trim($_POST['email']        ?? ''),
-        'bio'          => trim($_POST['bio']           ?? ''),
-        'preferences'  => $_POST['prefs']             ?? [],
+        'display_name' => trim($_POST['display_name'] ?? ''), 
+        'email'=> trim($_POST['email'] ?? ''),
+        'bio'=> trim($_POST['bio'] ?? ''),
+        'preferences' => $_POST['prefs'] ?? [],
     ]);
     $msg = ($result['success'] ?? false)
         ? 'Profile updated.'
         : 'Could not save changes. Please try again.';
 }
 
-$profile_res = rmq_rpc('user.profile') ?? [];
-$stats       = $profile_res['stats']          ?? [];
-$genre_count = $profile_res['genre_affinity'] ?? [];
+//loading user data for display
+
+$profile = rmq_rpc('user.profile') ?? [];
+$stats = $profile['stats'] ?? [];
+$genre_count = $profile['genre_affinity'] ?? [];
 arsort($genre_count);
 
 
-$my_ratings = [];
+$userRatings = [];
 if ($tab === 'books') {
-    $ratings_res = rmq_rpc('user.ratings') ?? [];
-    $my_ratings  = $ratings_res['ratings'] ?? [];
+    $ratings = rmq_rpc('user.ratings') ?? [];
+    $userRatings  = $ratings['ratings'] ?? [];
 }
 
-$my_reviews = [];
+$userReviews = [];
 if ($tab === 'reviews') {
-    $reviews_res = rmq_rpc('user.reviews') ?? [];
-    $my_reviews  = $reviews_res['reviews'] ?? [];
+    $reviews = rmq_rpc('user.reviews') ?? [];
+    $userReviews  = $reviews['reviews'] ?? [];
 }
 
-$user_settings = [];
+$userSettings = [];
 if ($tab === 'settings') {
-    $settings_res  = rmq_rpc('user.settings') ?? [];
-    $user_settings = $settings_res ?? [];
+    $settings  = rmq_rpc('user.settings') ?? [];
+    $userSettings = $settings ?? [];
 }
-$saved_prefs = $user_settings['preferences'] ?? [];
+$savedPreferences = $userSettings['preferences'] ?? [];
 
 ?>
 
@@ -62,6 +66,7 @@ $saved_prefs = $user_settings['preferences'] ?? [];
     border:1px solid rgba(134,113,91,0.2);
     border-bottom:none;
 }
+
 .profile-avatar {
     width:80px; height:80px; border-radius:50%;
     background:var(--moss); border:3px solid var(--card);
@@ -69,16 +74,40 @@ $saved_prefs = $user_settings['preferences'] ?? [];
     font-family:'IM Fell English',serif; font-size:2rem; color:var(--blush);
     position:absolute; bottom:-40px; left:1.5rem; overflow:hidden;
 }
-.profile-avatar img { width:100%; height:100%; object-fit:cover; }
-.rated-book { display:flex; align-items:center; gap:0.8rem; padding:0.6rem 0; border-bottom:1px solid rgba(134,113,91,0.12); }
-.tab-nav { display:flex; gap:0; border-bottom:1px solid rgba(134,113,91,0.3); margin-bottom:1.5rem; }
+
+.profile-avatar img { 
+    width:100%; 
+    height:100%; 
+    object-fit:cover; 
+}
+
+.rated-book { 
+    display:flex; 
+    align-items:center; 
+    gap:0.8rem; 
+    padding:0.6rem 0; 
+    border-bottom:1px solid rgba(134,113,91,0.12); 
+}
+
+.tab-nav { 
+    display:flex; 
+    gap:0; 
+    border-bottom:1px solid rgba(134,113,91,0.3); 
+    margin-bottom:1.5rem; 
+}
+
 .tab-link {
     padding:0.5rem 1.2rem; font-size:0.8rem; letter-spacing:0.1em;
     text-transform:uppercase; color:var(--text-muted); text-decoration:none;
     border-bottom:2px solid transparent; margin-bottom:-1px;
     transition:color 0.2s, border-color 0.2s;
 }
-.tab-link.active, .tab-link:hover { color:var(--blush); border-bottom-color:var(--umber); }
+
+.tab-link.active, .tab-link:hover { 
+    color:var(--blush); 
+    border-bottom-color:var(--umber); 
+}
+
 </style>
 
 <?php if ($msg): ?>
@@ -341,4 +370,5 @@ $saved_prefs = $user_settings['preferences'] ?? [];
     </div>
 </div>
 
+<!--footer code :) at least it stays consistent-->
 <?php require_once 'includes/footer.php'; ?>

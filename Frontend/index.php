@@ -252,7 +252,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
 
                 <form method="post" action="index.php">
-
+                <!--username and password inputs-->
                     <div class="mb-3">
                         <label for="username" class="form-label">Username</label>
                         <input type="text" class="form-control" id="username" name="username" required>
@@ -263,6 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
 
+                <!--buttons :)-->
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-theme btn-lg">Log In</button>
                         <button type="button" class="btn btn-outline-theme btn-lg"
@@ -271,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 </form>
             </div>
-
+                <!--register for our service :) please :)-->
             <div class="footer-link">
                 New to Noetic? <a href="registration.php">Create an account</a>
             </div>
