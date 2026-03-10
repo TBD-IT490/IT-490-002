@@ -145,7 +145,7 @@ function handleSearchBooks($data) {
 	}
 
 	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
-	$search_query = 'z'; //debug
+	//$search_query = 'z'; //debug
 	$like_query = '%' . $search_query . '%';
 	$stmt->bind_param("ss", $like_query, $like_query);
 	$stmt->execute();
