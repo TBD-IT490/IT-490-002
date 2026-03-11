@@ -18,6 +18,8 @@ define('DB_PASS', 'AppUsrPwd123!');
 define('DB_NAME', 'noetic');
 $log = new Logger('Noetic-Database-Listener');
 $log->pushHandler(new StreamHandler(__DIR__ .'noetic-database.log', Logger::DEBUG));
+$log->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
+
 //db connection
 function connectDB() {
 	$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -110,7 +112,7 @@ function handleLogin($data) {
 	$stmt->close();
 	$conn->close();
 
-	$log->info(message:"Login successful". $username);
+	$log->info(message:"Login successful ". $username);
 	return ['success' => true, 'session_key' => $sessionKey, 'username' => $username, 'message' => 'Logged in!'];
 }
 
@@ -482,8 +484,36 @@ function handleReviewList($data) {
 	return ['success' => true, 'reviews' => $reviews, 'message' => 'Reviews retrieved!'];
 }
 
+//FAAHH suggestion.create based on group_id, book_id, and sug_note
+function handleCreateSuggestion($data) {
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//user from db
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not logged in or authenticated (creating book sug)!]'];
+	}
+
+	$group_id = $data['group_id'];
+	$book_id = $data['book_id'];
+	$sug_note = $data['note'];
+
+	$stmt = $conn->prepare("INSERT INTO book_suggestions (group_id, book_id, sug_note) VALUES (?, ?, ?)");
+	$stmt->bind_param("iis", $group_id, $book_id, $sug_note);
+
+	if ($stmt->execute()) {
+		$log->info("SUCCESS: Book suggestion sent by user $user_id");
+		return ['success' => true, 'message' => 'Book suggestion created!'];
+	}
+	return ['success' => false, 'message' => 'Failed to create suggestion.'];
+}
+
 //HHAARR recommendation.personal
 function handlePersonalBookRecs($data) {
+	global $log;
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
