@@ -471,7 +471,7 @@ function handleReviewList($data) {
 }
 
 //HHAARR recommendation.personal
-function handlePersonalBookRecommendations($data) {
+function handlePersonalBookRecs($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
