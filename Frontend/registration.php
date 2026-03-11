@@ -52,8 +52,9 @@ if (isset($_POST["register"])) {
         true,
         false,
     );
+
     $response = null;
-    $corr_id = uniqid(); //they made me remove this then told me to put it back again smh
+    $corr_id = uniqid(); //MATT made me remove this then told me to put it back again smh
     $onResponse = function ($rep) use ($corr_id, &$response) {
         if ($rep->get("correlation_id") === $corr_id) {
             $response = $rep->getBody();
@@ -65,10 +66,13 @@ if (isset($_POST["register"])) {
         "correlation_id" => $corr_id,
         "reply_to" => $callback_queue,
     ]);
+
+    //publishing the exchange and waiting for response
     $channel->basic_publish($msg, "user_exchange", "user.register");
     while (!$response) {
         $channel->wait();
     }
+
 
     $result = json_decode($response, true);
     if (isset($result["success"]) && $result["success"] == true) {
@@ -76,7 +80,7 @@ if (isset($_POST["register"])) {
         $_SESSION["loggedin"] = true;
         $_SESSION["username"] = $username;
         $_SESSION["id"] = $result["id"] ?? null;
-        header("Location: index.php");
+        header("Location: index.php"); //once done registering, go to login page (instead of the home page)
 
         $channel->close();
 	
@@ -101,7 +105,6 @@ if (isset($_POST["register"])) {
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-
 <!--i left this in here because it completely BROKE when I removed it and i'd rather it be ugly code than broken
 I'm sure you understand-->
 </head>
@@ -111,6 +114,7 @@ I'm sure you understand-->
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5 col-xl-4" style="padding-top:150px">
 
+        <!--registration card-->
             <div class="register-card shadow-lg">
 
                 <div class="card-header-custom">
@@ -199,26 +203,33 @@ I'm sure you understand-->
             strengthScore+=1;
         }
 
+        //default is is weak
         let width = "25%";
         let color = "red";
         let text = "Weak";
 
+        //fair means orange
         if (strengthScore === 2) {
             width = "50%";
             color = "orange";
             text = "Fair";
         } 
+
+        //yellow means good password, not horrible not amazing
         else if (strengthScore === 3) {
             width = "75%";
             color = "yellow";
             text = "Good";
         } 
+
+        //AMAZING PASSWORD WOW YES 10/10 you won't get hacked
         else if (strengthScore >= 4) {
             width = "100%";
             color = "green";
             text = "Strong";
         }
 
+        //styling for the bar
         strengthFill.style.width = width;
         strengthFill.style.background = color;
         strengthLabel.textContent = text;

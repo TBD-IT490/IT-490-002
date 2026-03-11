@@ -22,9 +22,11 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
 <body>
 
 <nav class="noetic-nav">
+    <!--buttons :)-->
     <div class="container d-flex align-items-center gap-4">
         <a href="dashboard.php" class="nav-brand">Noetic<span>.</span></a>
         <div class="d-flex align-items-center gap-1 ms-2 flex-grow-1">
+            <!--navbar links at top of every page-->
             <a href="books.php" class="nav-link <?php echo $current_page==='books'?'active':''; ?>">Library</a>
             <a href="groups.php" class="nav-link <?php echo $current_page==='groups'?'active':''; ?>">Circles</a>
             <a href="schedule.php" class="nav-link <?php echo $current_page==='schedule'?'active':''; ?>">Gatherings</a>
