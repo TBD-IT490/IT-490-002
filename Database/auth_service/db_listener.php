@@ -752,6 +752,76 @@ function handleBookCache($data) {
 	
 	return ['success' => false, 'message' => 'Failed to cache books.'];
 }
+
+// based off the one nat showed me from stack, whyy :(
+function recommendBooks($data)  {
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	$user_id = getUserId($conn, $data);
+	$stmt = $conn->prepare(query:'Select book_id from book_reviews where user_id = ? AND rating >= 4');
+	$stmt->bind_param('i', $user_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	$liked_books = [];
+	while ($row = $result->fetch_assoc()) { 
+		$liked_books = $row['book_id'];
+	}	
+	if (count($liked_books) == 0) {
+
+		// give them everything cause they lame and have no opinion 
+		// log this someone pls
+		return ['success'=> true, 'message'=> 'giving you everything'];
+	}
+	$placeholders = implode(',', array_fill(0, count($liked_books), '?'));
+	$stmt = $conn->prepare(query:"SELECT DISTINCT user_id
+        FROM book_reviews
+        WHERE book_id IN ($placeholders) AND rating >= 4
+        AND user_id != ?");
+	$types = str_repeat('i', count($liked_books)) . 'i';
+	$others = array_merge($liked_books, [$user_id]);
+	// its like rust
+	$stmt->bind_param($types, ...$others);
+	$stmt->execute();
+    $result = $stmt->get_result();
+	$others = [];
+	while ($row = $result->fetch_assoc()) {
+		$others[] = $row['user_id'];
+	}
+	if (count($others) == 0) {
+        // give them everything cause they lame and have no opinion 
+		// log this someone pls
+		return ['success'=> true, 'message'=> 'giving you everything'];
+    }
+	$placeholders = implode(',', array_fill(0, count($others), '?'));
+	$types = str_repeat('i', count($others)) . 'i';
+	$stmt = $conn->prepare("SELECT books.book_id,
+        FROM book_reviews
+        JOIN books ON book_reviews.book_id = books.book_id
+        WHERE book_reviews.user_id IN ($placeholders)
+        AND book_reviews.rating >= 4
+        AND books.book_id NOT IN (
+            SELECT book_id FROM book_reviews WHERE user_id = ?
+        )
+        GROUP BY books.books_id
+        LIMIT 10");
+		$stmt->bind_param($types, ...$others);
+	$stmt->execute();
+    $result = $stmt->get_result();
+ 	$recommendations = [];
+
+    while ($row = $result->fetch_assoc()) {
+		$recommendations[] = $row["book_id"];
+    }
+
+
+
+	return ["success"=> true,"message"=> "all good twin heres the books", "recommendations" => $recommendations];
+
+}
 //RMQ processing
 function processMessage($req) {
 	global $log;
