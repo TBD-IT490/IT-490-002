@@ -2,7 +2,6 @@
 <?php
 require_once __DIR__ . '/fetchData.php';
 require_once __DIR__ . '/config.php';
-
 $searchTerms = DEFAULT_SEARCH_TERM;
 $data=fetchBooks($searchTerms);
 echo "[" . date('c'). "] Starting cron job. \n";
@@ -15,4 +14,15 @@ if($data==null){
 $clean_data = cleanData($data);
 processPublishBooks($clean_data);
 echo "[" . date('c') . "] Cron finsihed *dabs*\n";
+
+//logging stuff
+$logFile = __DIR__ .'/cron.log';
+file_put_contents($logFile, "[" . date('c') . "] The cron has begun...\n", FILE_APPEND);
+
+for($i = 0; $i < count($data["items"]); $i++) {
+	/// print array
+    $book[$i]['api_book_id'] = $data["items"][$i]['id'] ?? null;
+	file_put_contents($logFile, "Fetched book with api_book_id: " . $book[$i]['api_book_id'] . "\n", FILE_APPEND);
+}
+file_put_contents($logFile, "[" . date('c') . "] The cron has finished.\n", FILE_APPEND);
 ?>
