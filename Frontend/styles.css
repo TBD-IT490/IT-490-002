@@ -860,3 +860,54 @@ again, sorry it's ugly i had this from the file itself too and it was indented W
     width: 8px; height: 8px; border-radius: 50%;
     background: var(--umber); flex-shrink: 0; margin-top: 6px;
 }
+
+/*registration styles (everything else is redundant)*/
+.strength-bar {
+            height: 3px;
+            border-radius: 2px;
+            background: rgba(134,113,91,0.2);
+            margin-top: 6px;
+            overflow: hidden;
+            display: none;
+        }
+        .strength-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s, background 0.3s;
+        }
+        .strength-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+.register-card {
+            background-color: var(--card);
+            border: 1px solid rgba(134,113,91,0.25);
+            border-radius: 4px;
+        }
+
+        .card-header-custom {
+            background-color: var(--moss);
+            border-bottom: 1px solid rgba(134,113,91,0.25);
+            border-radius: 4px 4px 0 0;
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+        }
+
+        .card-header-custom .brand {
+            font-family: 'IM Fell English', serif;
+            font-size: 1.6rem;
+            color: var(--blush);
+            letter-spacing: 0.04em;
+            margin: 0;
+        }
+        .card-header-custom .brand span { color: var(--umber); }
+
+        .card-header-custom .heading {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.2rem;
+            letter-spacing: 0.1em;
+        }
