@@ -158,7 +158,7 @@ function handleSearchBooks($data) {
 	} */
 	//TODO: figure out why this is empty
 	//print data - debug
-	$search = $data['search']; //CHANGED to match front end - woohoo
+	$search = $data['search'] ?? ''; //CHANGED to match front end - woohoo
 	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
