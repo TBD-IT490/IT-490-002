@@ -1,4 +1,4 @@
-<html>
+<!DOCTYPE html>
     <footer class="footer-boarder">
       <div class="container text-center footer-text">
            <span class="footer-fonts">Noetic.</span>
