@@ -17,8 +17,13 @@ class ComposerStaticInitd751713988987e9331980363e24189ce
         ),
         'P' => 
         array (
+            'Psr\\Log\\' => 8,
             'PhpAmqpLib\\' => 11,
             'ParagonIE\\ConstantTime\\' => 23,
+        ),
+        'M' => 
+        array (
+            'Monolog\\' => 8,
         ),
     );
 
@@ -27,6 +32,10 @@ class ComposerStaticInitd751713988987e9331980363e24189ce
         array (
             0 => __DIR__ . '/..' . '/phpseclib/phpseclib/phpseclib',
         ),
+        'Psr\\Log\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/log/src',
+        ),
         'PhpAmqpLib\\' => 
         array (
             0 => __DIR__ . '/..' . '/php-amqplib/php-amqplib/PhpAmqpLib',
@@ -34,6 +43,10 @@ class ComposerStaticInitd751713988987e9331980363e24189ce
         'ParagonIE\\ConstantTime\\' => 
         array (
             0 => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src',
+        ),
+        'Monolog\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/monolog/monolog/src/Monolog',
         ),
     );
 
