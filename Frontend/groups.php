@@ -15,7 +15,7 @@ $msg     = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    if (isset($_POST['join_code'])) {
+    if (isset($_POST['invite_code'])) {
         $result = rmq_rpc('group.join', [
             'invite_code' => strtoupper(trim($_POST['invite_code'] ?? '')),
             'username'    => $_SESSION['username'] ?? '',
@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($result['success'] ?? false) {
             $club_id = $result['club_id'] ?? null;
             if ($club_id) {
-                header("Location: groups.php?joined=1");
+                header("Location: groups.php?id=" . $club_id . "&joined=1");
                 exit();
             }
         }
@@ -58,7 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             : 'error:Could not post. Please try again.';
     }
 
-
     if (isset($_POST['post_reply']) && $view_id) {
         rmq_rpc('discussion.reply', [
             'discussion_id' => (int)($_POST['discussion_id'] ?? 0),
@@ -78,28 +77,23 @@ if ($view_id) {
         'username' => $_SESSION['username'] ?? '',
     ]);
     $group = $group_res['group'] ?? null;
-
     if ($group) {
         $current_book = getBookById((int)($group['current_book_id'] ?? 0));
-
-        $disc_res          = rmq_rpc('discussion.list', [
+        $disc_res = rmq_rpc('discussion.list', [
             'group_id' => $view_id,
             'username' => $_SESSION['username'] ?? '',
         ]);
         $group_discussions = $disc_res['discussions'] ?? [];
-
         $sched_res      = rmq_rpc('schedule.list', [
             'group_id' => $view_id,
             'username' => $_SESSION['username'] ?? '',
         ]);
         $group_schedule = $sched_res['events'] ?? [];
-
         $gbooks_res  = rmq_rpc('group.books', [
             'group_id' => $view_id,
             'username' => $_SESSION['username'] ?? '',
         ]);
         $group_books = $gbooks_res['books'] ?? [];
-
         $gathering_count  = count($group_schedule);
         $discussion_count = count($group_discussions);
     }
@@ -107,16 +101,17 @@ if ($view_id) {
     $tab = $_GET['tab'] ?? 'discuss';
 
 } else {
-  
     $all_groups_res = rmq_rpc('group.list', [
         'username' => $_SESSION['username'] ?? '',
     ]);
+
     $groups = $all_groups_res['groups'] ?? [];
 
     $bselect_res      = rmq_rpc('book.list', [
         'fields'   => 'id,title',
         'username' => $_SESSION['username'] ?? '',
     ]);
+
     $books_for_select = $bselect_res['books'] ?? [];
 
     if (isset($_GET['joined'])) {
@@ -126,18 +121,21 @@ if ($view_id) {
 }
 ?>
 
-
 <!DOCTYPE html>
-<?php if ($msg_text): ?>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Noetic — Groups</title>
-    <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">   
+    <link rel="stylesheet" href="styles.css">
 </head>
+<body>
+<?php if ($msg_text): ?>
+    <div class="alert alert-<?php echo $msg_type === 'success' ? 'success' : 'danger'; ?>">
+        <?php echo $msg_text; ?>
+    </div>
 <?php endif; ?>
 
 <?php if ($view_id): ?>
@@ -377,7 +375,6 @@ if ($view_id) {
 <div class="n-card p-4 mb-4">
     <h6 style="font-family:'IM Fell English',serif; margin-bottom:0.8rem;">Join a Circle</h6>
     <form method="post" class="d-flex gap-2">
-        <input type="hidden" name="join_code" value="1">
         <input type="text" class="form-control" name="invite_code"
                placeholder="Enter invite code (e.g. OBS-7X2K)"
                style="max-width:300px; letter-spacing:0.15em; text-transform:uppercase;">
@@ -452,8 +449,9 @@ if ($view_id) {
         </div>
     </div>
 </div>
-</html>
 
 <?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>
+    </body>
+</html>
