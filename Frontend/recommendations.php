@@ -203,8 +203,8 @@ $books_for_select = $bselect_res['books'] ?? [];
         <div class="col-md-4">
             <label class="form-label">Circle</label>
             <select class="form-select" name="sug_group" required>
-                <?php foreach ($my_groups as $g): ?>
-                <option value="<?php echo $group['id']; ?>"><?php echo htmlspecialchars($group['name']); ?></option>
+                <?php foreach ($my_groups as $group): ?>
+                <option value="<?php echo $group['group_id']; ?>"><?php echo htmlspecialchars($group['name']); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>

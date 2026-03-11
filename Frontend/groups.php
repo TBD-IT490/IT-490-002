@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         if ($result['success'] ?? false ) {
             $name = htmlspecialchars($result['group_name'] ?? '');
-            $code = htmlspecialchars($result['invite_code'] ?? '');
+            $code = htmlspecialchars($result['group_id'] ?? '');
             $msg= 'success:You have joined the circle. Welcome!!!';
         }
         else {
@@ -47,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+//ignore this for now
     if (isset($_POST['post_discussion']) && $view_id) {
         $result = rmq_rpc('discussion.create', [
             'group_id' => $view_id,
@@ -113,11 +114,6 @@ if ($view_id) {
     ]);
 
     $books_for_select = $bselect_res['books'] ?? [];
-
-    if (isset($_GET['joined'])) {
-        $msg_type = 'success';
-        $msg_text = 'You have joined the circle. Welcome!';
-    }
 }
 ?>
 
@@ -149,6 +145,7 @@ if ($view_id) {
         &nbsp;›&nbsp; <?php echo htmlspecialchars($group['name']); ?>
     </div>
 
+    <!--book widgets that should be showing up but aren't when you join-->
     <div class="row g-4">
         <div class="col-lg-8">
             <h2 class="page-heading"><?php echo htmlspecialchars($group['name']); ?></h2>

@@ -87,7 +87,7 @@ $genres_response = rmq_rpc('genre.list');
 $genres = $genres_response['genres'] ?? [];
 
 
-$groups_response = rmq_rpc('group.list_for_user');
+$groups_response = rmq_rpc('group.list');
 $my_groups = $groups_response['groups'] ?? [];
 
 $_book_cache = [];
