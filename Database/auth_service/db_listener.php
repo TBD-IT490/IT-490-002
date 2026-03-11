@@ -7,6 +7,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
+use Monolog\Formatter\LineFormatter;
 
 define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
 define('RMQ_PORT', 5672);
@@ -18,7 +19,11 @@ define('DB_PASS', 'AppUsrPwd123!');
 define('DB_NAME', 'noetic');
 $log = new Logger('Noetic-Database-Listener');
 $log->pushHandler(new StreamHandler(__DIR__ .'noetic-database.log', Logger::DEBUG));
-$log->pushHandler(new StreamHandler('php://stdout', Logger::DEBUG));
+$format = "%level_name%: %message%\n";
+$formatter = new LineFormatter($format);
+$cli=new StreamHandler('php://stdout', Logger::DEBUG);
+$cli->setFormatter($formatter);
+$log->pushHandler($cli);
 
 //db connection
 function connectDB() {
@@ -146,7 +151,11 @@ function handleSearchBooks($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-
+	/*
+	if(!isset($data['search'])) {
+		$log->warning("FAILED: no 'search' key.");
+		return ['success' => false, 'message' => 'No search given!'];
+	} */
 	//TODO: figure out why this is empty
 	//print data - debug
 	$search = $data['search']; //CHANGED to match front end - woohoo
@@ -197,7 +206,7 @@ function handleGetBook($data) {
 	}
 
 	$book = $result->fetch_assoc();
-	$log->info("SUCCESS: Retrieved details for book id", $book_id);
+	$log->info("SUCCESS: Retrieved details for book id $book_id");
 	return ['success' => true, 'book' => $book, 'message' => 'Book details retrieved!'];
 }
 
@@ -242,14 +251,14 @@ function handleCreateClub($data) {
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from create club)!'];
 	}
-	
+	//$log->info("DEBUG: user id is: $user_id"); //faah
+
 	$group_name = $data['name']; 
     $description = $data['group_desc']; 
     $book = $data['book_id'] ?? null; 
     $invite_code = strtoupper(substr(md5(uniqid(rand(), true)),0,8));
-
-	$stmt = $conn->prepare("INSERT INTO book_clubs (club_name, group_desc, invite_code) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $group_name, $description, $invite_code);
+	$stmt = $conn->prepare("INSERT INTO book_clubs (club_name, group_desc, invite_code, created_by) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("sssi", $group_name, $description, $invite_code, $user_id);
 
 	if ($stmt->execute()) {
 		$club_id = $conn->insert_id;
@@ -266,28 +275,67 @@ function handleCreateClub($data) {
 	return ['success' => false, 'message' => 'Failed to create club.'];
 }
 
-//getting all groups*****
-function handleGetGroups($data) {
+//getting singleee group*****
+function handleGetGroup($data) {
 	global $log;
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
+	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (getting groups)!'];
 	}
 
-	$stmt = $conn->prepare("SELECT club_id, club_name, group_desc FROM book_clubs");
+	$group_id = $data['group_id'];
+
+	$stmt = $conn->prepare("SELECT club_id, club_name, group_desc, invite_code FROM book_clubs WHERE club_id = ?");
+	$stmt->bind_param("i", $group_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
+
+	$group = [];
+	if ($row = $result->fetch_assoc()) {
+		$group[] = ['group_id' => $row['club_id'], 'group_name' => $row['club_name'], 'group_desc' => $row['group_desc'], 'invite_code' => $row['invite_code']];
+		$log->info("SUCCESS: Group found for group: $group_id");
+		return ['success' => true, 'groups' => $group, 'message' => 'Group found!'];
+	} 
+	$log->warning("FAILED: Group_id: $group_id not found.");
+	return ['success' => false, 'message' => 'Group not found.'];
+}
+
+//get ALL groups
+function handleListGroups($data) {
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//user from db
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (getting groups)!'];
+	}
+	//$username = $data['username']; //trying it out
+
+	$stmt = $conn->prepare("SELECT club_id, club_name, group_desc FROM book_clubs WHERE created_by = ?");
+	$stmt->bind_param("i", $user_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
 	$groups = [];
 	while ($row = $result->fetch_assoc()) {
 		$groups[] = ['group_id' => $row['club_id'], 'group_name' => $row['club_name'], 'group_desc' => $row['group_desc']];
 	}
 	$log->info("SUCCESS: Retrieved all groups, found " . count($groups) . " results");
 	return ['success' => true, 'groups' => $groups, 'message' => 'Groups retrieved!'];
+
+	if (empty($groups)) {
+		$log->warning("FAILED: Groups not found.");
+		return ['success' => false, 'message' => 'Groups not found.'];
+	}
+	
 }
 
 //joining a club*****
@@ -528,7 +576,34 @@ function handlePersonalBookRecs($data) {
 	$book_id = $data['book_id'];
 	$note = $data['note'];
 
-	
+	$genre_score = [];
+	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as score FROM book_reviews r JOIN books b ON r.book_id = b.book_id WHERE r.user_id = ? GROUP BY b.genre");
+	$stmt->bind_param("i", $user_id);
+
+	return ['success' => true, 'message' => 'Book rec here!'];
+}
+
+function handleGroupBookRecs($data) { //faaaahh
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//useer from db
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list meetings)!]'];
+	}
+
+	$club_id = $data['group_id'];
+	$book_id = $data['book_id'];
+	$note = $data['note'];
+
+	$genre_score = [];
+	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as score FROM book_reviews r JOIN books b ON r.book_id = b.book_id WHERE r.user_id = ? GROUP BY b.genre");
+	$stmt->bind_param("i", $user_id);
+
+	return ['success' => true, 'message' => 'Book rec here!'];
 }
 
 //posting discussions*****
@@ -698,7 +773,7 @@ function processMessage($req) {
 		$response = handleGetGroupBooks($message);
 
 	}elseif($routing_key==='group.get') { //list all groups
-		$response = handleGetGroups($message);
+		$response = handleGetGroup($message);
 
 	}elseif($routing_key==='group.create') { //creating club
 		$response = handleCreateClub($message);
@@ -706,12 +781,24 @@ function processMessage($req) {
 	}elseif($routing_key==='group.join') { //joining club
 		$response = handleJoinClub($message);
 
-	}elseif($routing_key==='schedule.create') { //scheduling meeting
+	}elseif($routing_key==='group.list') {
+		$response = handleListGroups($message); //adding to fix front end popups rahhh
+	
+		}elseif($routing_key==='schedule.create') { //scheduling meeting
 		$response = handleScheduleMeeting($message);
 
 	}elseif($routing_key==='schedule.list') { //TODO add new route for pulling up scheduled meetings*****
 		//$response = handleScheduleList($message);
 	
+	}elseif($routing_key==='suggestion.create') { //creating book suggestion
+		$response = handleCreateSuggestion($message);
+
+	}elseif($routing_key==='recommendation.personal') { //creating personal rec - FAAAHHH
+		$response = handlePersonalBookRecs($message);
+
+	}elseif($routing_key==='recommendation.groups') { //creating group rec - FAAHHH
+		$response = handleGroupBookRecs($message);
+
 	}elseif($routing_key==='review.create') { //creating review
 		$response = handleCreateReview($message);
 
@@ -754,10 +841,14 @@ $channel->queue_bind('user_events_queue', 'user_exchange', 'book.list');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'book.get');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.books');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.get');
+$channel->queue_bind('user_events_queue', 'user_exchange', 'group.list'); //may or may not need ¯\_(ツ)_/¯
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'group.join');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.create');
 //$channel->queue_bind('user_events_queue', 'user_exchange', 'schedule.list'); //TODO once review and discussions has been tested
+$channel->queue_bind('user_events_queue', 'user_exchange', 'suggestion.create');
+$channel->queue_bind('user_events_queue', 'user_exchange', 'recommendation.personal');
+$channel->queue_bind('user_events_queue', 'user_exchange', 'recommendation.groups');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'review.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'review.list'); 
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.create');
