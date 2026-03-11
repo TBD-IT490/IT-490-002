@@ -12,8 +12,8 @@ require_once 'includes/data.php';
 require_once 'includes/header.php';
 
 $view_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
-$search = trim($_GET['search'] ?? '');
-$genre_filter = $_GET['genre'] ?? '';
+$search = trim($_GET['search'] );
+$genre_filter = $_GET['genre'] ;
 $review_msg = '';
 
 //sending info to nat lol
@@ -22,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
     if (isset($_POST['submit_review'])) {
         $result = rmq_rpc('review.create', [
             'book_id'=> $view_id,
-            'rating'=> (int)($_POST['rating'] ?? 0),
-            'review_text'=> trim($_POST['rev_body'] ?? ''),
-            'username'=> $_SESSION['username'] ?? '',
+            'rating'=> (int)($_POST['rating'] ),
+            'review_text'=> trim($_POST['rev_body'] ),
+            'username'=> $_SESSION['username'],
         ]);
-        $review_msg = ($result['success'] ?? false)
+        $review_msg = ($result['success'])
             ? 'Your review has been recorded. Thank you.'
             : 'Something went wrong. Please try again.';
     }
@@ -38,9 +38,9 @@ if ($view_id) {
 
     $book_res = rmq_rpc('book.get', [
         'book_id'=> $view_id,
-        'username' => $_SESSION['username'] ?? '',
+        'username' => $_SESSION['username'],
     ]);
-    $book = $book_res['book'] ?? null;
+    $book = $book_res['book'];
 
     if ($book) {
 
@@ -69,12 +69,12 @@ if ($view_id) {
 
     $filtered = array_map(function($b) {
         return [
-            'id' => $b['book_id'] ?? $b['id'] ?? null,
-            'title' => $b['title'] ?? '',
-            'author'=> $b['author'] ?? '',
-            'cover' => $b['cover_url'] ?? $b['cover'] ?? '',
-            'genre' => $b['genre'] ?? [],
-            'rating' => $b['rating'] ?? 0,
+            'id' => $b['book_id'] ?? $b['id'],
+            'title' => $b['title'] ,
+            'author'=> $b['author'] ,
+            'cover' => $b['cover_url'] ?? $b['cover'] ,
+            'genre' => $b['genre'] ,
+            'rating' => $b['rating'] ,
         ];
     }, $filtered);
 

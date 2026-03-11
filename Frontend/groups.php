@@ -18,12 +18,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['invite_code'])) {
         $result = rmq_rpc('group.join', [
-            'invite_code' => strtoupper(trim($_POST['invite_code'] ?? '')),
-            'username' => $_SESSION['username'] ?? '',
+            'invite_code' => strtoupper(trim($_POST['invite_code'])),
+            'username' => $_SESSION['username'],
         ]);
         if ($result['success'] ?? false ) {
-            $name = htmlspecialchars($result['group_name'] ?? '');
-            $code = htmlspecialchars($result['group_id'] ?? '');
+            $name = htmlspecialchars($result['group_name']);
+            $code = htmlspecialchars($result['group_id']);
             $msg= 'success:You have joined the circle. Welcome!!!';
         }
         else {
@@ -34,13 +34,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (isset($_POST['create_group'])) {
         $result = rmq_rpc('group.create', [
-            'name' => trim($_POST['group_name'] ?? ''),
-            'group_desc' => trim($_POST['group_desc'] ?? ''),
-            'username' => $_SESSION['username'] ?? '',
+            'name' => trim($_POST['group_name']),
+            'group_desc' => trim($_POST['group_desc']),
+            'username' => $_SESSION['username'],
         ]);
         if ($result['success'] ?? false) {
-            $name = htmlspecialchars($result['group_name'] ?? '');
-            $code = htmlspecialchars($result['invite_code'] ?? '');
+            $name = htmlspecialchars($result['group_name']);
+            $code = htmlspecialchars($result['invite_code']);
             $msg  = "success:Circle <em>$name</em> created! Your invite code is: <strong>$code</strong>";
         } else {
             $msg = 'error:Could not create circle. Please try again.';
@@ -54,26 +54,26 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 if ($view_id) {
     $group_res = rmq_rpc('group.get', [
         'group_id' => $view_id,
-        'username' => $_SESSION['username'] ?? '',
+        'username' => $_SESSION['username'],
     ]);
     $group = $group_res['group'] ?? null;
     if ($group) {
-        $current_book = getBookById((int)($group['current_book_id'] ?? 0));
+        $current_book = getBookById((int)($group['current_book_id']));
         $disc_res = rmq_rpc('discussion.list', [
             'group_id' => $view_id,
-            'username' => $_SESSION['username'] ?? '',
+            'username' => $_SESSION['username'],
         ]);
-        $group_discussions = $disc_res['discussions'] ?? [];
+        $group_discussions = $disc_res['discussions'];
         $sched_res      = rmq_rpc('schedule.list', [
             'group_id' => $view_id,
-            'username' => $_SESSION['username'] ?? '',
+            'username' => $_SESSION['username'],
         ]);
-        $group_schedule = $sched_res['events'] ?? [];
+        $group_schedule = $sched_res['events'];
         $gbooks_res  = rmq_rpc('group.books', [
             'group_id' => $view_id,
-            'username' => $_SESSION['username'] ?? '',
+            'username' => $_SESSION['username'],
         ]);
-        $group_books = $gbooks_res['books'] ?? [];
+        $group_books = $gbooks_res['books'];
         $gathering_count  = count($group_schedule);
         $discussion_count = count($group_discussions);
     }
@@ -82,17 +82,17 @@ if ($view_id) {
 
 } else {
     $all_groups_res = rmq_rpc('group.list', [
-        'username' => $_SESSION['username'] ?? '',
+        'username' => $_SESSION['username'],
     ]);
 
-    $groups = $all_groups_res['groups'] ?? [];
+    $groups = $all_groups_res['groups'];
 
     $bselect_res = rmq_rpc('book.list', [
         'fields' => 'id,title',
-        'username' => $_SESSION['username'] ?? '',
+        'username' => $_SESSION['username'],
     ]);
 
-    $books_for_select = $bselect_res['books'] ?? [];
+    $books_for_select = $bselect_res['books'];
 }
 ?>
 

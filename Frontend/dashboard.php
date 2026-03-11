@@ -13,31 +13,31 @@ $username = $_SESSION['username'];
 require_once 'includes/data.php';
 require_once 'includes/header.php';
 
-$reviews_res = rmq_rpc(action: 'review.recent') ?? [];
-$user_reviews = $reviews_res['reviews'] ?? [];
+$reviews_res = rmq_rpc(action: 'review.recent');
+$user_reviews = $reviews_res['reviews'] ;
 $recent_reviews = array_slice($user_reviews, -3);
 
 //listing meetings
-$schedule_res = rmq_rpc('schedule.list') ?? [];
-$schedule = $schedule_res['events'] ?? [];
+$schedule_res = rmq_rpc('schedule.list');
+$schedule = $schedule_res['events'] ;
 
 //ALL BOOKS
-$books_res = rmq_rpc('book.list') ?? [];
-$books = $books_res['books'] ?? [];
+$books_res = rmq_rpc('book.list');
+$books = $books_res['books'];
 
 //listing groups for user
 $groups_response = rmq_rpc('group.list');
-$my_groups = $groups_response['groups'] ?? [];
+$my_groups = $groups_response['groups'];
 
 //any recent discussions
-$discussions_res = rmq_rpc('discussion.recent') ?? [];
-$discussions = $discussions_res['discussions'] ?? [];
+$discussions_res = rmq_rpc('discussion.recent');
+$discussions = $discussions_res['discussions'];
 
 //recent user ratings
-$ratings_res = rmq_rpc('user.ratings') ?? [];
-$user_ratings = $ratings_res['ratings'] ?? [];
+$ratings_res = rmq_rpc('user.ratings');
+$user_ratings = $ratings_res['ratings'];
 
-$next_event = $schedule[0] ?? null;
+$next_event = $schedule[0];
 $next_book = $next_event ? getBookById($next_event['book_id']) : null;
 $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
 
