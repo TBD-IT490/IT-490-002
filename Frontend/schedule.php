@@ -17,13 +17,13 @@ $msg          = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
 
     $result = rmq_rpc('schedule.create', [
-        'group_id' => (int)($_POST['group_id']    ?? 0),
-        'book_id'  => (int)($_POST['book_id']     ?? 0),
-        'title'    => trim($_POST['event_title']  ?? ''),
-        'date'     => $_POST['event_date']        ?? '',
-        'time'     => $_POST['event_time']        ?? '',
-        'format'   => trim($_POST['event_format'] ?? ''),
-        'notes'    => trim($_POST['event_notes']  ?? ''),
+        'group_id' => (int)($_POST['group_id'] ?? 0),
+        'book_id' => (int)($_POST['book_id'] ?? 0),
+        'title' => trim($_POST['event_title'] ?? ''),
+        'date' => $_POST['event_date'] ?? '',
+        'time' => $_POST['event_time'] ?? '',
+        'format' => trim($_POST['event_format'] ?? ''),
+        'notes' => trim($_POST['event_notes']  ?? ''),
     ]);
     if ($result['success'] ?? false) {
         $date_fmt = date('F j, Y', strtotime($_POST['event_date'] ?? ''));
@@ -39,18 +39,16 @@ $bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
 $books_for_select = $bselect_res['books'] ?? [];
 ?>
 
-<style>
-.event-month-header {
-    font-family:'IM Fell English',serif; font-size:1rem; color:var(--text-muted);
-    letter-spacing:0.15em; text-transform:uppercase;
-    margin:1.5rem 0 0.8rem; border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:0.4rem;
-}
-.event-row { display:flex; gap:1.2rem; align-items:flex-start; padding:1rem 0; border-bottom:1px solid rgba(134,113,91,0.12); }
-.event-date-box { min-width:54px; text-align:center; background:rgba(36,46,15,0.4); border:1px solid rgba(134,113,91,0.25); border-radius:2px; padding:0.4rem 0.2rem; }
-.event-day      { font-family:'IM Fell English',serif; font-size:1.8rem; line-height:1; color:var(--blush); }
-.event-month-sm { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); }
-</style>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Noetic — Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
 <div class="d-flex justify-content-between align-items-end mb-4">
     <h2 class="page-heading mb-0">Gatherings</h2>
     <button class="btn-n btn" data-bs-toggle="modal" data-bs-target="#scheduleModal">
@@ -187,5 +185,6 @@ foreach ($filtered_schedule as $ev):
         </div>
     </div>
 </div>
+</html>
 
 <?php require_once 'includes/footer.php'; ?>

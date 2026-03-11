@@ -366,8 +366,8 @@ function handleScheduleMeeting($data) {
 	$notes = $data['notes'];
 
 	//change club_id to group_id once db gets updated ~~
-	$stmt = $conn->prepare("INSERT INTO club_meetings (club_id, event_title, event_date, event_time, event_format, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-	$stmt->bind_param("issssi", $club_id, $event_title, $event_date, $event_time, $event_format, $user_id);
+	$stmt = $conn->prepare("INSERT INTO club_meetings (club_id, event_title, event_date, event_time, event_format, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
+	$stmt->bind_param("isssssi", $club_id, $event_title, $event_date, $event_time, $event_format, $notes, $user_id);
 	
 	if ($stmt->execute()) {
 		$log->info("SUCCESS: Meeting scheduled for club $club_id");
@@ -480,6 +480,25 @@ function handleReviewList($data) {
 
 	$log->info("SUCCESS: Retrieved " . count($reviews) . " reviews for book id: $book_id");
 	return ['success' => true, 'reviews' => $reviews, 'message' => 'Reviews retrieved!'];
+}
+
+//HHAARR recommendation.personal
+function handlePersonalBookRecs($data) {
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//useer from db
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list meetings)!]'];
+	}
+
+	$club_id = $data['group_id'];
+	$book_id = $data['book_id'];
+	$note = $data['note'];
+
+	
 }
 
 //posting discussions*****

@@ -7,22 +7,24 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit();
 }
 
+//data functions and header file
 require_once 'includes/data.php';
 require_once 'includes/header.php';
 
-$view_id      = isset($_GET['id']) ? (int)$_GET['id'] : null;
-$search       = trim($_GET['search'] ?? '');
+$view_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+$search = trim($_GET['search'] ?? '');
 $genre_filter = $_GET['genre'] ?? '';
-$review_msg   = '';
+$review_msg = '';
 
+//sending info to nat lol
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
 
     if (isset($_POST['submit_review'])) {
         $result = rmq_rpc('review.create', [
-            'book_id'     => $view_id,
-            'rating'      => (int)($_POST['rating'] ?? 0),
-            'review_text' => trim($_POST['rev_body'] ?? ''),
-            'username'    => $_SESSION['username'] ?? '',
+            'book_id'=> $view_id,
+            'rating'=> (int)($_POST['rating'] ?? 0),
+            'review_text'=> trim($_POST['rev_body'] ?? ''),
+            'username'=> $_SESSION['username'] ?? '',
         ]);
         $review_msg = ($result['success'] ?? false)
             ? 'Your review has been recorded. Thank you.'
@@ -31,40 +33,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
 }
 
 
+//also sending info to nat but getting info back as well
 if ($view_id) {
 
     $book_res = rmq_rpc('book.get', [
-        'book_id'  => $view_id,
+        'book_id'=> $view_id,
         'username' => $_SESSION['username'] ?? '',
     ]);
     $book = $book_res['book'] ?? null;
 
     if ($book) {
 
-        $book['id']    = $book['book_id']        ?? $view_id;
-        $book['cover'] = $book['cover_url']      ?? '';
-        $book['year']  = $book['published_year'] ?? '';
+        $book['id'] = $book['book_id'] ?? $view_id;
+        $book['cover'] = $book['cover_url'] ?? '';
+        $book['year'] = $book['published_year'] ?? '';
 
         $book_reviews = [];
         $my_rating    = 0;  
     }
 
+    //book list function, nat has her own on her side
 } else {
 
     $books_res = rmq_rpc('book.list', [
-        'search'   => $search,
+        'search' => $search,
         'username' => $_SESSION['username'] ?? '',
     ]);
+
     $filtered = $books_res['books'] ?? [];
 
     $filtered = array_map(function($b) {
         return [
-            'id'     => $b['book_id'] ?? $b['id'] ?? null,
-            'title'  => $b['title']   ?? '',
-            'author' => $b['author']  ?? '',
-            'cover'  => $b['cover_url'] ?? $b['cover'] ?? '',
-            'genre'  => $b['genre']   ?? [],
-            'rating' => $b['rating']  ?? 0,
+            'id' => $b['book_id'] ?? $b['id'] ?? null,
+            'title' => $b['title'] ?? '',
+            'author'=> $b['author'] ?? '',
+            'cover' => $b['cover_url'] ?? $b['cover'] ?? '',
+            'genre' => $b['genre'] ?? [],
+            'rating' => $b['rating'] ?? 0,
         ];
     }, $filtered);
 
@@ -77,28 +82,25 @@ if ($view_id) {
 }
 ?>
 
-<style>
-.book-card { cursor:pointer; text-decoration:none; display:block; }
-.book-card:hover .n-card { border-color:rgba(134,113,91,0.6); transform:translateY(-3px); }
-.book-card .n-card { transition: transform 0.2s, border-color 0.2s; }
-.book-cover-lg { width:100%; max-width:200px; border:1px solid rgba(134,113,91,0.35); box-shadow:8px 8px 24px rgba(0,0,0,0.5); }
-.review-card { border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:1rem; margin-bottom:1rem; }
-.rating-input label { font-size:1.6rem; cursor:pointer; color:var(--umber); transition:color 0.1s; }
-.rating-input input:checked ~ label,
-.rating-input label:hover,
-.rating-input label:hover ~ label { color:#c9a87c; }
-.rating-input { display:flex; flex-direction:row-reverse; gap:4px; }
-.rating-input input { display:none; }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
 
 <?php if ($view_id): ?>
 
     <?php if (!$book): ?>
-        <p style="color:var(--text-muted); font-style:italic;">Book not found.</p>
+        <p class="not-found-msg">Book not found.</p>
     <?php else: ?>
 
-    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">
-        <a href="books.php" style="color:var(--umber); text-decoration:none;">Library</a>
+      <!--from https://www.w3schools.com/php/func_string_htmlspecialchars.asp -->
+    <div class="breadcrumb-text">
+        <a href="books.php" class="breadcrumb-link">Library</a>
         &nbsp;›&nbsp; <?php echo htmlspecialchars($book['title']); ?>
     </div>
 
@@ -109,28 +111,29 @@ if ($view_id) {
                  alt="<?php echo htmlspecialchars($book['title']); ?>"
                  onerror="this.src=''">
 
-            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:0.5rem;">Your Rating</div>
+            <div style="rating-label">Your Rating</div>
             <div class="rating-input justify-content-center">
                 <?php for ($i = 5; $i >= 1; $i--): ?>
-                <input type="radio" name="my_rating_display" id="star<?php echo $i; ?>"
+                <input type="radio" name="my_rating_display" 
+                       id="star<?php echo $i; ?>"
                        value="<?php echo $i; ?>"
                        <?php echo $my_rating == $i ? 'checked' : ''; ?>>
                 <label for="star<?php echo $i; ?>" title="<?php echo $i; ?>">★</label>
                 <?php endfor; ?>
             </div>
-            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;">
+            <div class="rating-status">
                 <?php echo $my_rating ? "You rated: $my_rating / 5" : 'Not yet rated'; ?>
             </div>
         </div>
 
         <div class="col-md-9">
-            <div style="font-size:0.75rem; color:var(--text-muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:0.4rem;">
+            <div class="genre-line">
                 <?php echo implode(' · ', (array)($book['genre'] ?? [])); ?>
             </div>
-            <h1 class="page-heading" style="font-size:2.6rem; border:none; margin-bottom:0.2rem;">
+            <h1 class="page-heading book-title-large">
                 <?php echo htmlspecialchars($book['title']); ?>
             </h1>
-            <div style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;">
+            <div class="book-author-line">
                 by <?php echo htmlspecialchars($book['author']); ?>
                 <?php if (!empty($book['year'])): ?>, <?php echo $book['year']; ?><?php endif; ?>
             </div>
@@ -146,16 +149,16 @@ if ($view_id) {
                 <span class="n-badge"><?php echo $book['pages']; ?> pages</span>
                 <?php endif; ?>
             </div>
-            <p style="font-size:1.05rem; line-height:1.75; margin-bottom:1.5rem;">
+            <p style="book-description">
                 <?php echo htmlspecialchars($book['description'] ?? ''); ?>
             </p>
             <?php if (!empty($book['isbn'])): ?>
-            <div style="font-size:0.82rem; color:var(--text-muted);">ISBN: <?php echo $book['isbn']; ?></div>
+            <div class="n-badge">ISBN: <?php echo $book['isbn']; ?></div>
             <?php endif; ?>
 
             <div class="ornament mt-4">· · ·</div>
 
-            <h4 style="font-family:'IM Fell English',serif; margin-bottom:1.2rem;">Reader Reviews</h4>
+            <h4 style="review-heading">Reader Reviews</h4>
 
             <?php if ($review_msg): ?>
             <div class="n-alert mb-3"><?php echo htmlspecialchars($review_msg); ?></div>
@@ -168,22 +171,22 @@ if ($view_id) {
                         <div class="avatar-ring"><?php echo strtoupper(substr($rv['user'], 0, 1)); ?></div>
                         <strong><?php echo htmlspecialchars($rv['user']); ?></strong>
                         <?php echo renderStars($rv['rating']); ?>
-                        <span style="font-size:0.8rem; color:var(--text-muted);"><?php echo $rv['created']; ?></span>
+                        <span class="review-date"><?php echo $rv['created']; ?></span>
                     </div>
-                    <div style="font-style:italic; color:var(--blush); font-size:1rem; margin-bottom:0.3rem;">
+                    <div class="review-title">
                         "<?php echo htmlspecialchars($rv['title'] ?? ''); ?>"
                     </div>
-                    <p style="font-size:0.98rem; margin:0; color:var(--text-muted);">
+                    <p class="review-body">
                         <?php echo htmlspecialchars($rv['body'] ?? $rv['review_text'] ?? ''); ?>
                     </p>
                 </div>
                 <?php endforeach; ?>
             <?php else: ?>
-                <p style="color:var(--text-muted); font-style:italic;">No reviews yet. Be the first.</p>
+                <p style="no-reviews-msg">No reviews yet. Be the first.</p>
             <?php endif; ?>
 
             <div class="n-card p-4 mt-4">
-                <h5 style="font-family:'IM Fell English',serif; margin-bottom:1rem;">Write a Review</h5>
+                <h5 class="write-review-heading">Write a Review</h5>
                 <form method="post">
                     <input type="hidden" name="submit_review" value="1">
                     <div class="mb-3">
@@ -211,7 +214,7 @@ if ($view_id) {
 
 <div class="d-flex justify-content-between align-items-end mb-4">
     <h2 class="page-heading mb-0">The Library</h2>
-    <span style="font-size:0.85rem; color:var(--text-muted);"><?php echo count($filtered); ?> volumes</span>
+    <span class="library-count"><?php echo count($filtered); ?> volumes</span>
 </div>
 
 <form method="get" class="row g-2 mb-4">
@@ -242,18 +245,17 @@ if ($view_id) {
         <a href="books.php?id=<?php echo $b['id']; ?>" class="book-card">
             <div class="n-card p-3 h-100">
                 <img src="<?php echo htmlspecialchars($b['cover']); ?>"
-                     style="width:100%; height:200px; object-fit:cover; border-radius:1px; margin-bottom:0.75rem;"
+                     class="book-cover-card"
                      alt="<?php echo htmlspecialchars($b['title']); ?>"
                      onerror="this.style.display='none'">
-                <div style="font-family:'Cormorant Garamond',serif; font-size:1.05rem; color:var(--blush); margin-bottom:0.2rem; line-height:1.3;">
-                    <?php echo htmlspecialchars($b['title']); ?>
+                <div class= "book-card-title">
                 </div>
-                <div style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.4rem; font-style:italic;">
+                <div class="book-card-author">
                     <?php echo htmlspecialchars($b['author']); ?>
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                     <?php echo renderStars($b['rating']); ?>
-                    <span style="font-size:0.78rem; color:var(--text-muted);"><?php echo $b['rating']; ?></span>
+                    <span class="book-rating-small"><?php echo $b['rating']; ?></span>
                 </div>
                 <div class="mt-2 d-flex flex-wrap gap-1">
                     <?php foreach ((array)$b['genre'] as $g): ?>
@@ -265,11 +267,12 @@ if ($view_id) {
     </div>
     <?php endforeach; ?>
     <?php if (empty($filtered)): ?>
-    <div class="col-12 text-center" style="color:var(--text-muted); padding:3rem; font-style:italic;">
+    <div class="col-12 text-center no-books-msg">
         No books found matching your search.
     </div>
     <?php endif; ?>
 </div>
+</html>
 
 <?php endif; ?>
 

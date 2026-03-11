@@ -1,140 +1,861 @@
- /* Bordered form */
-form {
-  border: 3px solid #f1f1f1;
+/*This contains the styles for the entire Noetic app, separated by which php file it came from*/
+
+/*groups.php styles*/
+.member-pill {
+    display:inline-flex; align-items:center; 
+    gap:0.4rem;
+    background:rgba(134,113,91,0.15); 
+    border:1px solid rgba(134,113,91,0.3);
+    border-radius:20px; 
+    padding:0.2rem 0.7rem;
+    font-size:0.82rem; 
+    color:var(--blush);
+}
+.tab-nav { 
+    display:flex; 
+    gap:0; 
+    border-bottom:1px solid rgba(134,113,91,0.3); 
+    margin-bottom:1.5rem; 
+}
+.tab-link {
+    padding:0.5rem 1.2rem; 
+    font-size:0.8rem; 
+    letter-spacing:0.1em;
+    text-transform:uppercase; 
+    color:var(--text-muted); 
+    text-decoration:none;
+    border-bottom:2px solid transparent; 
+    margin-bottom:-1px;
+    transition:color 0.2s, border-color 0.2s;
+}
+.tab-link.active, .tab-link:hover { 
+    color:var(--blush); 
+    border-bottom-color:var(--umber); 
 }
 
-/* Full-width inputs */
-input[type=text], input[type=password] {
-  width: 100%;
-  padding: 12px 20px;
-  margin: 8px 0;
-  display: inline-block;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
+/*books.php styles*/
+
+.breadcrumb-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
 }
 
-/* Set a style for all buttons */
-button {
-  background-color: #04AA6D;
-  color: white;
-  padding: 14px 20px;
-  margin: 8px 0;
-  border: none;
-  cursor: pointer;
-  width: 100%;
+.breadcrumb-link {
+    color: var(--umber);
+    text-decoration: none;
 }
 
-/* Add a hover effect for buttons */
-button:hover {
-  opacity: 0.8;
+.genre-line {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
 }
 
-/* Extra style for the cancel button (red) */
-.cancelbtn {
-  width: auto;
-  padding: 10px 18px;
-  background-color: #f44336;
+.book-title-large {
+    font-size: 2.6rem;
+    border: none;
+    margin-bottom: 0.2rem;
 }
 
-/* Center the avatar image inside this container */
-.imgcontainer {
-  text-align: center;
-  margin: 24px 0 12px 0;
+.book-author-line {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 1rem;
 }
 
-/* Avatar image */
-img.avatar {
-  width: 40%;
-  border-radius: 50%;
+.rating-meta {
+    font-size: 0.9rem;
+    color: var(--text-muted);
 }
 
-/* Add padding to containers */
-.container {
-  padding: 16px;
+.book-description {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    margin-bottom: 1.5rem;
 }
 
-/* The "Forgot password" text */
-span.psw {
-  float: right;
-  padding-top: 16px;
+.isbn-text {
+    font-size: 0.82rem;
+    color: var(--text-muted);
 }
 
-/* Change styles for span and cancel button on extra small screens */
-@media screen and (max-width: 300px) {
-  span.psw {
+.review-card {
+    border-bottom: 1px solid rgba(134,113,91,0.2);
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+.review-date {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.review-title {
+    font-style: italic;
+    color: var(--blush);
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+}
+
+.review-body {
+    font-size: 0.98rem;
+    margin: 0;
+    color: var(--text-muted);
+}
+
+.rating-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.rating-status {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+}
+
+.library-count {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.book-card-author {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+    font-style: italic;
+}
+
+.book-rating-small {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.genre-badge-small {
+    font-size: 0.65rem;
+}
+
+.no-books-msg {
+    color: var(--text-muted);
+    padding: 3rem;
+    font-style: italic;
+}
+
+.book-cover-lg {
+    width: 100%;
+    max-width: 200px;
+    border: 1px solid rgba(134,113,91,0.35);
+    box-shadow: 8px 8px 24px rgba(0,0,0,0.5);
+}
+
+.book-cover-card {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 1px;
+    margin-bottom: 0.75rem;
+}
+
+.book-card {
+    cursor: pointer;
+    text-decoration: none;
     display: block;
-    float: none;
-  }
-  .cancelbtn {
+}
+
+.book-card:hover .n-card {
+    border-color: rgba(134,113,91,0.6);
+    transform: translateY(-3px);
+}
+
+.book-card .n-card {
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    gap: 4px;
+}
+
+.rating-input input {
+    display: none;
+}
+
+.rating-input label {
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: var(--umber);
+    transition: color 0.1s;
+}
+
+.rating-input input:checked ~ label,
+.rating-input label:hover,
+.rating-input label:hover ~ label {
+    color: #c9a87c;
+}
+
+/* Library header */
+
+.library-count {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+
+/* Book Cards */
+
+.book-card {
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+}
+
+.book-card:hover .n-card {
+    border-color: rgba(134,113,91,0.6);
+    transform: translateY(-3px);
+}
+
+.book-card .n-card {
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+
+/* Book cover image */
+
+.book-cover-card {
     width: 100%;
-  }
-} 
-
-* {box-sizing: border-box}
-
-/* Full-width input fields */
-  input[type=text], input[type=password] {
-  width: 100%;
-  padding: 15px;
-  margin: 5px 0 22px 0;
-  display: inline-block;
-  border: none;
-  background: #f1f1f1;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 1px;
+    margin-bottom: 0.75rem;
 }
 
-input[type=text]:focus, input[type=password]:focus {
-  background-color: #ddd;
-  outline: none;
+
+/* Book title */
+
+.book-card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    color: var(--blush);
+    margin-bottom: 0.2rem;
+    line-height: 1.3;
+}
+.book-rating-small {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.genre-badge-small {
+    font-size: 0.65rem;
+}
+.no-books-msg {
+    color: var(--text-muted);
+    padding: 3rem;
+    font-style: italic;
 }
 
-hr {
-  border: 1px solid #f1f1f1;
-  margin-bottom: 25px;
+/*profile.php styles*/
+.profile-banner {
+    height:120px;
+    background:linear-gradient(135deg, var(--moss) 0%, var(--card) 40%, #2a1f35 100%);
+    border-radius:4px 4px 0 0;
+    border:1px solid rgba(134,113,91,0.2);
+    border-bottom:none;
 }
 
-/* Set a style for all buttons */
-button {
-  background-color: #04AA6D;
-  color: white;
-  padding: 14px 20px;
-  margin: 8px 0;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  opacity: 0.9;
+.profile-avatar {
+    width:80px;   height:80px; border-radius:50%;
+    background:var(--moss); border:3px solid var(--card);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IM Fell English',serif; font-size:2rem; color:var(--blush);
+    position:absolute; bottom:-40px; left:1.5rem; overflow:hidden;
 }
 
-button:hover {
-  opacity:1;
+.profile-avatar img { 
+    width:100%; 
+    height:100%; 
+    object-fit:cover; 
 }
 
-/* Extra styles for the cancel button */
-.cancelbtn {
-  padding: 14px 20px;
-  background-color: #f44336;
+.rated-book { 
+    display:flex; 
+    align-items:center; 
+    gap:0.8rem; 
+    padding:0.6rem 0; 
+    border-bottom:1px solid rgba(134,113,91,0.12); 
 }
 
-/* Float cancel and signup buttons and add an equal width */
-.cancelbtn, .signupbtn {
-  float: left;
-  width: 50%;
+.tab-link-profile {
+    padding:0.5rem 1.2rem; font-size:0.8rem; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--text-muted); text-decoration:none;
+    border-bottom:2px solid transparent; margin-bottom:-1px;
+    transition:color 0.2s, border-color 0.2s;
+}
+.profile-banner-border{
+  border-top:none; 
+  border-radius:0 0 4px 4px;
+}
+.profile-header{
+  position:relative; 
+  margin-bottom:3rem;
+}
+.profile-header-content{
+  margin-left:calc(80px + 1.5rem + 0.8rem); 
+  padding-top:0.5rem;
 }
 
-/* Add padding to container elements */
-.container {
-  padding: 16px;
+.profile-header {
+    position: relative;
+    margin-bottom: 3rem;
 }
 
-/* Clear floats */
-.clearfix::after {
-  content: "";
-  clear: both;
-  display: table;
+
+.profile-card {
+    padding: 1.5rem;
+    padding-top: 0;
 }
 
-/* Change styles for cancel button and signup button on extra small screens */
-@media screen and (max-width: 300px) {
-  .cancelbtn, .signupbtn {
+.profile-avatar img {
     width: 100%;
-  }
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-name {
+    font-family: 'IM Fell English', serif;
+    margin: 0;
+}
+
+.profile-meta {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.profile-bio {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 0.4rem;
+}
+
+.logout-btn {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1px solid rgba(134,113,91,0.3);
+    border-radius: 2px;
+    padding: 0.3rem 0.8rem;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.logout-btn:hover {
+    color: var(--blush);
+    border-color: var(--umber);
+}
+
+.tab-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.tab-link-profile {
+    text-decoration: none;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding-bottom: 4px;
+    border-bottom: 1px solid transparent;
+    transition: 0.2s;
+}
+
+.tab-link-profile:hover {
+    color: var(--blush);
+}
+
+.tab-link-profile.active {
+    color: var(--blush);
+    border-bottom: 1px solid var(--umber);
+}
+
+.empty-msg {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.link {
+    color: var(--umber);
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.rated-book-cover img {
+    width: 36px;
+    height: 54px;
+    object-fit: cover;
+    border: 1px solid rgba(134,113,91,0.3);
+    border-radius: 1px;
+}
+
+.rated-book-info {
+    flex-grow: 1;
+}
+
+.rated-book-title {
+    text-decoration: none;
+    color: var(--blush);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+}
+
+.rated-book-author {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.review-entry {
+    border-bottom: 1px solid rgba(134,113,91,0.2);
+    padding-bottom: 1.2rem;
+    margin-bottom: 1.2rem;
+}
+
+.review-content {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+}
+
+.review-cover {
+    width: 50px;
+    height: 75px;
+    object-fit: cover;
+    border: 1px solid rgba(134,113,91,0.3);
+    border-radius: 1px;
+}
+
+.review-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.review-book-link {
+    color: var(--umber);
+    text-decoration: none;
+    font-style: italic;
+}
+
+/*index.php styles 
+sorry it's ugly i just copy pasted from the original file*/
+
+:root {
+            --deep: #202030;
+            --card: #39304A;
+            --blush: #DCBCCE;
+            --moss: #242E0F;
+            --umber: #86715B;
+            --dim: #2d2840;
+            --text-muted: #a89aac;
+        }
+
+        body {
+            background-color: var(--deep);
+            color: var(--blush);
+            font-family: 'Crimson Text', Georgia, serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(57,48,74,0.4) 0%, transparent 60%);
+        }
+
+        .login-card {
+            background-color: var(--card);
+            border: 1px solid rgba(134,113,91,0.25);
+            border-radius: 4px;
+        }
+
+        .brand {
+            font-family: 'IM Fell English', serif;
+            font-size: 2.4rem;
+            color: var(--blush);
+            text-align: center;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.2rem;
+        }
+        .brand span { color: var(--umber); }
+
+        .brand-sub {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 2rem;
+            letter-spacing: 0.08em;
+        }
+
+        .form-label {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .form-control {
+            background-color: var(--deep);
+            border: 1px solid rgba(134,113,91,0.35);
+            color: var(--blush);
+            border-radius: 2px;
+            font-family: 'Crimson Text', serif;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            background-color: var(--dim);
+            color: var(--blush);
+            border-color: var(--umber);
+            box-shadow: 0 0 0 2px rgba(134,113,91,0.2);
+        }
+
+        .form-control::placeholder { color: var(--text-muted); }
+
+        .btn-theme {
+            background-color: var(--moss);
+            border: 1px solid rgba(134,113,91,0.3);
+            color: var(--blush);
+            font-family: 'Crimson Text', serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border-radius: 2px;
+            padding: 0.55rem 1.4rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-theme:hover {
+            background-color: var(--umber);
+            color: var(--deep);
+        }
+
+        .btn-outline-theme {
+            background: transparent;
+            border: 1px solid var(--umber);
+            color: var(--blush);
+            font-family: 'Crimson Text', serif;
+            font-size: 0.9rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border-radius: 2px;
+            padding: 0.55rem 1.4rem;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-outline-theme:hover {
+            background-color: var(--umber);
+            color: var(--deep);
+        }
+
+        .error-message {
+            background-color: rgba(134,113,91,0.2);
+            border: 1px solid var(--umber);
+            color: var(--blush);
+            border-radius: 2px;
+            padding: 0.7rem 1rem;
+            text-align: center;
+            margin-bottom: 1.2rem;
+            font-size: 0.95rem;
+        }
+
+        .ornament {
+            text-align: center;
+            color: var(--umber);
+            letter-spacing: 0.5rem;
+            margin: 1.2rem 0;
+            font-size: 0.75rem;
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 1.2rem;
+            font-family: 'Crimson Text', serif;
+        }
+        .footer-link a {
+            color: var(--umber);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .footer-link a:hover { 
+          color: var(--blush); 
+        }
+/*footer styles*/
+
+.footer-boarder{
+  border-top:1px solid rgba(134,113,91,0.2); 
+  padding:1.5rem 0; 
+  margin-top:3rem;
+}
+
+.footer-text{
+  color:var(--text-muted); 
+  font-size:0.82rem; 
+  letter-spacing:0.08em;
+}
+
+.footer-fonts{
+  font-family:'IM Fell English',serif; 
+  font-size:1rem; 
+  color:var(--umber);
+}
+
+/*header styles
+again, sorry it's ugly i had this from the file itself too and it was indented WAY different*/
+
+        .noetic-nav {
+            background: rgba(32,32,48,0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(134,113,91,0.25);
+            padding: 0.6rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-brand {
+            font-family: 'IM Fell English', serif;
+            font-size: 1.6rem;
+            color: var(--blush) !important;
+            letter-spacing: 0.04em;
+            text-decoration: none;
+        }
+        .nav-brand span { color: var(--umber); }
+
+        .noetic-nav .nav-link {
+            color: var(--text-muted) !important;
+            font-family: 'Crimson Text', serif;
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            padding: 0.4rem 1rem !important;
+            transition: color 0.2s;
+            text-transform: uppercase;
+            font-size: 0.82rem;
+        }
+        .noetic-nav .nav-link:hover,
+        .noetic-nav .nav-link.active {
+            color: var(--blush) !important;
+        }
+        .noetic-nav .nav-link.active {
+            border-bottom: 1px solid var(--umber);
+        }
+
+        .n-card {
+            background: var(--card);
+            border: 1px solid rgba(134,113,91,0.2);
+            border-radius: 4px;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .n-card:hover { border-color: rgba(134,113,91,0.5); }
+
+        .btn-n {
+            background: var(--moss);
+            color: var(--blush);
+            border: 1px solid rgba(134,113,91,0.3);
+            font-family: 'Crimson Text', serif;
+            font-size: 0.95rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border-radius: 2px;
+            padding: 0.45rem 1.4rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-n:hover { background: var(--umber); color: var(--deep); }
+        .btn-n-outline {
+            background: transparent;
+            color: var(--blush);
+            border: 1px solid var(--umber);
+            font-family: 'Crimson Text', serif;
+            font-size: 0.95rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border-radius: 2px;
+            padding: 0.45rem 1.4rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .btn-n-outline:hover { background: var(--umber); color: var(--deep); }
+
+        .form-control, .form-select {
+            background: var(--deep);
+            border: 1px solid rgba(134,113,91,0.35);
+            color: var(--blush);
+            border-radius: 2px;
+            font-family: 'Crimson Text', serif;
+        }
+        .form-control:focus, .form-select:focus {
+            background: var(--dim);
+            color: var(--blush);
+            border-color: var(--umber);
+            box-shadow: 0 0 0 2px rgba(134,113,91,0.2);
+        }
+        .form-control::placeholder { 
+          color: var(--text-muted); 
+        }
+        .form-label { 
+          color: var(--text-muted); 
+          font-size: 0.82rem; 
+          letter-spacing: 0.1em; 
+          text-transform: uppercase; 
+        }
+
+        .stars { 
+          color: var(--umber); 
+          letter-spacing: 2px; }
+        .stars .filled { 
+          color: #c9a87c; 
+        }
+
+
+        .page-heading {
+            font-family: 'IM Fell English', serif;
+            font-size: 2.2rem;
+            color: var(--blush);
+            border-bottom: 1px solid rgba(134,113,91,0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .n-badge {
+            background: rgba(134,113,91,0.25);
+            color: var(--blush);
+            border: 1px solid rgba(134,113,91,0.4);
+            border-radius: 2px;
+            padding: 0.15rem 0.6rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .ornament {
+            text-align: center;
+            color: var(--umber);
+            letter-spacing: 0.5rem;
+            margin: 1rem 0;
+            font-size: 0.8rem;
+        }
+
+        .n-alert {
+            background: rgba(134,113,91,0.2);
+            border: 1px solid var(--umber);
+            color: var(--blush);
+            border-radius: 2px;
+            padding: 0.75rem 1rem;
+        }
+
+        .main-wrap { 
+          padding: 2.5rem 0 4rem; 
+        }
+
+        .avatar-ring {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--umber);
+            background: var(--moss);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.9rem;
+            color: var(--blush);
+            flex-shrink: 0;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--deep); }
+        ::-webkit-scrollbar-thumb { background: var(--umber); border-radius: 3px; } 
+
+/*recommendations.php stylesheet*/
+.rec-card {
+    display:flex; gap:1rem; padding:1rem 0;
+    border-bottom:1px solid rgba(134,113,91,0.15);
+}
+.rec-rank {
+    font-family:'IM Fell English',serif;
+    font-size:1.8rem; color:rgba(134,113,91,0.35);
+    min-width:28px; text-align:center; line-height:1.2;
+}
+.rec-cover {
+    width:56px; height:84px; object-fit:cover;
+    border:1px solid rgba(134,113,91,0.3); border-radius:1px; flex-shrink:0;
+}
+.genre-pill {
+    display:inline-block;
+    background:rgba(36,46,15,0.5); border:1px solid rgba(134,113,91,0.3);
+    border-radius:2px; padding:0.1rem 0.5rem; font-size:0.72rem;
+    color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase;
+}
+.affinity-bar  { height:4px; border-radius:2px; background:rgba(134,113,91,0.2); margin-top:0.3rem; overflow:hidden; }
+.affinity-fill { height:100%; background:linear-gradient(90deg, var(--umber), #c9a87c); border-radius:2px; }
+
+/*schedule.php's styles*/
+.event-month-header {
+    font-family:'IM Fell English',serif; font-size:1rem; color:var(--text-muted);
+    letter-spacing:0.15em; text-transform:uppercase;
+    margin:1.5rem 0 0.8rem; border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:0.4rem;
+}
+.event-row { display:flex; gap:1.2rem; align-items:flex-start; padding:1rem 0; border-bottom:1px solid rgba(134,113,91,0.12); }
+.event-date-box { min-width:54px; text-align:center; background:rgba(36,46,15,0.4); border:1px solid rgba(134,113,91,0.25); border-radius:2px; padding:0.4rem 0.2rem; }
+.event-day      { font-family:'IM Fell English',serif; font-size:1.8rem; line-height:1; color:var(--blush); }
+.event-month-sm { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); }
+
+/*dashboard.php styles*/
+.hero-quote {
+    border-left: 2px solid var(--umber);
+    padding-left: 1.5rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-style: italic;
+    color: var(--blush);
+    opacity: 0.8;
+    margin-bottom: 2rem;
+}
+.stat-num {
+    font-family: 'IM Fell English', serif;
+    font-size: 2.4rem;
+    color: var(--blush);
+    line-height: 1;
+}
+.stat-label { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+.book-strip {
+    display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;
+    scrollbar-width: thin;
+}
+.book-strip-item {
+    flex-shrink: 0; width: 90px; cursor: pointer;
+    transition: transform 0.2s;
+}
+.book-strip-item:hover { transform: translateY(-4px); }
+.book-strip-item img {
+    width: 90px; height: 134px; object-fit: cover;
+    border: 1px solid rgba(134,113,91,0.3);
+    border-radius: 2px;
+}
+.book-strip-item .title {
+    font-size: 0.72rem; color: var(--text-muted);
+    margin-top: 0.35rem; line-height: 1.3;
+}
+.activity-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--umber); flex-shrink: 0; margin-top: 6px;
 }

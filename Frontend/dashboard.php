@@ -47,47 +47,14 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
 
 ?>
 
-<style>
-.hero-quote {
-    border-left: 2px solid var(--umber);
-    padding-left: 1.5rem;
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.35rem;
-    font-style: italic;
-    color: var(--blush);
-    opacity: 0.8;
-    margin-bottom: 2rem;
-}
-.stat-num {
-    font-family: 'IM Fell English', serif;
-    font-size: 2.4rem;
-    color: var(--blush);
-    line-height: 1;
-}
-.stat-label { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
-.book-strip {
-    display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem;
-    scrollbar-width: thin;
-}
-.book-strip-item {
-    flex-shrink: 0; width: 90px; cursor: pointer;
-    transition: transform 0.2s;
-}
-.book-strip-item:hover { transform: translateY(-4px); }
-.book-strip-item img {
-    width: 90px; height: 134px; object-fit: cover;
-    border: 1px solid rgba(134,113,91,0.3);
-    border-radius: 2px;
-}
-.book-strip-item .title {
-    font-size: 0.72rem; color: var(--text-muted);
-    margin-top: 0.35rem; line-height: 1.3;
-}
-.activity-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--umber); flex-shrink: 0; margin-top: 6px;
-}
-</style>
+<!DOCTYPE html>
+<html lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Noetic — Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
 
 <div class="row g-4 mb-5">
     <div class="col-12">
@@ -265,5 +232,6 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
 
     </div>
 </div>
+</html>
 
 <?php require_once 'includes/footer.php'; ?>
