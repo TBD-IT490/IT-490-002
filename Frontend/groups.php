@@ -57,29 +57,6 @@ if ($view_id) {
         'username' => $_SESSION['username'],
     ]);
     $group = $group_res['group'] ?? null;
-    if ($group) {
-        $current_book = getBookById((int)($group['current_book_id']));
-        $disc_res = rmq_rpc('discussion.list', [
-            'group_id' => $view_id,
-            'username' => $_SESSION['username'],
-        ]);
-        $group_discussions = $disc_res['discussions'];
-        $sched_res      = rmq_rpc('schedule.list', [
-            'group_id' => $view_id,
-            'username' => $_SESSION['username'],
-        ]);
-        $group_schedule = $sched_res['events'];
-        $gbooks_res  = rmq_rpc('group.books', [
-            'group_id' => $view_id,
-            'username' => $_SESSION['username'],
-        ]);
-        $group_books = $gbooks_res['books'];
-        $gathering_count  = count($group_schedule);
-        $discussion_count = count($group_discussions);
-    }
-
-    $tab = $_GET['tab'] ?? 'discuss';
-
 } else {
     $all_groups_res = rmq_rpc('group.list', [
         'username' => $_SESSION['username'],
@@ -145,12 +122,6 @@ if ($view_id) {
                       data-bs-toggle="modal" data-bs-target="#inviteModal">
                     <i class="bi bi-plus"></i> Invite
                 </span>
-            </div>
-
-            <div class="tab-nav">
-                <a href="?id=<?php echo $view_id; ?>&tab=discuss"  class="tab-link <?php echo $tab === 'discuss'  ? 'active' : ''; ?>">Discussion Board</a>
-                <a href="?id=<?php echo $view_id; ?>&tab=schedule" class="tab-link <?php echo $tab === 'schedule' ? 'active' : ''; ?>">Gatherings</a>
-                <a href="?id=<?php echo $view_id; ?>&tab=members"  class="tab-link <?php echo $tab === 'members'  ? 'active' : ''; ?>">Members</a>
             </div>
         </div>
     </div>

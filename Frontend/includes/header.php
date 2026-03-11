@@ -31,6 +31,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             <a href="groups.php" class="nav-link <?php echo $current_page==='groups'?'active':''; ?>">Circles</a>
             <a href="schedule.php" class="nav-link <?php echo $current_page==='schedule'?'active':''; ?>">Gatherings</a>
             <a href="recommendations.php" class="nav-link <?php echo $current_page==='recommendations'?'active':''; ?>">Discoveries</a>
+            <a href="discussions.php" class="nav-link <?php echo $current_page==='discussions'?'active':''; ?>">Discussions</a>
         </div>
         <div class="d-flex align-items-center gap-3">
             <a href="profile.php" class="nav-link <?php echo $current_page==='profile'?'active':''; ?> d-flex align-items-center gap-2">

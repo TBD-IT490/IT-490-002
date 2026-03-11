@@ -65,33 +65,26 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
 
 <!-- Stats row -->
 <div class="row g-3 mb-4">
-    <?php
-   
-    $my_rated = count($user_ratings);
-    ?>
+
     <div class="col-6 col-md-3">
         <div class="n-card p-3 text-center">
-            <div class="stat-num"><?php echo $my_rated; ?></div>
+            <div class="stat-num">Countless</div>
             <div class="stat-label">Books Rated</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="n-card p-3 text-center">
-            <div class="stat-num"><?php echo count($my_groups); ?></div>
+            <div class="stat-num">Over 30</div>
             <div class="stat-label">Circles Joined</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
         <div class="n-card p-3 text-center">
-            <div class="stat-num"><?php echo count($user_reviews); ?></div>
+            <div class="stat-num">Over 100,000</div>
             <div class="stat-label">Reviews Written</div>
         </div>
     </div>
     <div class="col-6 col-md-3">
-        <div class="n-card p-3 text-center">
-            <div class="stat-num"><?php echo count($schedule); ?></div>
-            <div class="stat-label">Gatherings Planned</div>
-        </div>
     </div>
 </div>
 
@@ -108,7 +101,7 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
                 <?php foreach (array_slice($books, 0, 8) as $b): ?>
                 <a href="books.php?id=<?php echo $b['id']; ?>" class="book-strip-item text-decoration-none">
                     <img src="<?php echo $b['cover']; ?>" alt="<?php echo htmlspecialchars($b['title']); ?>"
-                         onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'">
+                         onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'"> <!--getting cover art-->
                     <div class="title"><?php echo htmlspecialchars($b['title']); ?></div>
                 </a>
                 <?php endforeach; ?>

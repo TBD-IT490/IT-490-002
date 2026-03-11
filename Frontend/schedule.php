@@ -17,26 +17,26 @@ $msg          = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
 
     $result = rmq_rpc('schedule.create', [
-        'group_id' => (int)($_POST['group_id'] ?? 0),
-        'book_id' => (int)($_POST['book_id'] ?? 0),
+         'group_id' => (int)($_POST['group_id'] ?? 0),
+         'book_id' => (int)($_POST['book_id'] ?? 0),
         'title' => trim($_POST['event_title'] ?? ''),
-        'date' => $_POST['event_date'] ?? '',
-        'time' => $_POST['event_time'] ?? '',
-        'format' => trim($_POST['event_format'] ?? ''),
-        'notes' => trim($_POST['event_notes']  ?? ''),
-    ]);
-    if ($result['success'] ?? false) {
-        $date_fmt = date('F j, Y', strtotime($_POST['event_date'] ?? ''));
-        $msg      = "success:Gathering scheduled for <em>$date_fmt</em>.";
-    } else {
-        $msg = 'error:Could not save gathering. Please try again.';
-    }
-}
+         'date' => $_POST['event_date'] ?? '',
+         'time' => $_POST['event_time'] ?? '',
+         'format' => trim($_POST['event_format'] ?? ''),
+         'notes' => trim($_POST['event_notes']  ?? ''),
+     ]);
+     if ($result['success'] ?? false) {
+         $date_fmt = date('F j, Y', strtotime($_POST['event_date'] ?? ''));
+         $msg      = "success:Gathering scheduled for <em>$date_fmt</em>.";
+     } else {
+         $msg = 'error:Could not save gathering. Please try again.';
+     }
+ }
 
-list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
+ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
-$bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
-$books_for_select = $bselect_res['books'] ?? [];
+ $bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
+ $books_for_select = $bselect_res['books'] ?? [];
 ?>
 
 <!DOCTYPE html>
@@ -47,7 +47,7 @@ $books_for_select = $bselect_res['books'] ?? [];
     <title>Noetic — Schedule</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    
 </head>
 <div class="d-flex justify-content-between align-items-end mb-4">
     <h2 class="page-heading mb-0">Gatherings</h2>
@@ -76,8 +76,8 @@ $books_for_select = $bselect_res['books'] ?? [];
 $months_seen = [];
 foreach ($filtered_schedule as $ev):
     $month_key = date('F Y', strtotime($ev['date']));
-    $evb       = getBookById((int)$ev['book_id']);
-    $evg       = getGroupById((int)$ev['group_id']);
+    $evb = getBookById((int)$ev['book_id']);
+    $evg  = getGroupById((int)$ev['group_id']);
 ?>
     <?php if (!in_array($month_key, $months_seen)):
         $months_seen[] = $month_key; ?>
