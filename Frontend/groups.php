@@ -71,7 +71,6 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
 
 if ($view_id) {
-   
     $group_res = rmq_rpc('group.get', [
         'group_id' => $view_id,
         'username' => $_SESSION['username'] ?? '',
