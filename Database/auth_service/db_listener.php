@@ -680,7 +680,7 @@ function handleDiscussionList($data) {
 
 	$club_id = $data['club_id'];
 
-	$stmt = $conn->prepare("SELECT d.discussion_id, d.message AS discussion_message, d.created_at AS discussion_created, u.username FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.club_id = ?");
+	$stmt = $conn->prepare("SELECT d.discussion_id, d.post_text AS discussion_message, d.created_at AS discussion_created, u.user_id FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.club_id = ?");
 	$stmt->bind_param("i", $club_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
@@ -885,7 +885,9 @@ function processMessage($req) {
 	}elseif($routing_key==='discussion.reply') { //replying to discussions
 		$response = handleDiscussionReply($message);
 
-	}elseif($routing_key==='api.cache') {
+	}elseif($routing_key === 'explore.all'){
+        $response = recommendBooks($message);
+    }elseif($routing_key==='api.cache') {
 		$response = handleBookCache($message);
 	} else {
 		$log->error('SOMEONE FORGOT ROUTING KEY >:( ' . $routing_key ."");
@@ -925,6 +927,7 @@ $channel->queue_bind('user_events_queue', 'user_exchange', 'review.list');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.list'); 
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.reply'); 
+$channel->queue_bind('user_events_queue', 'user_exchange', 'explore.all'); //for personal book recs
 $channel->queue_bind('user_events_queue', 'user_exchange', 'api.cache');
 $channel->basic_consume('user_events_queue', '', false, false, false, false, 'processMessage');
 
