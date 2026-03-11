@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
     $result = rmq_rpc('schedule.create', [
          'group_id' => (int)($_POST['group_id'] ?? 0),
          'book_id' => (int)($_POST['book_id'] ?? 0),
-        'title' => trim($_POST['event_title'] ?? ''),
+         'title' => trim($_POST['event_title'] ?? ''),
          'date' => $_POST['event_date'] ?? '',
          'time' => $_POST['event_time'] ?? '',
          'format' => trim($_POST['event_format'] ?? ''),
@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
 
  list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
- $bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
+ $bselect_res      = rmq_rpc('book.list', ['fields' => 'title']); //id,title
  $books_for_select = $bselect_res['books'] ?? [];
 ?>
 
