@@ -484,8 +484,9 @@ function handlePersonalBookRecs($data) {
 
 	$club_id = $data['group_id'];
 	$book_id = $data['book_id'];
-	//$review_text = $data['note'];
+	$note = $data['note'];
 
+	
 }
 
 //posting discussions*****
