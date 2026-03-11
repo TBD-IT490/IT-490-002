@@ -126,40 +126,6 @@ if ($view_id) {
 }
 ?>
 
-<style>
-.member-pill {
-    display:inline-flex; align-items:center; 
-    gap:0.4rem;
-    background:rgba(134,113,91,0.15); 
-    border:1px solid rgba(134,113,91,0.3);
-    border-radius:20px; 
-    padding:0.2rem 0.7rem;
-    font-size:0.82rem; 
-    color:var(--blush);
-}
-.tab-nav { 
-    display:flex; 
-    gap:0; 
-    border-bottom:1px solid rgba(134,113,91,0.3); 
-    margin-bottom:1.5rem; 
-}
-.tab-link {
-    padding:0.5rem 1.2rem; 
-    font-size:0.8rem; 
-    letter-spacing:0.1em;
-    text-transform:uppercase; 
-    color:var(--text-muted); 
-    text-decoration:none;
-    border-bottom:2px solid transparent; 
-    margin-bottom:-1px;
-    transition:color 0.2s, border-color 0.2s;
-}
-.tab-link.active, .tab-link:hover { 
-    color:var(--blush); 
-    border-bottom-color:var(--umber); 
-}
-</style>
-
 <?php if ($msg_text): ?>
 <div class="n-alert mb-4 <?php echo $msg_type === 'error' ? 'border-danger' : ''; ?>">
     <?php echo $msg_text; ?>

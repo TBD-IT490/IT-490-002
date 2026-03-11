@@ -39,18 +39,6 @@ $bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
 $books_for_select = $bselect_res['books'] ?? [];
 ?>
 
-<style>
-.event-month-header {
-    font-family:'IM Fell English',serif; font-size:1rem; color:var(--text-muted);
-    letter-spacing:0.15em; text-transform:uppercase;
-    margin:1.5rem 0 0.8rem; border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:0.4rem;
-}
-.event-row { display:flex; gap:1.2rem; align-items:flex-start; padding:1rem 0; border-bottom:1px solid rgba(134,113,91,0.12); }
-.event-date-box { min-width:54px; text-align:center; background:rgba(36,46,15,0.4); border:1px solid rgba(134,113,91,0.25); border-radius:2px; padding:0.4rem 0.2rem; }
-.event-day      { font-family:'IM Fell English',serif; font-size:1.8rem; line-height:1; color:var(--blush); }
-.event-month-sm { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); }
-</style>
-
 <div class="d-flex justify-content-between align-items-end mb-4">
     <h2 class="page-heading mb-0">Gatherings</h2>
     <button class="btn-n btn" data-bs-toggle="modal" data-bs-target="#scheduleModal">

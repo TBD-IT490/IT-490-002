@@ -301,6 +301,161 @@
   border-top:none; 
   border-radius:0 0 4px 4px;
 }
+.profile-header{
+  position:relative; 
+  margin-bottom:3rem;
+}
+.profile-header-content{
+  margin-left:calc(80px + 1.5rem + 0.8rem); 
+  padding-top:0.5rem;
+}
+
+.profile-header {
+    position: relative;
+    margin-bottom: 3rem;
+}
+
+
+.profile-card {
+    padding: 1.5rem;
+    padding-top: 0;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-name {
+    font-family: 'IM Fell English', serif;
+    margin: 0;
+}
+
+.profile-meta {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+
+.profile-bio {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 0.4rem;
+}
+
+.logout-btn {
+    font-family: 'Crimson Text', serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-decoration: none;
+    border: 1px solid rgba(134,113,91,0.3);
+    border-radius: 2px;
+    padding: 0.3rem 0.8rem;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.logout-btn:hover {
+    color: var(--blush);
+    border-color: var(--umber);
+}
+
+.tab-nav {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.tab-link-profile {
+    text-decoration: none;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding-bottom: 4px;
+    border-bottom: 1px solid transparent;
+    transition: 0.2s;
+}
+
+.tab-link-profile:hover {
+    color: var(--blush);
+}
+
+.tab-link-profile.active {
+    color: var(--blush);
+    border-bottom: 1px solid var(--umber);
+}
+
+.empty-msg {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.link {
+    color: var(--umber);
+    text-decoration: none;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+.rated-book-cover img {
+    width: 36px;
+    height: 54px;
+    object-fit: cover;
+    border: 1px solid rgba(134,113,91,0.3);
+    border-radius: 1px;
+}
+
+.rated-book-info {
+    flex-grow: 1;
+}
+
+.rated-book-title {
+    text-decoration: none;
+    color: var(--blush);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+}
+
+.rated-book-author {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.review-entry {
+    border-bottom: 1px solid rgba(134,113,91,0.2);
+    padding-bottom: 1.2rem;
+    margin-bottom: 1.2rem;
+}
+
+.review-content {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+}
+
+.review-cover {
+    width: 50px;
+    height: 75px;
+    object-fit: cover;
+    border: 1px solid rgba(134,113,91,0.3);
+    border-radius: 1px;
+}
+
+.review-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.review-book-link {
+    color: var(--umber);
+    text-decoration: none;
+    font-style: italic;
+}
 
 /*index.php styles 
 sorry it's ugly i just copy pasted from the original file*/
@@ -630,3 +785,36 @@ again, sorry it's ugly i had this from the file itself too and it was indented W
         ::-webkit-scrollbar-track { background: var(--deep); }
         ::-webkit-scrollbar-thumb { background: var(--umber); border-radius: 3px; } 
 
+/*recommendations.php stylesheet*/
+.rec-card {
+    display:flex; gap:1rem; padding:1rem 0;
+    border-bottom:1px solid rgba(134,113,91,0.15);
+}
+.rec-rank {
+    font-family:'IM Fell English',serif;
+    font-size:1.8rem; color:rgba(134,113,91,0.35);
+    min-width:28px; text-align:center; line-height:1.2;
+}
+.rec-cover {
+    width:56px; height:84px; object-fit:cover;
+    border:1px solid rgba(134,113,91,0.3); border-radius:1px; flex-shrink:0;
+}
+.genre-pill {
+    display:inline-block;
+    background:rgba(36,46,15,0.5); border:1px solid rgba(134,113,91,0.3);
+    border-radius:2px; padding:0.1rem 0.5rem; font-size:0.72rem;
+    color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase;
+}
+.affinity-bar  { height:4px; border-radius:2px; background:rgba(134,113,91,0.2); margin-top:0.3rem; overflow:hidden; }
+.affinity-fill { height:100%; background:linear-gradient(90deg, var(--umber), #c9a87c); border-radius:2px; }
+
+/*schedule.php's styles*/
+.event-month-header {
+    font-family:'IM Fell English',serif; font-size:1rem; color:var(--text-muted);
+    letter-spacing:0.15em; text-transform:uppercase;
+    margin:1.5rem 0 0.8rem; border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:0.4rem;
+}
+.event-row { display:flex; gap:1.2rem; align-items:flex-start; padding:1rem 0; border-bottom:1px solid rgba(134,113,91,0.12); }
+.event-date-box { min-width:54px; text-align:center; background:rgba(36,46,15,0.4); border:1px solid rgba(134,113,91,0.25); border-radius:2px; padding:0.4rem 0.2rem; }
+.event-day      { font-family:'IM Fell English',serif; font-size:1.8rem; line-height:1; color:var(--blush); }
+.event-month-sm { font-size:0.65rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); }

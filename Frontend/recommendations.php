@@ -16,9 +16,9 @@ $msg = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['suggest_book'])) {
     
     $result = rmq_rpc('suggestion.create', [
-        'group_id' => (int)($_POST['sug_group'] ?? 0),
-        'book_id'  => (int)($_POST['sug_book']  ?? 0),
-        'note'     => trim($_POST['sug_note']   ?? ''),
+        'group_id'=> (int)($_POST['sug_group'] ?? 0),
+        'book_id'=> (int)($_POST['sug_book']  ?? 0),
+        'note'=> trim($_POST['sug_note']   ?? ''),
     ]);
     $msg = ($result['success'] ?? false)
         ? 'success:Your suggestion has been sent to the circle.'
@@ -29,40 +29,16 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
 $personal_res = rmq_rpc('recommendation.personal') ?? [];
 $personal_recs = $personal_res['recommendations'] ?? [];
-$genre_score   = $personal_res['genre_affinity']  ?? [];
-$top_genres    = array_slice(array_keys($genre_score), 0, 3);
+$genre_score = $personal_res['genre_score']  ?? [];
+$top_genres = array_slice(array_keys($genre_score), 0, 3);
 
 $group_recs_res  = rmq_rpc('recommendation.groups') ?? [];
 $group_recs_data = $group_recs_res['groups'] ?? [];
 
-$bselect_res      = rmq_rpc('book.list', ['fields' => 'id,title']);
+$bselect_res = rmq_rpc('book.list', ['fields' => 'id,title']);
 $books_for_select = $bselect_res['books'] ?? [];
 
 ?>
-
-<style>
-.rec-card {
-    display:flex; gap:1rem; padding:1rem 0;
-    border-bottom:1px solid rgba(134,113,91,0.15);
-}
-.rec-rank {
-    font-family:'IM Fell English',serif;
-    font-size:1.8rem; color:rgba(134,113,91,0.35);
-    min-width:28px; text-align:center; line-height:1.2;
-}
-.rec-cover {
-    width:56px; height:84px; object-fit:cover;
-    border:1px solid rgba(134,113,91,0.3); border-radius:1px; flex-shrink:0;
-}
-.genre-pill {
-    display:inline-block;
-    background:rgba(36,46,15,0.5); border:1px solid rgba(134,113,91,0.3);
-    border-radius:2px; padding:0.1rem 0.5rem; font-size:0.72rem;
-    color:var(--text-muted); letter-spacing:0.06em; text-transform:uppercase;
-}
-.affinity-bar  { height:4px; border-radius:2px; background:rgba(134,113,91,0.2); margin-top:0.3rem; overflow:hidden; }
-.affinity-fill { height:100%; background:linear-gradient(90deg, var(--umber), #c9a87c); border-radius:2px; }
-</style>
 
 <h2 class="page-heading">Discoveries</h2>
 <p style="color:var(--text-muted); font-style:italic; margin-bottom:2rem;">

@@ -65,7 +65,8 @@ $savedPreferences = $userSettings['preferences'] ?? [];
 <div class="row g-4">
     <div class="col-lg-8">
 
-        <div style="position:relative; margin-bottom:3rem;">
+<!--profile header with avatar information, image bio etc-->
+        <div class="profile-header">
             <div class="profile-banner"></div>
             <div class="n-card p-4 pt-0 profile-banner-border">
                 <div class="profile-avatar">
@@ -75,25 +76,23 @@ $savedPreferences = $userSettings['preferences'] ?? [];
                         <?php echo strtoupper(substr($_SESSION['username'], 0, 1)); ?>
                     <?php endif; ?>
                 </div>
-                <div style="margin-left:calc(80px + 1.5rem + 0.8rem); padding-top:0.5rem;" class="d-flex justify-content-between align-items-start">
+                <div class="profile-header-content">
                     <div>
-                        <h3 style="font-family:'IM Fell English',serif; margin:0;">
+                        <h3 class="profile-name">
                             <?php echo htmlspecialchars($profile_res['display_name'] ?? $_SESSION['username']); ?>
                         </h3>
-                        <div style="font-size:0.82rem; color:var(--text-muted);">
+                        <div class="profile-meta">
                             @<?php echo htmlspecialchars($_SESSION['username']); ?>
                             &nbsp;·&nbsp; Member since <?php echo $profile_res['member_since'] ?? '—'; ?>
                         </div>
                         <?php if (!empty($profile_res['bio'])): ?>
-                        <div style="font-size:0.95rem; color:var(--text-muted); font-style:italic; margin-top:0.4rem;">
+                        <div class="profile-bio">
                             <?php echo htmlspecialchars($profile_res['bio']); ?>
                         </div>
                         <?php endif; ?>
                     </div>
                     <a href="logout.php"
-                       style="font-family:'Crimson Text',serif; font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); text-decoration:none; border:1px solid rgba(134,113,91,0.3); border-radius:2px; padding:0.3rem 0.8rem; transition:color 0.2s, border-color 0.2s; white-space:nowrap;"
-                       onmouseover="this.style.color='var(--blush)'; this.style.borderColor='var(--umber)'"
-                       onmouseout="this.style.color='var(--text-muted)'; this.style.borderColor='rgba(134,113,91,0.3)'">
+                       class="logout-btn">
                         <i class="bi bi-box-arrow-right"></i> Log Out
                     </a>
                 </div>
@@ -101,65 +100,66 @@ $savedPreferences = $userSettings['preferences'] ?? [];
         </div>
 
         <div class="tab-nav">
-            <a href="?tab=books"    class="tab-link-profile <?php echo $tab === 'books' ? 'active' : ''; ?>">Rated Books</a>
-            <a href="?tab=reviews"  class="tab-link-profile <?php echo $tab === 'reviews' ? 'active' : ''; ?>">Reviews</a>
-            <a href="?tab=circles"  class="tab-link-profile <?php echo $tab === 'circles' ? 'active' : ''; ?>">Circles</a>
-            <a href="?tab=settings" class="tab-link-profile <?php echo $tab === 'settings' ? 'active' : ''; ?>">Settings</a>
+            <a href="?tab=books" class="tab-link-profile <?php echo $tab === 'books' ? 'active':''; ?>">Rated Books</a>
+            <a href="?tab=reviews" class="tab-link-profile <?php echo $tab === 'reviews' ? 'active':''; ?>">Reviews</a>
+            <a href="?tab=circles" class="tab-link-profile <?php echo $tab === 'circles' ? 'active':''; ?>">Circles</a>
+            <a href="?tab=settings" class="tab-link-profile <?php echo $tab === 'settings' ? 'active':''; ?>">Settings</a>
         </div>
 
+ <!--books tab of the profile page-->
         <?php if ($tab === 'books'): ?>
 
         <?php if (empty($my_ratings)): ?>
-        <p style="color:var(--text-muted); font-style:italic;">
+        <p class="empty-msg">
             No books rated yet. <a href="books.php" style="color:var(--umber);">Browse the library.</a>
         </p>
         <?php else: ?>
             <?php foreach ($my_ratings as $entry):
-                $b      = $entry['book']   ?? [];
+                $b = $entry['book'] ?? [];
                 $rating = $entry['rating'] ?? 0;
             ?>
             <div class="rated-book">
                 <a href="books.php?id=<?php echo $b['id']; ?>">
-                    <img src="<?php echo htmlspecialchars($b['cover']); ?>"
-                         style="width:36px;height:54px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;" alt="">
+                    <img src="<?php echo htmlspecialchars($b['cover']); ?>" class="rated-book-cover"alt="">
                 </a>
                 <div class="flex-grow-1">
                     <a href="books.php?id=<?php echo $b['id']; ?>"
-                       style="text-decoration:none; color:var(--blush); font-family:'Cormorant Garamond',serif; font-size:1rem;">
+                       class="rated-book-title">
                         <?php echo htmlspecialchars($b['title']); ?>
                     </a>
-                    <div style="font-size:0.8rem; color:var(--text-muted); font-style:italic;"><?php echo htmlspecialchars($b['author']); ?></div>
+                    <div class="rated-book-author"><?php echo htmlspecialchars($b['author']); ?></div>
                 </div>
                 <div><?php echo renderStars($rating); ?></div>
             </div>
             <?php endforeach; ?>
         <?php endif; ?>
 
+<!--reviews tab for reviewing books-->
         <?php elseif ($tab === 'reviews'): ?>
 
         <?php if (empty($my_reviews)): ?>
-        <p style="color:var(--text-muted); font-style:italic;">No reviews written yet.</p>
+        <p class="empty-msg">No reviews written yet.</p>
         <?php else: ?>
             <?php foreach ($my_reviews as $rv):
                 $rvb = $rv['book'] ?? [];
             ?>
-            <div style="border-bottom:1px solid rgba(134,113,91,0.2); padding-bottom:1.2rem; margin-bottom:1.2rem;">
+            <div class="review-entry">
                 <div class="d-flex gap-3 align-items-start">
                     <img src="<?php echo htmlspecialchars($rvb['cover'] ?? ''); ?>"
-                         style="width:50px;height:75px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;flex-shrink:0;" alt="">
+                         class="review-cover" alt="">
                     <div>
-                        <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.2rem;">
+                        <div class="review-meta">
                             <a href="books.php?id=<?php echo $rvb['id']; ?>"
-                               style="color:var(--umber); text-decoration:none; font-style:italic;">
+                               style="review-book-link">
                                 <?php echo htmlspecialchars($rvb['title'] ?? ''); ?>
                             </a>
                             &nbsp;·&nbsp; <?php echo $rv['created']; ?>
                         </div>
                         <?php echo renderStars($rv['rating']); ?>
-                        <div style="font-style:italic; color:var(--blush); margin-top:0.3rem; font-size:1rem;">
+                        <div class="review-title">
                             "<?php echo htmlspecialchars($rv['title']); ?>"
                         </div>
-                        <p style="font-size:0.95rem; color:var(--text-muted); margin-top:0.3rem;">
+                        <p class="review-body">
                             <?php echo htmlspecialchars($rv['body']); ?>
                         </p>
                     </div>
@@ -168,6 +168,7 @@ $savedPreferences = $userSettings['preferences'] ?? [];
             <?php endforeach; ?>
         <?php endif; ?>
 
+        <!--circles tab, this shows where the user is involved in within the app itself-->
         <?php elseif ($tab === 'circles'): ?>
 
         <div class="row g-3">
