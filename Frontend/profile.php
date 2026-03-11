@@ -332,5 +332,6 @@ $savedPreferences = $userSettings['preferences'] ?? [];
     </div>
 </div>
 </html>
+
 <!--footer code :) at least it stays consistent-->
 <?php require_once 'includes/footer.php'; ?>

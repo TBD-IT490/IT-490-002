@@ -26,7 +26,7 @@ $books_res = rmq_rpc('book.list') ?? [];
 $books = $books_res['books'] ?? [];
 
 //listing groups for user
-$groups_response = rmq_rpc('group.list_all');
+$groups_response = rmq_rpc('group.list');
 $my_groups = $groups_response['groups'] ?? [];
 
 //any recent discussions
