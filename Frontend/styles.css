@@ -475,13 +475,15 @@ sorry it's ugly i just copy pasted from the original file*/
             color: var(--blush);
             font-family: 'Crimson Text', Georgia, serif;
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             background-image:
                 radial-gradient(ellipse at 20% 50%, rgba(57,48,74,0.4) 0%, transparent 60%);
         }
-
+        .login-wrapper{
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+    }
         .login-card {
             background-color: var(--card);
             border: 1px solid rgba(134,113,91,0.25);
@@ -625,7 +627,6 @@ sorry it's ugly i just copy pasted from the original file*/
 
 /*header styles
 again, sorry it's ugly i had this from the file itself too and it was indented WAY different*/
-
         .noetic-nav {
             background: rgba(32,32,48,0.92);
             backdrop-filter: blur(12px);

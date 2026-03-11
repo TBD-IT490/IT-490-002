@@ -99,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="row justify-content-center">
         <div class="col-md-6 col-lg-5">
 
+        <div class="login-wrapper">
             <div class="login-card shadow-lg p-4 p-md-5">
 
                 <div class="brand">Noetic</div>
