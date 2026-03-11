@@ -6,6 +6,7 @@ require_once __DIR__ . "/vendor/autoload.php";
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
+//connecting to matt's vm on the broker
 define('RABBITMQ_HOST', '100.101.27.73');
 define('RABBITMQ_PORT', 5672);
 define('RABBITMQ_USER', 'broker');
@@ -13,6 +14,7 @@ define('RABBITMQ_PASS', 'test');
 
 $error = "";
 
+//registering a user
 if (isset($_POST["register"])) {
 
     $username = filter_input(INPUT_POST, "username", FILTER_SANITIZE_STRING);
@@ -25,6 +27,7 @@ if (isset($_POST["register"])) {
 
     $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
+    //stream connection
     $connection = new AMQPStreamConnection(
         RABBITMQ_HOST,
         RABBITMQ_PORT,
@@ -41,6 +44,7 @@ if (isset($_POST["register"])) {
         "email" => $email,
         "password_hash" => $password_hash,
     ];
+
     list($callback_queue, ,) = $channel->queue_declare(
         "",
         false,
@@ -49,13 +53,13 @@ if (isset($_POST["register"])) {
         false,
     );
     $response = null;
-    $corr_id = uniqid();
+    $corr_id = uniqid(); //they made me remove this then told me to put it back again smh
     $onResponse = function ($rep) use ($corr_id, &$response) {
         if ($rep->get("correlation_id") === $corr_id) {
             $response = $rep->getBody();
         }
     };
-    $channel->basic_consume($callback_queue,'',false,true,false,false, $onResponse);
+    $channel->basic_consume($callback_queue,'',false,true,false,false, $onResponse); //this too
     $msg = new AMQPMessage(json_encode($message), [
         "delivery_mode" => 2,
         "correlation_id" => $corr_id,
@@ -90,6 +94,7 @@ if (isset($_POST["register"])) {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!--stylesheets! and other things, i broke it so badly i'm scared to code in html ever again-->
     <meta charset="UTF-8">
     <link rel="stylesheet" href="styles.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -97,6 +102,8 @@ if (isset($_POST["register"])) {
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
+<!--i left this in here because it completely BROKE when I removed it and i'd rather it be ugly code than broken
+I'm sure you understand-->
     <style>
         :root {
             --deep: #202030;

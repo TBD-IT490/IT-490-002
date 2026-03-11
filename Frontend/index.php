@@ -97,12 +97,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 <div class="container">
     <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-
-        <div class="login-wrapper">
+        <div class="col-md-6 col-lg-5" style="padding-top: 200px;">
             <div class="login-card shadow-lg p-4 p-md-5">
 
-                <div class="brand">Noetic</div>
+                <div class="brand">Noetic.</div>
 
                 <!--from https://www.w3schools.com/php/func_string_htmlspecialchars.asp -->
                 <?php if (!empty($error)) : ?>

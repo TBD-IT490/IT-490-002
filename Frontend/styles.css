@@ -483,7 +483,7 @@ sorry it's ugly i just copy pasted from the original file*/
             display:flex;
             align-items:center;
             justify-content:center;
-    }
+        }   
         .login-card {
             background-color: var(--card);
             border: 1px solid rgba(134,113,91,0.25);
