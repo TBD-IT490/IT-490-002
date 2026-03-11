@@ -8,6 +8,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 $error = "";
 
+//connecting to rabbit and sending login request to nat
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $username = $_POST['username'] ?? '';
@@ -18,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
 
         
+    //connecting to rabbit
             $connection = new AMQPStreamConnection(
                 '100.101.27.73',
             //    'localhost',
@@ -41,11 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $response = null;
         $corr_id = uniqid();
         $onResponse = function($rep) use($corr_id, &$response) {
-            if ($rep->get('correlation_id') === $corr_id) {
+            if ($rep->get('correlation_id') === $corr_id) { //they had me remove this but I was right
                 $response = $rep->getBody();
             }
         };
-        $channel->basic_consume($callback_queue, '', false, true, false, false, $onResponse);
+        $channel->basic_consume($callback_queue, '', false, true, false, false, $onResponse); //this too :(
 
         $msg = new AMQPMessage(
             json_encode($request),
@@ -86,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!--i broke this so hopefully it works now -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Noetic — Login</title>

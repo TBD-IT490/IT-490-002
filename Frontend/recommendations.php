@@ -100,7 +100,7 @@ $books_for_select = $bselect_res['books'] ?? [];
                         <img src="<?php echo htmlspecialchars($b['cover']); ?>"
                              class="rec-cover"
                              alt="<?php echo htmlspecialchars($b['title']); ?>"
-                             onerror="this.src='https://via.placeholder.com/56x84/39304A/DCBCCE?text=?'">
+                             onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'">
                     </a>
                     <div class="flex-grow-1">
                         <a href="books.php?id=<?php echo $b['id']; ?>" style="text-decoration:none;">
@@ -160,7 +160,7 @@ $books_for_select = $bselect_res['books'] ?? [];
                     <img src="<?php echo htmlspecialchars($b['cover']); ?>"
                          class="rec-cover"
                          alt="<?php echo htmlspecialchars($b['title']); ?>"
-                         onerror="this.src='https://via.placeholder.com/56x84/39304A/DCBCCE?text=?'">
+                         onerror="this.src='<?php echo htmlspecialchars($b['cover_url']); ?>'">
                 </a>
                 <div class="flex-grow-1">
                     <a href="books.php?id=<?php echo $b['id']; ?>" style="text-decoration:none;">

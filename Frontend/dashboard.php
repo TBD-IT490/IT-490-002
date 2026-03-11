@@ -8,39 +8,35 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== TRUE) {
     exit();
 }
 
-// Get username from session (NOT from $_GET)
+//getting username from session, and including data and header
 $username = $_SESSION['username'];
 require_once 'includes/data.php';
 require_once 'includes/header.php';
 
-// Fetch dashboard data via RabbitMQ
-// Recent reviews across all users
 $reviews_res = rmq_rpc(action: 'review.recent') ?? [];
 $user_reviews = $reviews_res['reviews'] ?? [];
 $recent_reviews = array_slice($user_reviews, -3);
 
-// Schedule/gatherings
+//listing meetings
 $schedule_res = rmq_rpc('schedule.list') ?? [];
 $schedule = $schedule_res['events'] ?? [];
 
-// Books for the library strip
+//ALL BOOKS
 $books_res = rmq_rpc('book.list') ?? [];
 $books = $books_res['books'] ?? [];
 
-// Groups for create
+//listing groups for user
 $groups_response = rmq_rpc('group.list_all');
 $my_groups = $groups_response['groups'] ?? [];
 
-
-// Recent discussions
+//any recent discussions
 $discussions_res = rmq_rpc('discussion.recent') ?? [];
 $discussions = $discussions_res['discussions'] ?? [];
 
-// User ratings count
+//recent user ratings
 $ratings_res = rmq_rpc('user.ratings') ?? [];
 $user_ratings = $ratings_res['ratings'] ?? [];
 
-// Upcoming gathering
 $next_event = $schedule[0] ?? null;
 $next_book = $next_event ? getBookById($next_event['book_id']) : null;
 $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
@@ -70,7 +66,7 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
 <!-- Stats row -->
 <div class="row g-3 mb-4">
     <?php
-    // $my_groups is already fetched in data.php via 'group.list_for_user'
+   
     $my_rated = count($user_ratings);
     ?>
     <div class="col-6 col-md-3">
@@ -101,10 +97,8 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
 
 <div class="row g-4">
 
-    <!-- Left column -->
     <div class="col-lg-8">
 
-        <!-- Currently reading strip -->
         <div class="n-card p-4 mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 style="font-family:'IM Fell English',serif; margin:0;">The Library</h5>
@@ -121,7 +115,6 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
             </div>
         </div>
 
-        <!-- Recent discussions -->
         <div class="n-card p-4">
             <h5 style="font-family:'IM Fell English',serif; margin-bottom:1.2rem;">Recent Discussions</h5>
             <?php foreach ($discussions as $d):
@@ -168,10 +161,8 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
 
     </div>
 
-    <!-- Right column -->
     <div class="col-lg-4">
 
-        <!-- Next gathering -->
         <div class="n-card p-4 mb-4">
             <h6 style="letter-spacing:0.12em; text-transform:uppercase; font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">Next Gathering</h6>
             <?php if ($next_event && $next_book): ?>
@@ -195,7 +186,6 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
             <a href="schedule.php" class="btn-n-outline btn w-100 mt-3">View All Gatherings</a>
         </div>
 
-        <!-- My circles -->
         <div class="n-card p-4 mb-4">
             <h6 style="letter-spacing:0.12em; text-transform:uppercase; font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">My Circles</h6>
             <?php foreach ($my_groups as $g):
@@ -216,7 +206,6 @@ $next_group = $next_event ? getGroupById($next_event['group_id']) : null;
             <a href="groups.php" class="btn-n-outline btn w-100 mt-1">All Circles</a>
         </div>
 
-        <!-- Recent reviews -->
         <div class="n-card p-4">
             <h6 style="letter-spacing:0.12em; text-transform:uppercase; font-size:0.75rem; color:var(--text-muted); margin-bottom:1rem;">Recent Reviews</h6>
             <?php foreach ($recent_reviews as $rv):
