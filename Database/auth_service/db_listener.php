@@ -156,10 +156,9 @@ function handleSearchBooks($data) {
 		$log->warning("FAILED: no 'search' key.");
 		return ['success' => false, 'message' => 'No search given!'];
 	} */
-	//TODO: figure out why this is empty
-	//print data - debug
-	$search = $data['search']; //CHANGED to match front end - woohoo
-	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
+	//why warning T^T
+	$search = $data['search'] ?? ''; //CHANGED to match front end - woohoo
+	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from search)!'];
@@ -318,8 +317,10 @@ function handleListGroups($data) {
 		return ['success' => false, 'message' => 'User not authenticated (getting groups)!'];
 	}
 	//$username = $data['username']; //trying it out
-
-	$stmt = $conn->prepare("SELECT club_id, club_name, group_desc FROM book_clubs WHERE created_by = ?");
+	//-_-
+	$stmt = $conn->prepare("SELECT c.club_id, c.club_name, c.group_desc FROM book_clubs c JOIN club_members cm ON c.club_id = cm.club_id WHERE cm.user_id = ?");
+	//SELECT club_id, club_name, group_desc FROM book_clubs WHERE created_by = ?
+	//SELECT c.club_id, c.club_name, c.group_desc FROM book_clubs c JOIN club_members cm ON c.club_id = cm.club_id WHERE cm.user_id = ?
 	$stmt->bind_param("i", $user_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
@@ -382,7 +383,7 @@ function handleJoinClub($data) {
 	if ($stmt->execute()) {
 		
 		$log->info("SUCCESS: User $user_id joined club $club_id");
-		return ['success' => true, 'groups' => $group_name, 'username' => $user_id, 'group_id' => $club_id, 'message' => 'Joined club!'];
+		return ['success' => true, 'group_name' => $group_name, 'username' => $user_id, 'group_id' => $club_id, 'message' => 'Joined club!'];
 	}
 
 	return ['success' => false, 'message' => 'Already a member...or error :/'];
