@@ -10,34 +10,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 require_once 'includes/data.php';
 require_once 'includes/header.php';
 
-$msg = '';
-
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['suggest_book'])) {
-    
-    $result = rmq_rpc('suggestion.create', [
-        'group_id'=> (int)($_POST['sug_group'] ?? 0),
-        'book_id'=> (int)($_POST['sug_book']  ?? 0),
-        'note'=> trim($_POST['sug_note']   ?? ''),
-    ]);
-    $msg = ($result['success'] ?? false)
-        ? 'success:Your suggestion has been sent to the circle.'
-        : 'error:Could not send suggestion. Please try again.';
-}
-
-list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
-
-$personal_res = rmq_rpc('recommendation.personal') ?? [];
-$personal_recs = $personal_res['recommendations'] ?? [];
-$genre_score = $personal_res['genre_score']  ?? [];
-$top_genres = array_slice(array_keys($genre_score), 0, 3);
-
-$group_recs_res  = rmq_rpc('recommendation.groups') ?? [];
-$group_recs_data = $group_recs_res['groups'] ?? [];
-
-$bselect_res = rmq_rpc('book.list', ['fields' => 'id,title']);
-$books_for_select = $bselect_res['books'] ?? [];
-
 ?>
 
 <!DOCTYPE html>
