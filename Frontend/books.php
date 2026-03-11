@@ -48,8 +48,13 @@ if ($view_id) {
         $book['cover'] = $book['cover_url'] ?? '';
         $book['year'] = $book['published_year'] ?? '';
 
-        $book_reviews = [];
-        $my_rating    = 0;  
+        //hopefully this works pray for me it is midnight
+       $reviews_res = rmq_rpc('review.list',[
+        'book_id' => $view_id,
+        'username' => $_SESSION['username'] ?? '',
+       ]);
+         $book_reviews = $reviews_res['reviews'] ?? [];
+         $my_rating = 0;
     }
 
     //book list function, nat has her own on her side
@@ -138,13 +143,6 @@ if ($view_id) {
                 <?php if (!empty($book['year'])): ?>, <?php echo $book['year']; ?><?php endif; ?>
             </div>
             <div class="d-flex align-items-center gap-3 mb-3">
-                <?php echo renderStars($book['rating'] ?? 0); ?>
-                <span style="font-size:0.9rem; color:var(--text-muted);">
-                    <?php echo $book['rating'] ?? 0; ?>
-                    <?php if (!empty($book['reviews'])): ?>
-                        <?php echo number_format($book['reviews']); ?> ratings
-                    <?php endif; ?>
-                </span>
                 <?php if (!empty($book['pages'])): ?>
                 <span class="n-badge"><?php echo $book['pages']; ?> pages</span>
                 <?php endif; ?>
@@ -168,13 +166,10 @@ if ($view_id) {
                 <?php foreach ($book_reviews as $rv): ?>
                 <div class="review-card">
                     <div class="d-flex gap-2 align-items-center mb-1">
-                        <div class="avatar-ring"><?php echo strtoupper(substr($rv['user'], 0, 1)); ?></div>
-                        <strong><?php echo htmlspecialchars($rv['user']); ?></strong>
+                        <div class="avatar-ring"><?php echo strtoupper(substr($rv['username'], 0, 1)); ?></div>
+                        <strong><?php echo htmlspecialchars($rv['username']); ?></strong>
                         <?php echo renderStars($rv['rating']); ?>
-                        <span class="review-date"><?php echo $rv['created']; ?></span>
-                    </div>
-                    <div class="review-title">
-                        "<?php echo htmlspecialchars($rv['title'] ?? ''); ?>"
+                        <span class="review-date"><?php echo $rv['created-at']; ?></span>
                     </div>
                     <p class="review-body">
                         <?php echo htmlspecialchars($rv['body'] ?? $rv['review_text'] ?? ''); ?>
@@ -252,15 +247,6 @@ if ($view_id) {
                 </div>
                 <div class="book-card-author">
                     <?php echo htmlspecialchars($b['author']); ?>
-                </div>
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <?php echo renderStars($b['rating']); ?>
-                    <span class="book-rating-small"><?php echo $b['rating']; ?></span>
-                </div>
-                <div class="mt-2 d-flex flex-wrap gap-1">
-                    <?php foreach ((array)$b['genre'] as $g): ?>
-                    <span class="n-badge" style="font-size:0.65rem;"><?php echo htmlspecialchars($g); ?></span>
-                    <?php endforeach; ?>
                 </div>
             </div>
         </a>

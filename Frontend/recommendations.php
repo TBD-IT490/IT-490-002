@@ -204,7 +204,7 @@ $books_for_select = $bselect_res['books'] ?? [];
             <label class="form-label">Circle</label>
             <select class="form-select" name="sug_group" required>
                 <?php foreach ($my_groups as $g): ?>
-                <option value="<?php echo $g['id']; ?>"><?php echo htmlspecialchars($g['name']); ?></option>
+                <option value="<?php echo $group['id']; ?>"><?php echo htmlspecialchars($group['name']); ?></option>
                 <?php endforeach; ?>
             </select>
         </div>
