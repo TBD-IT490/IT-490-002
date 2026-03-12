@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
 
  list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
- $bselect_res      = rmq_rpc('book.list', ['fields' => 'title']); //id,title
+ $bselect_res      = rmq_rpc('book.list', ['fields' => ['id', 'title']]); //'id,title'
  $books_for_select = $bselect_res['books'] ?? [];
 ?>
 
