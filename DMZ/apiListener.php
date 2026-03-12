@@ -16,7 +16,7 @@ define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
 
-define('DMZ_HOST', '100.74.23.11'); //do i need to add my ip??
+define('DMZ_HOST', '100.74.23.11'); //dont think i need to add my ip??
 
 define('DB_HOST', '100.112.153.128'); //nat ip 4 db
 define('DB_USER', 'app_user');
@@ -26,14 +26,36 @@ define('DB_NAME', 'noetic');
 //connecting to matt
 $connection = new AMQPStreamConnection(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
 $channel = $connection->channel();
-$channel->queue_declare('api_queue', false, true, false, false);
-echo "API Listener wating for DB requests. To exit press CTRL+C\n";
-$channel->basic_consume('api_queue', '', false, true, false, false);
-while ($channel->is_consuming()) {
-    $channel->wait();
-}
+
+//for sending api reponses to nat and getting her requests
+//need to fix and make better 
+//this just the template, trust
+$channel->queue_declare('api_responses', false, true, false, false);
+$channel->queue_declare('api_requests', false, true, false, false);
+$msg = new AMQPMessage(json_encode($data), ['delivery_mode' => 2]); //make msg persistent
+
+echo "API Listener is listening for DB requests...\n";
+$channel->basic_publish($msg, '', 'api_responses'); //publish to api_responses queue
+
+//thank you google
+$channel->basic_consume(
+    'api_requests', //queue
+    '', //consumer tag
+    false, //no local
+    true, //no ack
+    false, //exclusive
+    false, //no wait
+    $callback //callback function
+    );
+    while ($channel->is_consuming()) {
+        $channel->wait();
+    }
+    $channel->close();
+    $connection->close();
 
 //connecting to nat, i dont think ineed tbh
+//will delete laterz
+//ctrl c ctrl v from db listener
 function connectDB(){
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 	if ($conn->connect_error) {
@@ -45,6 +67,7 @@ function connectDB(){
 }
 
 //RMQ processing
+//ctrl c ctrl v from db listener
 function processMessage($req) {
 	global $log;
 	$routing_key_books = $req->delivery_info['routing_key_books'];
@@ -57,12 +80,17 @@ function processMessage($req) {
 }
 
 //when we get the msg
-$books = function($msg){
+$callback = function($msg){
     echo "Received message: " . $msg->body . "\n";
     $data = json_decode($msg->body, true);
+    if(!isset($data['type']) || $data['type'] !== 'search') {
+        echo "Invalid message request type\n";
+        return;
+    }
     $searchTerm = $data['query'] ?? '';
-
+    echo "Searching for book: " . $searchTerm . "\n";
     //hey db do we have the book?
+    $raw_data=fetchBooks($searchTerm);
     $db=connectDB();
     $stmt = $db->prepare("SELECT * FROM books WHERE title LIKE ?");
     $searchParam = "%$searchTerm%";
@@ -81,7 +109,6 @@ $books = function($msg){
     }  
     
     //published api
-    $raw_data=fetchBooks($searchTerm);
     if($searchData){
         $clean_data=cleanData($raw_data);
         processPublishBooks($clean_data);
@@ -91,8 +118,7 @@ $books = function($msg){
         echo "Failed to fetch data :c";
     }
 
-    }
-echo "[*] Connected to RMQ\n";
-echo "[*] Waiting for messages...\n";
-echo "[*] Press CTRL+C to exit\n";
+    $msg->ack(); //acknowledge message
+
+}
 ?>
