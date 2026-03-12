@@ -1,8 +1,10 @@
 #!/usr/bin/env php
 <?php
+//require_once __DIR__ . '/apiListener.php';
+
 define ('API_BASE', 'https://www.googleapis.com/books/v1/volumes');
 define ('API_KEY', 'AIzaSyDYJbl3JpctqD5r3bn_qF4LkCzBvjOfdQI');
-define ('DEFAULT_SEARCH_TERM', 'The Cat in the Hat');
+define ('SEARCH_TERM', 'The Cat in the Hat');
 
 //for rabbit
 define ('RABBITMQ_HOST','100.101.27.73'); // change to matt's ip 100.127.138.110
