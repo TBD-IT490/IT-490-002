@@ -4,7 +4,7 @@ require_once __DIR__ . '/fetchData.php';
 require_once __DIR__ . '/config.php';
 //require_once __DIR__ . '/apiListener.php';
 
-$searchTerms = SEARCH_TERM;
+$searchTerms = '';
 $data=fetchBooks($searchTerms);
 echo "[" . date('c'). "] Starting cron job. \n";
 if($data==null){

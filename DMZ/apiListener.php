@@ -16,8 +16,6 @@ define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
 
-define('DMZ_HOST', '100.74.23.11'); //dont think i need to add my ip??
-
 define('DB_HOST', '100.112.153.128'); //nat ip 4 db
 define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
@@ -27,19 +25,13 @@ define('DB_NAME', 'noetic');
 $connection = new AMQPStreamConnection(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
 $channel = $connection->channel();
 
-//for sending api reponses to nat and getting her requests
-//need to fix and make better 
-//this just the template, trust
-$channel->queue_declare('api_responses', false, true, false, false);
-$channel->queue_declare('api_requests', false, true, false, false);
 $msg = new AMQPMessage(json_encode($data), ['delivery_mode' => 2]); //make msg persistent
 
-echo "API Listener is listening for DB requests...\n";
-$channel->basic_publish($msg, '', 'api_responses'); //publish to api_responses queue
+$channel->basic_publish($msg, '', 'api_queue');  // since queue alr made in rabbitmqpublish file right?
 
 //thank you google
 $channel->basic_consume(
-    'api_requests', //queue
+    'api_queue', //queue
     '', //consumer tag
     false, //no local
     true, //no ack
@@ -53,8 +45,7 @@ $channel->basic_consume(
     $channel->close();
     $connection->close();
 
-//connecting to nat, i dont think ineed tbh
-//will delete laterz
+//connecting to nat, 
 //ctrl c ctrl v from db listener
 function connectDB(){
     $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -68,6 +59,7 @@ function connectDB(){
 
 //RMQ processing
 //ctrl c ctrl v from db listener
+//chat am i doing this right??
 function processMessage($req) {
 	global $log;
 	$routing_key_books = $req->delivery_info['routing_key_books'];
@@ -79,8 +71,7 @@ function processMessage($req) {
 	$req->ack(); //tell rmq we done w/ msg
 }
 
-//when we get the msg
-$callback = function($msg){
+$callback = function(AMQPMessage $msg){
     echo "Received message: " . $msg->body . "\n";
     $data = json_decode($msg->body, true);
     if(!isset($data['type']) || $data['type'] !== 'search') {
