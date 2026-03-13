@@ -41,8 +41,9 @@ function rmq_rpc(string $action, array $payload = []): ?array {
         $channel->queue_declare('user_events_queue', false, true, false, false);
         $channel->basic_qos(null, 1, null);
 
-        list($callback_queue,,) = $channel->queue_declare('', false, false, true, false);
-
+        
+		
+		list($callback_queue,,) = $channel->queue_declare('', false, false, true, false);
         $response = null;
         $corr_id = uniqid();
         $onResponse = function($msg) use($corr_id, &$response) {
@@ -52,8 +53,8 @@ function rmq_rpc(string $action, array $payload = []): ?array {
         };
         $channel->basic_consume($callback_queue, '', false, true, false, false, $onResponse);
 
-        $payload['user_id'] = $_SESSION['id'] ?? null;
-        $payload['username'] = $_SESSION['username'] ?? null;
+        //$payload['user_id'] = $_SESSION['id'] ?? null;
+        //$payload['username'] = $_SESSION['username'] ?? null;
 
         $msg = new AMQPMessage(
             json_encode($payload),
@@ -67,11 +68,9 @@ function rmq_rpc(string $action, array $payload = []): ?array {
         $channel->basic_publish($msg, 'user_exchange', $action);
 
         while ($response === null) {
-            $channel->wait(null, false, 5); 
+            $channel->wait(null, false, 0); 
         }
 
-        $channel->close();
-        $connection->close();
 
         $decoded = json_decode($response, true);
         
@@ -81,7 +80,8 @@ function rmq_rpc(string $action, array $payload = []): ?array {
             'response' => $decoded,
             'raw' => $response,
         ];
-        
+ 		$channel->close();
+        $connection->close();        
         return $decoded;
 
         //debugging because taryn sucks at php and she doesn't know if it's working or not
@@ -235,7 +235,7 @@ function handleSearchBooks($data) {
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from search)!'];
 	}
-
+	while (true) {
 	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
 	$like_query = '%' . $search . '%';
 	$stmt->bind_param("ss", $like_query, $like_query);
@@ -247,14 +247,20 @@ function handleSearchBooks($data) {
 		if ($res["success"] === true) {
 			
 		}
+		elseif ($res["success"] === false) {
+			$log->debug("something went wrong");
+			break;
+		}
 
+	}
+		break;
 	}
 	$books = [];
 	while ($row = $result->fetch_assoc()) {
 		//TODO add more rows for other stuff needed for return
 		$books[] = ['book_id' => $row['book_id'], 'title' => $row['title'], 'author' => $row['author'], 'cover_url' => $row['cover_url']];
 	}
-
+	
 	//debug search
 	$log->info("SUCCESS: Book search for query,".$search ." found ". count($books) ." results");
 	return ['success' => true, 'books' => $books, 'message' => 'Book search completed!'];
