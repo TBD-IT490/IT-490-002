@@ -817,7 +817,10 @@ function recommendBooks($data)  {
     while ($row = $result->fetch_assoc()) {
 		$recommendations[] = $row["book_id"];
     }
-
+	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
+	$stmt->bind_param("s", $like_query);
+	$stmt->execute();
+	$result = $stmt->get_result();
 
 
 	return ["success"=> true,"message"=> "all good twin heres the books", "recommendations" => $recommendations];
