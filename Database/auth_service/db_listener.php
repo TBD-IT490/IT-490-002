@@ -25,6 +25,78 @@ $cli=new StreamHandler('php://stdout', Logger::DEBUG);
 $cli->setFormatter($formatter);
 $log->pushHandler($cli);
 
+
+function rmq_rpc(string $action, array $payload = []): ?array {
+    global $_DEBUG_LOG;
+    try {
+        $connection = new AMQPStreamConnection(
+            RMQ_HOST,
+            RMQ_PORT,
+            RMQ_USER,
+            RMQ_PASS
+        );
+
+        $channel = $connection->channel();
+        $channel->exchange_declare('user_exchange', 'direct', false, true, false);
+        $channel->queue_declare('user_events_queue', false, true, false, false);
+        $channel->basic_qos(null, 1, null);
+
+        
+		
+		list($callback_queue,,) = $channel->queue_declare('', false, false, true, false);
+        $response = null;
+        $corr_id = uniqid();
+        $onResponse = function($msg) use($corr_id, &$response) {
+            if ($msg->get('correlation_id') === $corr_id) {
+                $response = $msg->getBody();
+            }
+        };
+        $channel->basic_consume($callback_queue, '', false, true, false, false, $onResponse);
+
+        //$payload['user_id'] = $_SESSION['id'] ?? null;
+        //$payload['username'] = $_SESSION['username'] ?? null;
+
+        $msg = new AMQPMessage(
+            json_encode($payload),
+            [
+                'delivery_mode' => 2,
+                'correlation_id' => $corr_id,
+                'reply_to' => $callback_queue,
+            ]
+        );
+
+        $channel->basic_publish($msg, 'user_exchange', $action);
+
+        while ($response === null) {
+            $channel->wait(null, false, 0); 
+        }
+
+
+        $decoded = json_decode($response, true);
+        
+        $_DEBUG_LOG[] = [
+            'action' => $action,
+            'request' => $payload,
+            'response' => $decoded,
+            'raw' => $response,
+        ];
+ 		$channel->close();
+        $connection->close();        
+        return $decoded;
+
+        //debugging because taryn sucks at php and she doesn't know if it's working or not
+    } catch (\Exception $e) {
+        error_log("rmq_rpc error for '$action': " . $e->getMessage());
+        $_DEBUG_LOG[] = [
+            'action' => $action,
+            'request' => $payload,
+            'error' => $e->getMessage(),
+        ];
+        return null;
+    }
+}
+
+
 //db connection
 function connectDB() {
 	$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -163,19 +235,32 @@ function handleSearchBooks($data) {
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from search)!'];
 	}
-
+	while (true) {
 	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
 	$like_query = '%' . $search . '%';
 	$stmt->bind_param("ss", $like_query, $like_query);
 	$stmt->execute();
 	$result = $stmt->get_result();
 
+	if ($result->num_rows === 0) { 
+		$res = rmq_rpc('api.on_demand',["search_query" => $like_query]);
+		if ($res["success"] === true) {
+			
+		}
+		elseif ($res["success"] === false) {
+			$log->debug("something went wrong");
+			break;
+		}
+
+	}
+		break;
+	}
 	$books = [];
 	while ($row = $result->fetch_assoc()) {
 		//TODO add more rows for other stuff needed for return
 		$books[] = ['book_id' => $row['book_id'], 'title' => $row['title'], 'author' => $row['author'], 'cover_url' => $row['cover_url']];
 	}
-
+	
 	//debug search
 	$log->info("SUCCESS: Book search for query,".$search ." found ". count($books) ." results");
 	return ['success' => true, 'books' => $books, 'message' => 'Book search completed!'];
@@ -818,7 +903,10 @@ function recommendBooks($data)  {
     while ($row = $result->fetch_assoc()) {
 		$recommendations[] = $row["book_id"];
     }
-
+	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
+	$stmt->bind_param("ss", $like_query, $like_query);
+	$stmt->execute();
+	$result = $stmt->get_result();
 
 
 	return ["success"=> true,"message"=> "all good twin heres the books", "recommendations" => $recommendations];

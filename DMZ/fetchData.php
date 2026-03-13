@@ -13,7 +13,7 @@ function buildURL(string $searchTerm): string
 
 function cleanData($data){
 	$book = [];
-	for($i = 0; $i < count($data["items"]); $i++) {
+	for($i = 0; $i < count($data["items"] ?? []); $i++) {
 	/// print array
     $book[$i]['api_book_id'] = $data["items"][$i]['id'] ?? null;
     $book[$i]['isbn'] = $data["items"][$i]['volumeInfo']['industryIdentifiers'][1]['identifier'] ?? null;
@@ -51,7 +51,7 @@ function fetchBooks(string $searchTerm): ?array{
 	if($httpCode==429){
 		echo"Google hates us, waiting 5 seconds...\n";
 		sleep(5);
-		return fetchBooks($searchTerm);
+		return null;//fetchBooks($searchTerm);
 	}
 	//deals with other errors	
 	if($response==false || $httpCode!==200){
@@ -68,9 +68,9 @@ function fetchBooks(string $searchTerm): ?array{
 }
 
 //gets each book to send to rabbit
-function processPublishBooks(array $data):void{
-	$seenFile= __DIR__ . '/bookIDsInQueue.txt';
-	$seen = file_exists($seenFile) ? array_flip(file($seenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) : [];
+function processPublishBooks(array $data){
+	//$seenFile= __DIR__ . '/bookIDsInQueue.txt';
+	//$seen = file_exists($seenFile) ? array_flip(file($seenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) : [];
 	$count=0;
 	foreach($data as $book){
 
@@ -80,26 +80,12 @@ function processPublishBooks(array $data):void{
 
 		publishToRabbit($json);
 		$count++;
+		if($count > 10){ 
+			break;
+		}
 	}
 
 	echo "Published $count books to RabbitMQ :D !!\n";
+	if($count > 0){return true;} else {return false;}
 }
-
-$searchTerm=DEFAULT_SEARCH_TERM;
-if($argc > 1 && is_numeric($argv[1])){
-	$searchTerm=(int)$argv[1];
-}
-
-echo "url: " . buildUrl($searchTerm) . "\n";
-//echo "apikey: ".  API_KEY . "\n";
-
-echo "Fetching books for search term:'$searchTerm'... \n";
-$data=fetchBooks($searchTerm);
-if($data==null){
-	echo "Failed to fetch data D:\n";
-	exit(1);
-}
-$clean_data = cleanData($data);
-processPublishBooks($clean_data);
-echo "Done!! :D\n";
 ?>
