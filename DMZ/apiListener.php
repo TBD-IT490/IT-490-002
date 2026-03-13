@@ -2,7 +2,7 @@
 <?php
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/fetchData.php';
-require_once __DIR__ . '/fetchDataCron.php';
+//require_once __DIR__ . '/fetchDataCron.php';
 require_once __DIR__ .'/vendor/autoload.php'; /** rmq library */
 use PhpAmqpLib\Connection\AMQPStreamConnection; /**import RMQ classes*/
 use PhpAmqpLib\Message\AMQPMessage;
@@ -21,95 +21,92 @@ define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
 define('DB_NAME', 'noetic');
 
+//$log = new Logger('Noetic-DMZ-Listener');
+//$log->pushHandler(new StreamHandler(__DIR__ .'noetic-dmz.log', Logger::DEBUG));
+//$format = "%level_name%: %message%\n";
+//$formatter = new LineFormatter($format);
+//$cli=new StreamHandler('php://stdout', Logger::DEBUG);
+//$cli->setFormatter($formatter);
+//$log->pushHandler($cli);
 //connecting to matt
-$connection = new AMQPStreamConnection(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
-$channel = $connection->channel();
+echo "DMZ Listener Starting\n";
 
-$msg = new AMQPMessage(json_encode($data), ['delivery_mode' => 2]); //make msg persistent
+echo "[*] Connected to RMQ\n";
+echo "[*] Waiting for messages...\n";
+echo "[*] Press CTRL+C to exit\n";
 
-$channel->basic_publish($msg, '', 'api_queue');  // since queue alr made in rabbitmqpublish file right?
-
-//thank you google
-$channel->basic_consume(
-    'api_queue', //queue
-    '', //consumer tag
-    false, //no local
-    true, //no ack
-    false, //exclusive
-    false, //no wait
-    $callback //callback function
-    );
-    while ($channel->is_consuming()) {
-        $channel->wait();
-    }
-    $channel->close();
-    $connection->close();
-
-//connecting to nat, 
-//ctrl c ctrl v from db listener
-function connectDB(){
-    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-	if ($conn->connect_error) {
-		global $log;
-		$log->error('Database connection failed'. $conn->connect_error);
-		return null;
-	}
-	return $conn;
-}
+//listen
 
 //RMQ processing
 //ctrl c ctrl v from db listener
 //chat am i doing this right??
 function processMessage($req) {
 	global $log;
-	$routing_key_books = $req->delivery_info['routing_key_books'];
+    $routing_key = $req->delivery_info['routing_key'];
 	$message = json_decode($req->body, true);
+    if ($routing_key == 'api.on_demand') {
+        $response = onDemandAPICall($message);
+    } else {
+		$log->error('SOMEONE FORGOT ROUTING KEY >:( ' . $routing_key ."");
+	}
+
+
+
     //sending reply back
 	$reply_msg = new AMQPMessage(json_encode($response), ['correlation_id' => $req->get('correlation_id')]);	
 	$req->getChannel()->basic_publish($reply_msg, '', $req->get('reply_to'));
-	$log->info("".  $response['message'] . "");
+	//$log->info("".  $response['message'] . "");
 	$req->ack(); //tell rmq we done w/ msg
 }
 
-$callback = function(AMQPMessage $msg){
-    echo "Received message: " . $msg->body . "\n";
-    $data = json_decode($msg->body, true);
-    if(!isset($data['type']) || $data['type'] !== 'search') {
-        echo "Invalid message request type\n";
-        return;
-    }
-    $searchTerm = $data['query'] ?? '';
-    echo "Searching for book: " . $searchTerm . "\n";
-    //hey db do we have the book?
-    $raw_data=fetchBooks($searchTerm);
-    $db=connectDB();
-    $stmt = $db->prepare("SELECT * FROM books WHERE title LIKE ?");
-    $searchParam = "%$searchTerm%";
-    $stmt->bind_param("s", $searchParam);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        echo "Book found in DB for search term: " . $searchTerm . "\n";
-        echo "Returning data...\n";
-        $response=$results->fetch_all(MYSQLI_ASSOC);
-        }
-     else {
-        echo "No books found for search term: " . $searchTerm . "\n";
-        $response=fetchBooks($searchTerm);
-        $response=["status"=>"success", "data"=>"API Results r here"];
-    }  
-    
-    //published api
-    if($searchData){
-        $clean_data=cleanData($raw_data);
-        processPublishBooks($clean_data);
-        echo "Successfully fetched and published data for search term: " . $searchTerm . "\n";
-    }
-    else{
-        echo "Failed to fetch data :c";
+function tuff($searchTerms) {
+    $data=fetchBooks($searchTerms);
+    if($data==null){
+	echo"[" . date('c'). "] Cron failed to fetch data :c \n";
+	exit(1);
     }
 
-    $msg->ack(); //acknowledge message
+try {
+	$clean_data = cleanData($data);
+} catch (Exception $e) {
+	echo "". $e->getMessage() ."";
+}
+
+    return processPublishBooks($clean_data);
+}
+function onDemandAPICall($data) {
+
+    $searchTerm = $data['search_query'] ?? '';
+    echo "Searching for book: " . $searchTerm . "\n";
+    $tuff = tuff($searchTerm);    
+
+
+
+    if ($tuff) { 
+        return ["success"=> true];
+    }else {
+        return ["success"=> false];
+    }
 
 }
+$connection = new AMQPStreamConnection(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
+$channel = $connection->channel();
+$channel->exchange_declare('user_exchange', 'direct', false, true, false);
+$channel->queue_declare('api_queue', false, true, false, false); //creating queue if one not existent
+$channel->queue_bind('api_queue', 'user_exchange', 'api.on_demand');
+$channel->basic_consume('api_queue', '', false, false, false, false, 'processMessage');
+
+
+
+while ($channel->is_consuming()) {
+	$channel->wait();
+}
+
+//clean
+$channel->close();
+$connection->close();
+
+
+
+
 ?>
