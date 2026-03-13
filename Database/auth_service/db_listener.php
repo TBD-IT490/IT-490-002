@@ -395,11 +395,11 @@ function handleScheduleMeeting($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+	}/*
 	//validate fields
-	if(!isset($data['club_id'], $data['scheduled_time'], $data['agenda'])) {
+	if(!isset($data['club_id'], $data['event_title'], $data['event_date'], $data['event_time'], $data['event_format'], $data['notes'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
-	}
+	}*/
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -621,16 +621,17 @@ function handleDiscussions($data) {
 	}
 
 	//from front end
-	$club_id = $data['club_id'];
+	$club_id = $data['group_id']; 
 	//$user_id = $data['user_id'];
-	$message = $data['message'];
+	$message = $data['disc_message']; //changed tryna match front end
 
-	$stmt = $conn->prepare("INSERT INTO discussions (club_id, user_id, message) VALUES (?, ?, ?)");
+	//change variable u need to insert into db the club_book_id, user_id, and post_text
+	$stmt = $conn->prepare("INSERT INTO discussions (club_book_id, user_id, message) VALUES (?, ?, ?)");
 	$stmt->bind_param("iis", $club_id, $user_id, $message);
 
 	if ($stmt->execute()) {
 		$log->info("SUCCESS: Discussion message posted in club $club_id by user $user_id");
-		return ['success' => true, 'message' => 'Message posted!'];
+		return ['success' => true, 'message' => 'Message posted!']; //return stuff
 	}
 	return ['success' => false, 'message' => 'Failed to post discussion message.'];
 }
