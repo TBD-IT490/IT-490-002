@@ -82,7 +82,7 @@ $callback = function(AMQPMessage $msg){
     echo "Searching for book: " . $searchTerm . "\n";
     //hey db do we have the book?
     $raw_data=fetchBooks($searchTerm);
-    $db=connectDB();
+    $db=connectDB(); //do not do
     $stmt = $db->prepare("SELECT * FROM books WHERE title LIKE ?");
     $searchParam = "%$searchTerm%";
     $stmt->bind_param("s", $searchParam);

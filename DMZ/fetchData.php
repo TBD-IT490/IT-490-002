@@ -85,7 +85,7 @@ function processPublishBooks(array $data):void{
 	echo "Published $count books to RabbitMQ :D !!\n";
 }
 
-$searchTerm=DEFAULT_SEARCH_TERM;
+$searchTerm='';
 if($argc > 1 && is_numeric($argv[1])){
 	$searchTerm=(int)$argv[1];
 }
