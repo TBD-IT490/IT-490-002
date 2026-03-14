@@ -493,13 +493,13 @@ function handleScheduleMeeting($data) {
 
 	//var from front end
 	$club_id = $data['group_id']; 
-	$event_title = $data['event_title'];
-	$event_date = $data['event_date'];
-	$event_time = $data['event_time'];
-	$event_format = $data['event_format'];
-	$created_by = $data['created_by'];
+	$event_title = $data['title'] ?? 'Untitled gathering.';
+	$event_date = $data['date'] ?? '';
+	$event_time = $data['time'] ?? '';
+	$event_format = $data['format'] ?? '';
+	//$created_by = $data['created_by'];
 	$book = $data['book_id'];
-	$notes = $data['event_notes'];
+	$notes = $data['notes'] ?? '';
 
 	//change club_id to group_id once db gets updated ~~
 	$stmt = $conn->prepare("INSERT INTO club_meetings (club_id, event_title, event_date, event_time, event_format, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
