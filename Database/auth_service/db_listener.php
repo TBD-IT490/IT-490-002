@@ -229,7 +229,7 @@ function handleSearchBooks($data) {
 		return ['success' => false, 'message' => 'No search given!'];
 	} */
 	//why warning T^T
-	$search = $data['search'] ?? ''; //CHANGED to match front end - woohoo
+	$search = $data['search']  ?? ''; //CHANGED to match front end - woohoo
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -266,33 +266,39 @@ function handleSearchBooks($data) {
 	if ($result->num_rows === 0 && !empty($search)) {
         $res = rmq_rpc('api.on_demand', ["search_query" => $search]);
 
-		//erm now initial don't work but will look after sleep :)
-        if ($result->num_rows === 0 && !empty($search)) {
-        $log->info("Sent request to API for: $search");
-        $res = rmq_rpc('api.on_demand', ["search_query" => $search]);
+		$res = json_decode($res['books'], true); 
+		$books = $res;
+		foreach ($books as $book) {
+			handleBookCache($book);
+		}
 
-			//what if we add counter plus wait instead of just wait?
-			//will this lag? idk lwk losing my mind its 4 ;-;
-        	if ($res && ($res["success"] ?? false)) {
-            	$attempts = 0;
-            	while ($attempts < 15) {
-					//erm google says 2 seconds - if this don't work imma make it longer rahhh
-                	usleep(200000); 
-
-					//lets run this again smh >:( pls work
-                	$stmt->execute(); 
-                	$result = $stmt->get_result();
-
-                	if ($result->num_rows > 0) {
-                    	$log->info("PLS WORK: Found " . $result->num_rows . " books for $search");
-                    	break; 
-               		}
-                	$attempts++;
-            	}
-        	}
-    	}
-
+		$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
+		$like_query = '%' . $search . '%';
+		$stmt->bind_param("ss", $like_query, $like_query);
+		$stmt->execute();
+		$result = $stmt->get_result();
+		
     	$books = [];
+		if ($result) {
+			while ($row = $result->fetch_assoc()) {
+				$books[] = [
+					'book_id' => $row['book_id'], 
+					'title' => $row['title'], 
+					'author' => $row['author'], 
+					'cover_url' => $row['cover_url']
+				];
+    		}
+		}
+    	
+    
+    	$log->info("SUCCESS: Book search for query: " . $search . " found " . count($books) . " results");
+    	return [
+        	'success' => true, 
+        	'books' => $books, 
+        	'message' => 'Book search completed!'
+    	];
+	}
+	$books = [];
     	while ($row = $result->fetch_assoc()) {
         	$books[] = [
             	'book_id' => $row['book_id'], 
@@ -308,7 +314,6 @@ function handleSearchBooks($data) {
         	'books' => $books, 
         	'message' => 'Book search completed!'
     	];
-	}
 }
 
 //book.get - gets a single book by id and returns full details
@@ -966,6 +971,8 @@ function processMessage($req) {
 	global $log;
 	$routing_key = $req->delivery_info['routing_key'];
 	$message = json_decode($req->body, true);
+	echo print_r("RAHHH$routing_key", true);
+
 	if($routing_key==='user.login') {
 		$response = handleLogin($message);
 
