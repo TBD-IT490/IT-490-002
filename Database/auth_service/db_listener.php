@@ -235,6 +235,7 @@ function handleSearchBooks($data) {
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from search)!'];
 	}
+	/* - we gonna start over but keep js in case it dont work
 	while (true) {
 	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
 	$like_query = '%' . $search . '%';
@@ -254,16 +255,60 @@ function handleSearchBooks($data) {
 
 	}
 		break;
+	}*/
+	//copy from what mat had
+	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
+	$like_query = '%' . $search . '%';
+	$stmt->bind_param("ss", $like_query, $like_query);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	if ($result->num_rows === 0 && !empty($search)) {
+        $res = rmq_rpc('api.on_demand', ["search_query" => $search]);
+
+		//erm now initial don't work but will look after sleep :)
+        if ($result->num_rows === 0 && !empty($search)) {
+        $log->info("Sent request to API for: $search");
+        $res = rmq_rpc('api.on_demand', ["search_query" => $search]);
+
+			//what if we add counter plus wait instead of just wait?
+			//will this lag? idk lwk losing my mind its 4 ;-;
+        	if ($res && ($res["success"] ?? false)) {
+            	$attempts = 0;
+            	while ($attempts < 15) {
+					//erm google says 2 seconds - if this don't work imma make it longer rahhh
+                	usleep(200000); 
+
+					//lets run this again smh >:( pls work
+                	$stmt->execute(); 
+                	$result = $stmt->get_result();
+
+                	if ($result->num_rows > 0) {
+                    	$log->info("PLS WORK: Found " . $result->num_rows . " books for $search");
+                    	break; 
+               		}
+                	$attempts++;
+            	}
+        	}
+    	}
+
+    	$books = [];
+    	while ($row = $result->fetch_assoc()) {
+        	$books[] = [
+            	'book_id' => $row['book_id'], 
+            	'title' => $row['title'], 
+            	'author' => $row['author'], 
+            	'cover_url' => $row['cover_url']
+        	];
+    	}
+    
+    	$log->info("SUCCESS: Book search for query: " . $search . " found " . count($books) . " results");
+    	return [
+        	'success' => true, 
+        	'books' => $books, 
+        	'message' => 'Book search completed!'
+    	];
 	}
-	$books = [];
-	while ($row = $result->fetch_assoc()) {
-		//TODO add more rows for other stuff needed for return
-		$books[] = ['book_id' => $row['book_id'], 'title' => $row['title'], 'author' => $row['author'], 'cover_url' => $row['cover_url']];
-	}
-	
-	//debug search
-	$log->info("SUCCESS: Book search for query,".$search ." found ". count($books) ." results");
-	return ['success' => true, 'books' => $books, 'message' => 'Book search completed!'];
 }
 
 //book.get - gets a single book by id and returns full details
