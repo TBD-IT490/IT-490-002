@@ -37,6 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_event'])) {
 
  $bselect_res      = rmq_rpc('book.list', ['fields' => ['id', 'title']]); //'id,title'
  $books_for_select = $bselect_res['books'] ?? [];
+
+ //showing member circles - pls work :c - update IT WORKS! (im tired its 2:30 ;-;)
+ $gselect_res = rmq_rpc('group.list', ['username' => $_SESSION['username']]);
+ $my_groups   = $gselect_res['groups'] ?? [];
+
+ //showing meetings for all circles
+ $mselect_res = rmq_rpc('schedule.list', [
+    'username' => $_SESSION['username'],
+    'group_id' => $filter_group
+    ]);
+ $filtered_schedule = $mselect_res['meetings'] ?? [];
 ?>
 
 <!DOCTYPE html>

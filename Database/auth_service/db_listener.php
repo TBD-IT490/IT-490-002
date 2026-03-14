@@ -339,7 +339,7 @@ function handleCreateClub($data) {
 
 	$group_name = $data['name']; 
     $description = $data['group_desc']; 
-    $book = $data['book_id'] ?? null; 
+    //$book = $data['book_id'] ?? null; --> add when book gets added to front end 
     $invite_code = strtoupper(substr(md5(uniqid(rand(), true)),0,8));
 	$stmt = $conn->prepare("INSERT INTO book_clubs (club_name, group_desc, invite_code, created_by) VALUES (?, ?, ?, ?)");
     $stmt->bind_param("sssi", $group_name, $description, $invite_code, $user_id);
@@ -412,7 +412,7 @@ function handleListGroups($data) {
 
 	$groups = [];
 	while ($row = $result->fetch_assoc()) {
-		$groups[] = ['group_id' => $row['club_id'], 'group_name' => $row['club_name'], 'group_desc' => $row['group_desc']];
+		$groups[] = ['id' => $row['club_id'], 'name' => $row['club_name'], 'group_desc' => $row['group_desc']];
 	}
 	$log->info("SUCCESS: Retrieved all groups, found " . count($groups) . " results");
 	return ['success' => true, 'groups' => $groups, 'message' => 'Groups retrieved!'];
@@ -492,14 +492,14 @@ function handleScheduleMeeting($data) {
 	}
 
 	//var from front end
-	$club_id = $data['club_id']; 
+	$club_id = $data['group_id']; 
 	$event_title = $data['event_title'];
 	$event_date = $data['event_date'];
 	$event_time = $data['event_time'];
 	$event_format = $data['event_format'];
 	$created_by = $data['created_by'];
 	$book = $data['book_id'];
-	$notes = $data['notes'];
+	$notes = $data['event_notes'];
 
 	//change club_id to group_id once db gets updated ~~
 	$stmt = $conn->prepare("INSERT INTO club_meetings (club_id, event_title, event_date, event_time, event_format, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -529,7 +529,7 @@ function handleScheduleList($data) {
 		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list meetings)!]'];
 	}
 
-	$club_id = $data['club_id']; //TODO change to group_id once db gets updated
+	$club_id = $data['group_id']; //TODO change to group_id once db gets updated
 
 	$stmt = $conn->prepare("SELECT meeting_id, book_id, event_title, event_date, event_time, event_format, notes FROM club_meetings WHERE club_id = ?");
 	$stmt->bind_param("i", $club_id);
@@ -692,7 +692,7 @@ function handleGroupBookRecs($data) { //faaaahh
 	return ['success' => true, 'message' => 'Book rec here!'];
 }
 
-//posting discussions*****
+//creating a discussion thread 
 function handleDiscussions($data) {
 	global $log;
 	$conn = connectDB();
@@ -706,16 +706,20 @@ function handleDiscussions($data) {
 	}
 
 	//from front end
-	$club_id = $data['group_id']; 
+	//$club_id = $data['group_id']; 
 	//$user_id = $data['user_id'];
+	$disc_name = $data['disc_name'];
+	//$club_book = $data['disc_book'];
 	$message = $data['disc_message']; //changed tryna match front end
 
 	//change variable u need to insert into db the club_book_id, user_id, and post_text
-	$stmt = $conn->prepare("INSERT INTO discussions (club_book_id, user_id, message) VALUES (?, ?, ?)");
-	$stmt->bind_param("iis", $club_id, $user_id, $message);
+	$stmt = $conn->prepare("INSERT INTO discussions (discussion_name, user_id, post_text) VALUES (?, ?, ?)");
+	$stmt->bind_param("sis", $disc_name, $user_id, $message);
 
 	if ($stmt->execute()) {
-		$log->info("SUCCESS: Discussion message posted in club $club_id by user $user_id");
+		$disc_id = $conn->insert_id;
+
+		$log->info("SUCCESS: Discussion message posted in discussion $disc_id by user $user_id");
 		return ['success' => true, 'message' => 'Message posted!']; //return stuff
 	}
 	return ['success' => false, 'message' => 'Failed to post discussion message.'];
@@ -737,7 +741,7 @@ function handleDiscussionReply($data) {
 	//from front end
 	$discussion_id = $data['discussion_id'];
 	//$user_id = $data['user_id'];
-	$message = $data['message'];
+	$message = $data['discussion_message'];
 
 	$stmt = $conn->prepare("INSERT INTO discussion_replies (discussion_id, user_id, message) VALUES (?, ?, ?)");
 	$stmt->bind_param("iis", $discussion_id, $user_id, $message);
@@ -948,7 +952,7 @@ function processMessage($req) {
 		$response = handleScheduleMeeting($message);
 
 	}elseif($routing_key==='schedule.list') { //TODO add new route for pulling up scheduled meetings*****
-		//$response = handleScheduleList($message);
+		$response = handleScheduleList($message);
 	
 	}elseif($routing_key==='suggestion.create') { //creating book suggestion
 		$response = handleCreateSuggestion($message);
