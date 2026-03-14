@@ -71,8 +71,9 @@ function fetchBooks(string $searchTerm): ?array{
 function processPublishBooks(array $data){
 	//$seenFile= __DIR__ . '/bookIDsInQueue.txt';
 	//$seen = file_exists($seenFile) ? array_flip(file($seenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) : [];
-	$count=0;
-	foreach($data as $book){
+	$count=count($data);
+	$books = [];
+	/*foreach($data as $book){
 
 		//turns book entry into json string
 		$json=json_encode($book);
@@ -83,9 +84,11 @@ function processPublishBooks(array $data){
 		if($count > 10){ 
 			break;
 		}
-	}
-
+	}*/
+	$json=json_encode($data);
+	return $json;
+	//publishToRabbit($json);
 	echo "Published $count books to RabbitMQ :D !!\n";
-	if($count > 0){return true;} else {return false;}
+	//if($count > 0){return true;} else {return false;}
 }
 ?>

@@ -49,9 +49,6 @@ function processMessage($req) {
     } else {
 		$log->error('SOMEONE FORGOT ROUTING KEY >:( ' . $routing_key ."");
 	}
-
-
-
     //sending reply back
 	$reply_msg = new AMQPMessage(json_encode($response), ['correlation_id' => $req->get('correlation_id')]);	
 	$req->getChannel()->basic_publish($reply_msg, '', $req->get('reply_to'));
@@ -83,7 +80,7 @@ function onDemandAPICall($data) {
 
 
     if ($tuff) { 
-        return ["success"=> true];
+        return ["success"=> true, "books" => $tuff];
     }else {
         return ["success"=> false];
     }
