@@ -1,1 +1,6 @@
 Database/auth_service/vendor/
+Frontend/vendor/
+Frontend/composer.lock
+Database/auth_servicenoetic-database.log
+Database/auth_service/.db_listener.php.swp
+Database/auth_service/composer.lock
