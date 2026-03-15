@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'username' => $_SESSION['username'],
         ]);
         if ($result['success'] ?? false) {
-            $disc_name = htmlspecialchars($result['disc_name']);
+            $disc_name = htmlspecialchars($result['discussion_name']);
             $msg = 'success:Your reply has been posted to the discussion! Yay!';
         } else {
             $msg = 'error:Could not post reply. Please try again.';
@@ -38,14 +38,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //handleDiscussions -> discussion.create
     if (isset($_POST['disc_create'])) {
         $result = rmq_rpc('discussion.create', [
-            'disc_name' => trim($_POST['disc_name']),
+            'discussion_name' => trim($_POST['discussion_name']),
             //add book id ?? - if so how to get book?
             //'disc_book' => trim($_POST['club_book']),
-            'disc_message' => trim($_POST['disc_message']),
+            'discussion_message' => trim($_POST['discussion_message']),
             'username' => $_SESSION['username'],
         ]);
         if ($result['success'] ?? false) {
-            $disc_name = htmlspecialchars($result['disc_name']);
+            $disc_name = htmlspecialchars($result['discussion_name']);
             //add replies too?
             //do i need to add anything else?
             $msg = 'success:Discussion created!';
@@ -95,7 +95,7 @@ if ($view_id) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Noetic — Threads</title>
+    <title>Noetic — Discussions</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">   
     <link rel="stylesheet" href="styles.css">
@@ -107,8 +107,58 @@ if ($view_id) {
     </div>
 <?php endif; ?>
  
+<?php if ($view_id): ?>
 
+     <?php if (!$discussions): ?>
+        <p style="color:var(--text-muted); font-style:italic;">No discussions.</p>
+    <?php else: ?>
+
+    <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">
+        <a href="groups.php" style="color:var(--umber); text-decoration:none;">Discussions</a>
+        &nbsp;›&nbsp; <?php echo htmlspecialchars($discussions['name']); ?>
+    </div>
+
+    <!-- add the book widget or wtv here when it works -->
+
+    <?php endif; ?>
+<?php else: ?>
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <h2 class="page-heading mb-0">Reading Discussions</h2>
+    <button class="btn-n btn" data-bs-toggle="modal" data-bs-target="#createModal">
+        <i class="bi bi-plus-lg"></i> New Discussions
+    </button>
+</div>
  
+
+
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background:var(--card); border:1px solid rgba(134,113,91,0.3); border-radius:4px;">
+            <div class="modal-header" style="border-bottom:1px solid rgba(134,113,91,0.2);">
+                <h5 class="modal-title" style="font-family:'IM Fell English',serif; color:var(--blush);">Found a New Thread</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post">
+                    <input type="hidden" name="disc_create" value="1">
+                    <div class="mb-3">
+                        <label class="form-label">Discussion Name</label>
+                        <input type="text" class="form-control" name="discussion_name" placeholder="e.g. Who is the better Jojo?" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" name="discussion_message" rows="3" placeholder="Post message..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-n btn w-100">Create Discussion</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<?php endif; ?>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <?php require_once 'includes/footer.php'; ?>
 </body>
