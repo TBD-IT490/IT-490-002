@@ -758,9 +758,9 @@ function handleDiscussions($data) {
 	//from front end
 	//$club_id = $data['group_id']; 
 	//$user_id = $data['user_id'];
-	$disc_name = $data['disc_name'];
+	$disc_name = $data['discussion_name'];
 	//$club_book = $data['disc_book'];
-	$message = $data['disc_message']; //changed tryna match front end
+	$message = $data['discussion_message']; //changed tryna match front end
 
 	//change variable u need to insert into db the club_book_id, user_id, and post_text
 	$stmt = $conn->prepare("INSERT INTO discussions (discussion_name, user_id, post_text) VALUES (?, ?, ?)");
