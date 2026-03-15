@@ -809,19 +809,22 @@ function handleDiscussionList($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
+	/* -uncomment after attatching discussions to group
 	if(!isset($data['club_id'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
-	}
+	}*/
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (tryna list discussions)!]'];
 	}
 
-	$club_id = $data['club_id'];
+	//$club_id = $data['club_id'];
 
-	$stmt = $conn->prepare("SELECT d.discussion_id, d.post_text AS discussion_message, d.created_at AS discussion_created, u.user_id FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.club_id = ?");
-	$stmt->bind_param("i", $club_id);
+	$stmt = $conn->prepare("SELECT d.discussion_id, d.post_text AS discussion_message, d.created_at AS discussion_created, u.id FROM discussions d JOIN users u ON d.user_id = u.id");
+
+	//$stmt = $conn->prepare("SELECT d.discussion_id, d.post_text AS discussion_message, d.created_at AS discussion_created, u.user_id FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.club_id = ?");
+	//$stmt->bind_param("i", $club_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
 
@@ -834,7 +837,9 @@ function handleDiscussionList($data) {
 			'username' => $row['username']
 		];
 	}
-	$log->info("SUCCESS: Retrieved " . count($discussions) . " discussions for club id: $club_id");
+	$log->info("SUCCESS: Retrieved " . count($discussions) . " discussions");
+
+	//$log->info("SUCCESS: Retrieved " . count($discussions) . " discussions for club id: $club_id");
 	return ['success' => true, 'discussions' => $discussions, 'message' => 'Discussions retrieved!'];
 }
 
@@ -971,7 +976,7 @@ function processMessage($req) {
 	global $log;
 	$routing_key = $req->delivery_info['routing_key'];
 	$message = json_decode($req->body, true);
-	echo print_r("RAHHH$routing_key", true);
+	echo print_r("RAHHH$routing_key\n", true);
 
 	if($routing_key==='user.login') {
 		$response = handleLogin($message);
