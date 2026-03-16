@@ -67,12 +67,12 @@ if ($view_id) {
         'username' => $_SESSION['username'] ?? '',
     ]);
     $discussions = $all_disc_res['discussions'] ?? [];
-    /* erm test without if else see if i need to add the new key or not
-    $disc_res = rmq_rpc('discussion.get', [  //nat add new key function on db listener 
-        'discussion_id' => $view_id,
-        'username' => $_SESSION['username'],
-    ]);
-    $discussion = $disc_res['discussion'] ?? null;
+    //erm test without if else see if i need to add the new key or not
+    //$disc_res = rmq_rpc('discussion.get', [  //nat add new key function on db listener 
+    //    'discussion_id' => $view_id,
+    //    'username' => $_SESSION['username'],
+    //]);
+    //$discussion = $disc_res['discussion'] ?? null;
 } else {
     $all_disc_res = rmq_rpc('discussion.list', [
         'discussion_id' => $view_id,
@@ -85,7 +85,7 @@ if ($view_id) {
         //discussion.list - gets all discussions for group_id asking for id, author, content, created, replies
         
         //hopefully this works pray for me too it is also midnight :c  
-        */ 
+         
 }
 
 ?>
@@ -129,6 +129,50 @@ if ($view_id) {
     </button>
 </div>
  
+
+<div class="row g-4">
+    <?php foreach ($discussions as $d):
+        $cb        = getBookById((int)($g['current_book_id'] ?? 0));
+        $is_member = in_array($_SESSION['username'], $g['members'] ?? []);
+    ?>
+    <div class="col-md-6 col-lg-4">
+        <div class="n-card p-4 h-100" style="position:relative;">
+            <?php if ($is_member): ?>
+            <span class="n-badge" style="position:absolute; top:1rem; right:1rem;">Member</span>
+            <?php endif; ?>
+            <h5 style="font-family:'IM Fell English',serif; margin-bottom:0.3rem;">
+                <?php echo htmlspecialchars($g['discussion_name']); ?>
+            </h5>
+            <p style="font-size:0.9rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;">
+                <?php echo htmlspecialchars($g['discussion_message'] ?? $g['discussion_message']); ?>
+            </p>
+            <?php if ($cb): ?>
+            <div class="d-flex gap-3 align-items-center mb-3">
+                <img src="<?php echo htmlspecialchars($cb['cover']); ?>"
+                     style="width:44px;height:66px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;" alt="">
+                <div>
+                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Reading Now</div>
+                    <div style="font-style:italic; font-size:0.95rem;"><?php echo htmlspecialchars($cb['title']); ?></div>
+                    <div style="font-size:0.8rem; color:var(--text-muted);"><?php echo htmlspecialchars($cb['author']); ?></div>
+                </div>
+            </div>
+            <?php endif; ?>
+            <div class="d-flex align-items-center justify-content-between">
+                <div style="font-size:0.82rem; color:var(--text-muted);">
+                    <i class="bi bi-people"></i> <?php echo $g['member_count'] ?? 0; ?> members
+                </div>
+                <a href="groups.php?id=<?php echo $g['group_id']; ?>" class="btn-n-outline btn btn-sm">Enter Circle</a>
+            </div>
+        </div>
+    </div>
+    <?php endforeach; ?>
+    <?php if (empty($groups)): ?>
+    <div class="col-12 text-center" style="color:var(--text-muted); padding:3rem; font-style:italic;">
+        No circles found. Create one or join with an invite code.
+    </div>
+    <?php endif; ?>
+</div>
+
 
 
 <div class="modal fade" id="createModal" tabindex="-1">

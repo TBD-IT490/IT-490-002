@@ -4,3 +4,6 @@ Frontend/composer.lock
 Database/auth_servicenoetic-database.log
 Database/auth_service/.db_listener.php.swp
 Database/auth_service/composer.lock
+DMZ/composer.lock
+DMZ/vendor/
+DMZ/cron.log
