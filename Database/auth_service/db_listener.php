@@ -729,11 +729,11 @@ function handlePersonalBookRecs($data) {
 
 		$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books LIMIT 3");
 	} else {
-		echo "it broke here";
+		//echo "it broke here";
 		$top_genre = $genre_res['genre'];
 		$log->info("Top genre for user $user_id is $top_genre");
 
-		$stmt = $conn->prepare("SELECT b.book_id, b.title, b.author, b.cover_url, AVG(a.rating) as avg_rating FROM books b LEFT JOIN book_reviews r ON b.book_id = r.book_id AND r.user_id = ? LEFT JOIN book_reviews a ON b.book_id = a.book_id WHERE b.genre = ? AND r.review_id IS NULL GROUP BY b.book_id LIMIT 3");
+		$stmt = $conn->prepare("SELECT b.book_id, b.title, b.author, b.cover_url, ROUND(AVG(a.rating), 1) as avg_rating FROM books b LEFT JOIN book_reviews r ON b.book_id = r.book_id AND r.user_id = ? LEFT JOIN book_reviews a ON b.book_id = a.book_id WHERE b.genre = ? AND r.review_id IS NULL GROUP BY b.book_id LIMIT 3");
 		$stmt->bind_param("is", $user_id, $top_genre);
 	}
 
@@ -767,14 +767,45 @@ function handleGroupBookRecs($data) { //faaaahh
 	}
 
 	$club_id = $data['group_id'];
-	$book_id = $data['book_id'];
-	$note = $data['note'];
+	echo "club_id is $club_id\n"; //smh here we go again -_-
 
-	$genre_score = [];
-	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as score FROM book_reviews r JOIN books b ON r.book_id = b.book_id WHERE r.user_id = ? GROUP BY b.genre");
-	$stmt->bind_param("i", $user_id);
+	//group top genre
+	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as group_score FROM book_reviews r JOIN books b ON r.book_id = b.book_id JOIN club_members cm ON r.user_id = cm.user_id WHERE cm.club_id = ? GROUP BY b.genre ORDER BY group_score DESC LIMIT 1");
+	$stmt->bind_param("i", $club_id);
+	$stmt->execute();
+	$genre_res = $stmt->get_result()->fetch_assoc();
 
-	return ['success' => true, 'message' => 'Book rec here!'];
+	//if person has no reviews
+	if (!$genre_res) {
+		$log->info("Group has no reviews, returning books from library...");
+
+		$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books LIMIT 3");
+	} else {
+		//echo "it broke here";
+		$top_genre = $genre_res['genre'];
+		$log->info("Top genre for the group $club_id is $top_genre");
+
+		$stmt = $conn->prepare("SELECT b.book_id, b.title, b.author, b.cover_url FROM books b 
+								LEFT JOIN (SELECT r.book_id FROM book_reviews r JOIN club_members cm ON r.user_id = cm.user_id 
+								WHERE cm.club_id = ?) gh ON b.book_id = gh.book_id WHERE b.genre = ? AND gh.book_id IS NULL LIMIT 3");
+		$stmt->bind_param("is", $club_id, $top_genre);
+	}
+
+	$stmt->execute();
+	$result = $stmt->get_result();
+	$recommendations = [];
+
+	while ($row = $result->fetch_assoc()) {
+		$recommendations[] = [
+			'book_id' => $row['book_id'],
+			'title' => $row['title'],
+			'author' => $row['author'],
+			'cover_url' => $row['cover_url'],
+			//'rating' => $row['avg_rating'] ?? 'No ratings yet'
+		];
+	}
+
+	return ['success' => true, 'recommendations' => $recommendations, 'message' => 'Book rec here!'];
 }
 
 //creating a discussion thread 
