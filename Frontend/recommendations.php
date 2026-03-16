@@ -31,18 +31,6 @@ if ($view_id) {
     }, $rec);
     $books_res = rmq_rpc('recommendation.personal',['username' => $_SESSION['username'] ?? '']);
     $rec = $books_res['recommendations'] ?? [];
-    $rec_group = array_map(function($b) {
-        return [
-            'id' => $b['book_id'] ?? $b['id'],
-            'title' => $b['title'] ,
-            'author'=> $b['author'] ,
-            'cover' => $b['cover_url'] ?? $b['cover'] ,
-            'genre' => $b['genre'] ,
-            'rating' => $b['rating'] ,
-        ];
-    }, $rec);
-    $books_res = rmq_rpc('recommendation.personal',['username' => $_SESSION['username'] ?? '']);
-    $rec = $books_res['recommendations'] ?? [];
     $rec_trend = array_map(function($b) {
         return [
             'id' => $b['book_id'] ?? $b['id'],
@@ -53,7 +41,24 @@ if ($view_id) {
             'rating' => $b['rating'] ,
         ];
     }, $rec);
-}
+    $all_groups_res = rmq_rpc('group.list', [
+        'username' => $_SESSION['username'],
+    ]);
+
+    $groups = $all_groups_res['groups'];
+    $books_res = rmq_rpc('recommendation.groups',['username' => $_SESSION['username'] ?? '', 'group_id'=> $groups[0]['id']]);
+    $rec = $books_res['recommendations'] ?? [];
+    $rec_group = array_map(function($b) {
+        return [
+            'id' => $b['book_id'] ?? $b['id'],
+            'title' => $b['title'] ,
+            'author'=> $b['author'] ,
+            'cover' => $b['cover_url'] ?? $b['cover'] ,
+            'genre' => $b['genre'] ,
+            'rating' => $b['rating'] ,
+        ];
+    }, $rec);
+    }
 
 ?>
 <!DOCTYPE html>
@@ -112,7 +117,7 @@ if ($view_id) {
 
 
 <div class="row g-3">
-    <?php foreach ($rec_you as $b): ?>
+    <?php foreach ($rec_group as $b): ?>
     <div class="col-sm-6 col-md-4 col-lg-3">
         <a href="books.php?id=<?php echo $b['id']; ?>" class="book-card">
             <div class="n-card p-3 h-100">
@@ -129,7 +134,7 @@ if ($view_id) {
         </a>
     </div>
     <?php endforeach; ?>
-    <?php if (empty($rec_you)): ?>
+    <?php if (empty($rec_group)): ?>
     <div class="col-12 text-center no-books-msg">
         No books found, try reviewing books.
     </div>
