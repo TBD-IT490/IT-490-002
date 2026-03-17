@@ -72,28 +72,22 @@ try {
     return processPublishBooks($clean_data);
 }
 function onDemandAPICall($data) {
-
     $searchTerm = $data['search_query'] ?? '';
     echo "Searching for book: " . $searchTerm . "\n";
     $tuff = tuff($searchTerm);    
-
-
-
     if ($tuff) { 
         return ["success"=> true, "books" => $tuff];
     }else {
         return ["success"=> false];
     }
-
 }
+
 $connection = new AMQPStreamConnection(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
 $channel = $connection->channel();
 $channel->exchange_declare('user_exchange', 'direct', false, true, false);
 $channel->queue_declare('api_queue', false, true, false, false); //creating queue if one not existent
 $channel->queue_bind('api_queue', 'user_exchange', 'api.on_demand');
 $channel->basic_consume('api_queue', '', false, false, false, false, 'processMessage');
-
-
 
 while ($channel->is_consuming()) {
 	$channel->wait();

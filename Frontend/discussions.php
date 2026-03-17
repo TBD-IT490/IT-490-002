@@ -11,7 +11,7 @@ require_once 'includes/data.php';
 require_once 'includes/header.php';
 
 //variables go here for nat
-$view_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
+//$view_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $msg = '';
 
 //send nat info hehe - should add && view_id ??
@@ -43,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             //'disc_book' => trim($_POST['club_book']),
             'discussion_message' => trim($_POST['discussion_message']),
             'username' => $_SESSION['username'],
+            'group_id' => $_POST['book_id']
         ]);
         if ($result['success'] ?? false) {
             $disc_name = htmlspecialchars($result['discussion_name']);
@@ -56,6 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
+$groups = rmq_rpc("group.list",['username' => $_SESSION['username']]);
+$groups_for_select = $groups['groups'];
 
 //also sending nat info but getting some back
 if ($view_id) {
@@ -81,6 +84,7 @@ if ($view_id) {
         'username' => $_SESSION['username'] ?? '',
     ]);
     $discussions = $all_disc_res['discussions'] ?? [];
+    $msg = "j" . count($discussions);
         //handleDiscussionList -> discussion.list
         //discussion.list - gets all discussions for group_id asking for id, author, content, created, replies
         
@@ -108,18 +112,13 @@ if ($view_id) {
 <?php endif; ?>
  
 <?php if ($view_id): ?>
-
      <?php if (!$discussions): ?>
         <p style="color:var(--text-muted); font-style:italic;">No discussions.</p>
     <?php else: ?>
-
     <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">
         <a href="groups.php" style="color:var(--umber); text-decoration:none;">Discussions</a>
         &nbsp;›&nbsp; <?php echo htmlspecialchars($discussions['name']); ?>
     </div>
-
-    <!-- add the book widget or wtv here when it works -->
-
     <?php endif; ?>
 <?php else: ?>
 <div class="d-flex justify-content-between align-items-end mb-4">
@@ -151,9 +150,8 @@ if ($view_id) {
                 <img src="<?php echo htmlspecialchars($cb['cover']); ?>"
                      style="width:44px;height:66px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;" alt="">
                 <div>
-                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Reading Now</div>
-                    <div style="font-style:italic; font-size:0.95rem;"><?php echo htmlspecialchars($cb['title']); ?></div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);"><?php echo htmlspecialchars($cb['author']); ?></div>
+                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);"><?php echo htmlspecialchars($d['discussion_name']); ?></div>
+                    <div style="font-style:italic; font-size:0.95rem;"><?php echo htmlspecialchars($d['discussion_name']); ?></div>
                 </div>
             </div>
             <?php endif; ?>
@@ -161,14 +159,14 @@ if ($view_id) {
                 <div style="font-size:0.82rem; color:var(--text-muted);">
                     <i class="bi bi-people"></i> <?php echo $g['member_count'] ?? 0; ?> members
                 </div>
-                <a href="groups.php?id=<?php echo $g['group_id']; ?>" class="btn-n-outline btn btn-sm">Enter Circle</a>
+                <a href="groups.php?id=<?php echo $g['group_id']; ?>" class="btn-n-outline btn btn-sm">Enter Discussion</a>
             </div>
         </div>
     </div>
     <?php endforeach; ?>
-    <?php if (empty($groups)): ?>
+    <?php if (empty($discussions)): ?>
     <div class="col-12 text-center" style="color:var(--text-muted); padding:3rem; font-style:italic;">
-        No circles found. Create one or join with an invite code.
+        No discussions found. Create one or join one.
     </div>
     <?php endif; ?>
 </div>
@@ -185,6 +183,14 @@ if ($view_id) {
             <div class="modal-body">
                 <form method="post">
                     <input type="hidden" name="disc_create" value="1">
+                    <div class="mb-3">
+                        <label class="form-label">Group</label>
+                        <select class="form-select" name="book_id" required>
+                            <?php foreach ($groups_for_select as $b): ?>
+                            <option value="<?php echo $b['id']; ?>"><?php echo htmlspecialchars($b['name']); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Discussion Name</label>
                         <input type="text" class="form-control" name="discussion_name" placeholder="e.g. Who is the better Jojo?" required>
