@@ -25,6 +25,78 @@ $cli=new StreamHandler('php://stdout', Logger::DEBUG);
 $cli->setFormatter($formatter);
 $log->pushHandler($cli);
 
+
+function rmq_rpc(string $action, array $payload = []): ?array {
+    global $_DEBUG_LOG;
+    try {
+        $connection = new AMQPStreamConnection(
+            RMQ_HOST,
+            RMQ_PORT,
+            RMQ_USER,
+            RMQ_PASS
+        );
+
+        $channel = $connection->channel();
+        $channel->exchange_declare('user_exchange', 'direct', false, true, false);
+        $channel->queue_declare('user_events_queue', false, true, false, false);
+        $channel->basic_qos(null, 1, null);
+
+        
+		
+		list($callback_queue,,) = $channel->queue_declare('', false, false, true, false);
+        $response = null;
+        $corr_id = uniqid();
+        $onResponse = function($msg) use($corr_id, &$response) {
+            if ($msg->get('correlation_id') === $corr_id) {
+                $response = $msg->getBody();
+            }
+        };
+        $channel->basic_consume($callback_queue, '', false, true, false, false, $onResponse);
+
+        //$payload['user_id'] = $_SESSION['id'] ?? null;
+        //$payload['username'] = $_SESSION['username'] ?? null;
+
+        $msg = new AMQPMessage(
+            json_encode($payload),
+            [
+                'delivery_mode' => 2,
+                'correlation_id' => $corr_id,
+                'reply_to' => $callback_queue,
+            ]
+        );
+
+        $channel->basic_publish($msg, 'user_exchange', $action);
+
+        while ($response === null) {
+            $channel->wait(null, false, 0); 
+        }
+
+
+        $decoded = json_decode($response, true);
+        
+        $_DEBUG_LOG[] = [
+            'action' => $action,
+            'request' => $payload,
+            'response' => $decoded,
+            'raw' => $response,
+        ];
+ 		$channel->close();
+        $connection->close();        
+        return $decoded;
+
+        //debugging because taryn sucks at php and she doesn't know if it's working or not
+    } catch (\Exception $e) {
+        error_log("rmq_rpc error for '$action': " . $e->getMessage());
+        $_DEBUG_LOG[] = [
+            'action' => $action,
+            'request' => $payload,
+            'error' => $e->getMessage(),
+        ];
+        return null;
+    }
+}
+
+
 //db connection
 function connectDB() {
 	$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -157,28 +229,91 @@ function handleSearchBooks($data) {
 		return ['success' => false, 'message' => 'No search given!'];
 	} */
 	//why warning T^T
-	$search = $data['search'] ?? ''; //CHANGED to match front end - woohoo
+	$search = $data['search']  ?? ''; //CHANGED to match front end - woohoo
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (from search)!'];
 	}
-
+	/* - we gonna start over but keep js in case it dont work
+	while (true) {
 	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
 	$like_query = '%' . $search . '%';
 	$stmt->bind_param("ss", $like_query, $like_query);
 	$stmt->execute();
 	$result = $stmt->get_result();
 
-	$books = [];
-	while ($row = $result->fetch_assoc()) {
-		//TODO add more rows for other stuff needed for return
-		$books[] = ['book_id' => $row['book_id'], 'title' => $row['title'], 'author' => $row['author'], 'cover_url' => $row['cover_url']];
-	}
+	if ($result->num_rows === 0) { 
+		$res = rmq_rpc('api.on_demand',["search_query" => $like_query]);
+		if ($res["success"] === true) {
+			
+		}
+		elseif ($res["success"] === false) {
+			$log->debug("something went wrong");
+			break;
+		}
 
-	//debug search
-	$log->info("SUCCESS: Book search for query,".$search ." found ". count($books) ." results");
-	return ['success' => true, 'books' => $books, 'message' => 'Book search completed!'];
+	}
+		break;
+	}*/
+	//copy from what mat had
+	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
+	$like_query = '%' . $search . '%';
+	$stmt->bind_param("ss", $like_query, $like_query);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	if ($result->num_rows === 0 && !empty($search)) {
+        $res = rmq_rpc('api.on_demand', ["search_query" => $search]);
+
+		$res = json_decode($res['books'], true); 
+		$books = $res;
+		foreach ($books as $book) {
+			handleBookCache($book);
+		}
+
+		$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
+		$like_query = '%' . $search . '%';
+		$stmt->bind_param("ss", $like_query, $like_query);
+		$stmt->execute();
+		$result = $stmt->get_result();
+		
+    	$books = [];
+		if ($result) {
+			while ($row = $result->fetch_assoc()) {
+				$books[] = [
+					'book_id' => $row['book_id'], 
+					'title' => $row['title'], 
+					'author' => $row['author'], 
+					'cover_url' => $row['cover_url']
+				];
+    		}
+		}
+    	
+    
+    	$log->info("SUCCESS: Book search for query: " . $search . " found " . count($books) . " results");
+    	return [
+        	'success' => true, 
+        	'books' => $books, 
+        	'message' => 'Book search completed!'
+    	];
+	}
+	$books = [];
+    	while ($row = $result->fetch_assoc()) {
+        	$books[] = [
+            	'book_id' => $row['book_id'], 
+            	'title' => $row['title'], 
+            	'author' => $row['author'], 
+            	'cover_url' => $row['cover_url']
+        	];
+    	}
+    
+    	$log->info("SUCCESS: Book search for query: " . $search . " found " . count($books) . " results");
+    	return [
+        	'success' => true, 
+        	'books' => $books, 
+        	'message' => 'Book search completed!'
+    	];
 }
 
 //book.get - gets a single book by id and returns full details
@@ -254,7 +389,7 @@ function handleCreateClub($data) {
 
 	$group_name = $data['name']; 
     $description = $data['group_desc']; 
-    $book = $data['book_id'] ?? null; 
+    //$book = $data['book_id'] ?? null; --> add when book gets added to front end 
     $invite_code = strtoupper(substr(md5(uniqid(rand(), true)),0,8));
 	$stmt = $conn->prepare("INSERT INTO book_clubs (club_name, group_desc, invite_code, created_by) VALUES (?, ?, ?, ?)");
     $stmt->bind_param("sssi", $group_name, $description, $invite_code, $user_id);
@@ -327,7 +462,7 @@ function handleListGroups($data) {
 
 	$groups = [];
 	while ($row = $result->fetch_assoc()) {
-		$groups[] = ['group_id' => $row['club_id'], 'group_name' => $row['club_name'], 'group_desc' => $row['group_desc']];
+		$groups[] = ['id' => $row['club_id'], 'name' => $row['club_name'], 'group_desc' => $row['group_desc']];
 	}
 	$log->info("SUCCESS: Retrieved all groups, found " . count($groups) . " results");
 	return ['success' => true, 'groups' => $groups, 'message' => 'Groups retrieved!'];
@@ -395,11 +530,11 @@ function handleScheduleMeeting($data) {
 	$conn = connectDB();
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+	}/*
 	//validate fields
-	if(!isset($data['club_id'], $data['scheduled_time'], $data['agenda'])) {
+	if(!isset($data['club_id'], $data['event_title'], $data['event_date'], $data['event_time'], $data['event_format'], $data['notes'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
-	}
+	}*/
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -407,14 +542,14 @@ function handleScheduleMeeting($data) {
 	}
 
 	//var from front end
-	$club_id = $data['club_id']; 
-	$event_title = $data['event_title'];
-	$event_date = $data['event_date'];
-	$event_time = $data['event_time'];
-	$event_format = $data['event_format'];
-	$created_by = $data['created_by'];
+	$club_id = $data['group_id']; 
+	$event_title = $data['title'] ?? 'Untitled gathering.';
+	$event_date = $data['date'] ?? '';
+	$event_time = $data['time'] ?? '';
+	$event_format = $data['format'] ?? '';
+	//$created_by = $data['created_by'];
 	$book = $data['book_id'];
-	$notes = $data['notes'];
+	$notes = $data['notes'] ?? '';
 
 	//change club_id to group_id once db gets updated ~~
 	$stmt = $conn->prepare("INSERT INTO club_meetings (club_id, event_title, event_date, event_time, event_format, notes, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -444,7 +579,7 @@ function handleScheduleList($data) {
 		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list meetings)!]'];
 	}
 
-	$club_id = $data['club_id']; //TODO change to group_id once db gets updated
+	$club_id = $data['group_id']; //TODO change to group_id once db gets updated
 
 	$stmt = $conn->prepare("SELECT meeting_id, book_id, event_title, event_date, event_time, event_format, notes FROM club_meetings WHERE club_id = ?");
 	$stmt->bind_param("i", $club_id);
@@ -534,6 +669,7 @@ function handleReviewList($data) {
 }
 
 //FAAHH suggestion.create based on group_id, book_id, and sug_note
+//create suggestion is somebody suggesting a book for the group to read ??
 function handleCreateSuggestion($data) {
 	global $log;
 	$conn = connectDB();
@@ -561,6 +697,7 @@ function handleCreateSuggestion($data) {
 }
 
 //HHAARR recommendation.personal
+//would be like a fyp for books
 function handlePersonalBookRecs($data) {
 	global $log;
 	$conn = connectDB();
@@ -573,15 +710,42 @@ function handlePersonalBookRecs($data) {
 		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list meetings)!]'];
 	}
 
-	$club_id = $data['group_id'];
-	$book_id = $data['book_id'];
-	$note = $data['note'];
-
-	$genre_score = [];
-	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as score FROM book_reviews r JOIN books b ON r.book_id = b.book_id WHERE r.user_id = ? GROUP BY b.genre");
+	//$genre_score = [];
+	//should return top genre reviewed by the user
+	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as score FROM book_reviews r JOIN books b ON r.book_id = b.book_id WHERE r.user_id = ? GROUP BY b.genre ORDER BY score DESC LIMIT 1");
 	$stmt->bind_param("i", $user_id);
+	$stmt->execute();
+	$genre_res = $stmt->get_result()->fetch_assoc();
 
-	return ['success' => true, 'message' => 'Book rec here!'];
+	//if person has no reviews
+	if (!$genre_res) {
+		$log->info("User has no reviews, returning books from library...");
+
+		$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books LIMIT 3");
+	} else {
+		//echo "it broke here";
+		$top_genre = $genre_res['genre'];
+		$log->info("Top genre for user $user_id is $top_genre");
+
+		$stmt = $conn->prepare("SELECT b.book_id, b.title, b.author, b.cover_url, ROUND(AVG(a.rating), 1) as avg_rating FROM books b LEFT JOIN book_reviews r ON b.book_id = r.book_id AND r.user_id = ? LEFT JOIN book_reviews a ON b.book_id = a.book_id WHERE b.genre = ? AND r.review_id IS NULL GROUP BY b.book_id LIMIT 3");
+		$stmt->bind_param("is", $user_id, $top_genre);
+	}
+
+	$stmt->execute();
+	$result = $stmt->get_result();
+	$recommendations = [];
+
+	while ($row = $result->fetch_assoc()) {
+		$recommendations[] = [
+			'book_id' => $row['book_id'],
+			'title' => $row['title'],
+			'author' => $row['author'],
+			'cover_url' => $row['cover_url'],
+			'rating' => $row['avg_rating'] ?? 'No ratings yet'
+		];
+	}
+
+	return ['success' => true, 'recommendations' => $recommendations, 'message' => 'Book rec here!'];
 }
 
 function handleGroupBookRecs($data) { //faaaahh
@@ -597,17 +761,48 @@ function handleGroupBookRecs($data) { //faaaahh
 	}
 
 	$club_id = $data['group_id'];
-	$book_id = $data['book_id'];
-	$note = $data['note'];
+	echo "club_id is $club_id\n"; //smh here we go again -_-
 
-	$genre_score = [];
-	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as score FROM book_reviews r JOIN books b ON r.book_id = b.book_id WHERE r.user_id = ? GROUP BY b.genre");
-	$stmt->bind_param("i", $user_id);
+	//group top genre
+	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as group_score FROM book_reviews r JOIN books b ON r.book_id = b.book_id JOIN club_members cm ON r.user_id = cm.user_id WHERE cm.club_id = ? GROUP BY b.genre ORDER BY group_score DESC LIMIT 1");
+	$stmt->bind_param("i", $club_id);
+	$stmt->execute();
+	$genre_res = $stmt->get_result()->fetch_assoc();
 
-	return ['success' => true, 'message' => 'Book rec here!'];
+	//if person has no reviews
+	if (!$genre_res) {
+		$log->info("Group has no reviews, returning books from library...");
+
+		$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books LIMIT 3");
+	} else {
+		//echo "it broke here";
+		$top_genre = $genre_res['genre'];
+		$log->info("Top genre for the group $club_id is $top_genre");
+
+		$stmt = $conn->prepare("SELECT b.book_id, b.title, b.author, b.cover_url FROM books b 
+								LEFT JOIN (SELECT r.book_id FROM book_reviews r JOIN club_members cm ON r.user_id = cm.user_id 
+								WHERE cm.club_id = ?) gh ON b.book_id = gh.book_id WHERE b.genre = ? AND gh.book_id IS NULL LIMIT 3");
+		$stmt->bind_param("is", $club_id, $top_genre);
+	}
+
+	$stmt->execute();
+	$result = $stmt->get_result();
+	$recommendations = [];
+
+	while ($row = $result->fetch_assoc()) {
+		$recommendations[] = [
+			'book_id' => $row['book_id'],
+			'title' => $row['title'],
+			'author' => $row['author'],
+			'cover_url' => $row['cover_url'],
+			//'rating' => $row['avg_rating'] ?? 'No ratings yet'
+		];
+	}
+
+	return ['success' => true, 'recommendations' => $recommendations, 'message' => 'Book rec here!'];
 }
 
-//posting discussions*****
+//creating a discussion thread 
 function handleDiscussions($data) {
 	global $log;
 	$conn = connectDB();
@@ -621,16 +816,22 @@ function handleDiscussions($data) {
 	}
 
 	//from front end
-	$club_id = $data['club_id'];
+	$club_id = $data['group_id']; 
+	echo "club_id is $club_id from creating discussions\n";
 	//$user_id = $data['user_id'];
-	$message = $data['message'];
+	$disc_name = $data['discussion_name'];
+	//$club_book = $data['disc_book'];
+	$message = $data['discussion_message']; //changed tryna match front end
 
-	$stmt = $conn->prepare("INSERT INTO discussions (club_id, user_id, message) VALUES (?, ?, ?)");
-	$stmt->bind_param("iis", $club_id, $user_id, $message);
+	//change variable u need to insert into db the club_book_id, user_id, and post_text
+	$stmt = $conn->prepare("INSERT INTO discussions (discussion_name, club_id, user_id, post_text) VALUES (?, ?, ?, ?)");
+	$stmt->bind_param("siis", $disc_name, $club_id, $user_id, $message);
 
 	if ($stmt->execute()) {
-		$log->info("SUCCESS: Discussion message posted in club $club_id by user $user_id");
-		return ['success' => true, 'message' => 'Message posted!'];
+		$disc_id = $conn->insert_id;
+
+		$log->info("SUCCESS: Discussion message posted in discussion $disc_id by user $user_id");
+		return ['success' => true, 'message' => 'Message posted!']; //return stuff
 	}
 	return ['success' => false, 'message' => 'Failed to post discussion message.'];
 }
@@ -651,10 +852,11 @@ function handleDiscussionReply($data) {
 	//from front end
 	$discussion_id = $data['discussion_id'];
 	//$user_id = $data['user_id'];
-	$message = $data['message'];
+	$message = $data['discussion_message'];
+	$club_id = $data['group_id'];
 
-	$stmt = $conn->prepare("INSERT INTO discussion_replies (discussion_id, user_id, message) VALUES (?, ?, ?)");
-	$stmt->bind_param("iis", $discussion_id, $user_id, $message);
+	$stmt = $conn->prepare("INSERT INTO discussion_replies (discussion_id, club_id, user_id, message) VALUES (?, ?, ?, ?)");
+	$stmt->bind_param("iiis", $discussion_id, $club_id, $user_id, $message);
 	if ($stmt->execute()) {
 		$log->info("SUCCESS: Discussion reply posted for discussion $discussion_id by user $user_id");
 		return ['success' => true, 'message' => 'Reply posted!'];
@@ -669,19 +871,22 @@ function handleDiscussionList($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
+	/* -uncomment after attatching discussions to group
 	if(!isset($data['club_id'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
-	}
+	}*/
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (tryna list discussions)!]'];
 	}
 
-	$club_id = $data['club_id'];
+	//$club_id = $data['group_id'];
 
-	$stmt = $conn->prepare("SELECT d.discussion_id, d.message AS discussion_message, d.created_at AS discussion_created, u.username FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.club_id = ?");
-	$stmt->bind_param("i", $club_id);
+	//$stmt = $conn->prepare("SELECT d.discussion_id, d.post_text AS discussion_message, d.created_at AS discussion_created, u.id FROM discussions d JOIN users u ON d.user_id = u.id");
+
+	$stmt = $conn->prepare("SELECT d.discussion_id, d.discussion_name, u.username AS username, d.post_text AS discussion_message, d.created_at AS discussion_created, u.id FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.user_id = ?");
+	$stmt->bind_param("i", $user_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
 
@@ -689,12 +894,15 @@ function handleDiscussionList($data) {
 	while ($row = $result->fetch_assoc()) {
 		$discussions[] = [
 			'discussion_id' => $row['discussion_id'],
+			'discussion_name' => $row['discussion_name'],
 			'message' => $row['discussion_message'],
 			'created_at' => $row['discussion_created'],
 			'username' => $row['username']
 		];
 	}
-	$log->info("SUCCESS: Retrieved " . count($discussions) . " discussions for club id: $club_id");
+	$log->info("SUCCESS: Retrieved " . count($discussions) . " discussions");
+	//echo "discussions is: " . json_encode($discussions) . "\n";
+	//$log->info("SUCCESS: Retrieved " . count($discussions) . " discussions for club id: $club_id");
 	return ['success' => true, 'discussions' => $discussions, 'message' => 'Discussions retrieved!'];
 }
 
@@ -817,7 +1025,10 @@ function recommendBooks($data)  {
     while ($row = $result->fetch_assoc()) {
 		$recommendations[] = $row["book_id"];
     }
-
+	$stmt = $conn->prepare("SELECT book_id, title, author, cover_url FROM books WHERE title LIKE ? OR author LIKE ?");
+	$stmt->bind_param("ss", $like_query, $like_query);
+	$stmt->execute();
+	$result = $stmt->get_result();
 
 
 	return ["success"=> true,"message"=> "all good twin heres the books", "recommendations" => $recommendations];
@@ -828,6 +1039,8 @@ function processMessage($req) {
 	global $log;
 	$routing_key = $req->delivery_info['routing_key'];
 	$message = json_decode($req->body, true);
+	echo print_r("RAHHH $routing_key\n", true);
+
 	if($routing_key==='user.login') {
 		$response = handleLogin($message);
 
@@ -855,11 +1068,11 @@ function processMessage($req) {
 	}elseif($routing_key==='group.list') {
 		$response = handleListGroups($message); //adding to fix front end popups rahhh
 	
-		}elseif($routing_key==='schedule.create') { //scheduling meeting
+	}elseif($routing_key==='schedule.create') { //scheduling meeting
 		$response = handleScheduleMeeting($message);
 
-	}elseif($routing_key==='schedule.list') { //TODO add new route for pulling up scheduled meetings*****
-		//$response = handleScheduleList($message);
+	}elseif($routing_key==='schedule.list') { //pulling up scheduled meetings
+		$response = handleScheduleList($message);
 	
 	}elseif($routing_key==='suggestion.create') { //creating book suggestion
 		$response = handleCreateSuggestion($message);
@@ -885,7 +1098,9 @@ function processMessage($req) {
 	}elseif($routing_key==='discussion.reply') { //replying to discussions
 		$response = handleDiscussionReply($message);
 
-	}elseif($routing_key==='api.cache') {
+	}elseif($routing_key === 'explore.all'){
+        $response = recommendBooks($message);
+    }elseif($routing_key==='api.cache') {
 		$response = handleBookCache($message);
 	} else {
 		$log->error('SOMEONE FORGOT ROUTING KEY >:( ' . $routing_key ."");
@@ -925,6 +1140,7 @@ $channel->queue_bind('user_events_queue', 'user_exchange', 'review.list');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.create');
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.list'); 
 $channel->queue_bind('user_events_queue', 'user_exchange', 'discussion.reply'); 
+$channel->queue_bind('user_events_queue', 'user_exchange', 'explore.all'); //for personal book recs
 $channel->queue_bind('user_events_queue', 'user_exchange', 'api.cache');
 $channel->basic_consume('user_events_queue', '', false, false, false, false, 'processMessage');
 
