@@ -90,7 +90,7 @@ if ($view_id) {
     </div>
 <?php endif; ?>
 
-<?php if ($view_id): ?>
+<?php if ($group): ?>
 
     <?php if (!$group): ?>
         <p style="color:var(--text-muted); font-style:italic;">Circle not found.</p>
@@ -149,7 +149,7 @@ if ($view_id) {
 
 <div class="row g-4">
     <?php foreach ($groups as $g):
-        $cb        = getBookById((int)($g['current_book_id'] ?? 0));
+        $cb = getBookById((int)($g['current_book_id'] ?? 0));
         $is_member = in_array($_SESSION['username'], $g['members'] ?? []);
     ?>
     <div class="col-md-6 col-lg-4">
@@ -163,22 +163,11 @@ if ($view_id) {
             <p style="font-size:0.9rem; color:var(--text-muted); font-style:italic; margin-bottom:1rem;">
                 <?php echo htmlspecialchars($g['group_desc'] ?? $g['description']); ?>
             </p>
-            <?php if ($cb): ?>
-            <div class="d-flex gap-3 align-items-center mb-3">
-                <img src="<?php echo htmlspecialchars($cb['cover']); ?>"
-                     style="width:44px;height:66px;object-fit:cover;border:1px solid rgba(134,113,91,0.3);border-radius:1px;" alt="">
-                <div>
-                    <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">Reading Now</div>
-                    <div style="font-style:italic; font-size:0.95rem;"><?php echo htmlspecialchars($cb['title']); ?></div>
-                    <div style="font-size:0.8rem; color:var(--text-muted);"><?php echo htmlspecialchars($cb['author']); ?></div>
-                </div>
-            </div>
-            <?php endif; ?>
             <div class="d-flex align-items-center justify-content-between">
                 <div style="font-size:0.82rem; color:var(--text-muted);">
                     <i class="bi bi-people"></i> <?php echo $g['member_count'] ?? 0; ?> members
                 </div>
-                <a href="groups.php?id=<?php echo $g['group_id']; ?>" class="btn-n-outline btn btn-sm">Enter Circle</a>
+                <a href="groupDetails.php" class="btn-n-outline btn btn-sm">Enter Circle</a>
             </div>
         </div>
     </div>

@@ -25,6 +25,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
     }
 }
 
+if ($view_id) {
+    $group_res = rmq_rpc('group.get', [
+        'group_id' => $view_id,
+        'username' => $_SESSION['username'],
+    ]);
+    $group = $group_res['group'] ?? null;
+}
+else{
+    echo("No group found at "+$view_id);
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -37,9 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $view_id) {
     <link rel="stylesheet" href="styles.css">
     <title>Noetic - Discussions</title>
 
-    <?php if (!empty($discussions)): ?>
-        <h2>Discussions for <?php echo htmlspecialchars($book['title'])?></h2>
-    <?php endif; ?>
+    <h1>YOUR BUTTON WORKS YAY</h1>
 </html>
 
 <?php require_once 'includes/footer.php'; ?>
