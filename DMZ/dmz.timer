@@ -1,0 +1,11 @@
+[Unit]
+Description=Restart the listener every 30 mins Controlled by Jess
+After=network.target
+
+[Service]
+OnCalendar=*:0/30
+AccuracySec=1m
+Unit=dmz.service
+
+[Install]
+WantedBy=timers.target
