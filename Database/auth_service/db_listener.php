@@ -836,6 +836,36 @@ function handleDiscussions($data) {
 	return ['success' => false, 'message' => 'Failed to post discussion message.'];
 }
 
+//getting single discussion
+function handleGetDiscussion($data) {
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		return ['success' => false, 'message' => 'Database connection failed.'];
+	}
+	//user from db
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (getting groups)!'];
+	}
+
+	$group_id = $data['group_id'];
+
+	$stmt = $conn->prepare("SELECT discussion_id, discussion_name, post_text FROM discussions WHERE club_id = ?");
+	$stmt->bind_param("i", $group_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	$discussion = [];
+	if ($row = $result->fetch_assoc()) {
+		$discussion[] = ['discussion_id' => $row['discussion_id'], 'discussion_name' => $row['discussion_name']];
+		$log->info("SUCCESS: Discussion found for group: $group_id");
+		return ['success' => true, 'discussions' => $discussion, 'message' => 'Discussion found!'];
+	} 
+	$log->warning("FAILED: Discussion_id: $group_id not found.");
+	return ['success' => false, 'message' => 'Discussion not found.'];
+}
+
 //discussion.reply - inserts a reply to the discussion by discussion_id
 function handleDiscussionReply($data) {
 	global $log;
@@ -1092,6 +1122,9 @@ function processMessage($req) {
 	}elseif($routing_key==='discussion.create') { //creating discussion
 		$response = handleDiscussions($message);
 
+	}elseif($routing_key==='discussion.get') { //getting single discussion
+		$response = handleGetDiscussion($message);
+		
 	}elseif($routing_key==='discussion.list') { //listing discussions
 		$response = handleDiscussionList($message);
 	
