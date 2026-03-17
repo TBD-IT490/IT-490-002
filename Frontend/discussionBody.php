@@ -109,7 +109,7 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
             <?php foreach ($replies["replies"] as $reply): ?>
                 <div class="border rounded p-3 mb-2" style="border-color:rgba(134,113,91,0.25) !important;">
                     <strong style="font-size:0.9rem;">
-                        <?php echo htmlspecialchars($reply['user_id']); ?>
+                        <?php echo htmlspecialchars($reply['username']); ?>
                     </strong>
                     <p class="mb-0 mt-1">
                         <?php echo htmlspecialchars($reply['message']); ?>
