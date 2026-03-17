@@ -22,10 +22,17 @@ $msg = '';
 //handleDiscussionReply -> discussion.reply
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disc_reply'])) {
     //crashing out over this - it better work >:(
-    $result = rmq_rpc('discussion.reply', [
+    $disc_lookup = rmq_rpc('discussion.list', [
         'discussion_id' => $discussion_id,
+        'username'      => $_SESSION['username'],
+    ]);
+    $group_id = $disc_lookup['discussions'][0]['group_id'];
+
+    $result = rmq_rpc('discussion.reply', [
+        'discussion_id'      => $discussion_id,
+        'group_id'           => (int)$_POST['group_id'],
         'discussion_message' => trim($_POST['discussion_message']),
-        'username' => $_SESSION['username'],
+        'username'           => $_SESSION['username'],
     ]);
 
     if ($result['success'] ?? false) {
@@ -36,10 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disc_reply'])) {
 }
 
 //handleDiscussionGet -> discussion.list
-$disc_res   = rmq_rpc('discussion.list', [
+$disc_res   = rmq_rpc('discussion.get', [
     'discussion_id' => $discussion_id,
     'username'      => $_SESSION['username'],
 ]);
+
 $discussion = $disc_res['discussions'][0] ?? null;
 $replies    = $discussion['replies'] ?? [];
 

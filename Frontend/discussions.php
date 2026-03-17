@@ -15,12 +15,12 @@ $msg = '';
 //send nat info hehe
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['disc_create'])) {
     //handleDiscussions -> discussion.create
-    //update discussion.create → disc_name, book_id, content
+    //update discussion.create → disc_name, club_id, content
     $result = rmq_rpc('discussion.create', [
         'discussion_name'    => trim($_POST['discussion_name']),
         'discussion_message' => trim($_POST['discussion_message']),
         'username'           => $_SESSION['username'],
-        'group_id'           => (int)$_POST['book_id'],
+        'group_id'           => (int)$_POST['group_id'],
     ]);
 
     if ($result['success'] ?? false) {
@@ -112,7 +112,7 @@ $discussions = $all_disc_res['discussions'] ?? [];
                     <input type="hidden" name="disc_create" value="1">
                     <div class="mb-3">
                         <label class="form-label">Group</label>
-                        <select class="form-select" name="book_id" required>
+                        <select class="form-select" name="group_id" required>
                             <?php foreach ($groups_for_select as $g): ?>
                                 <option value="<?php echo (int)$g['id']; ?>">
                                     <?php echo htmlspecialchars($g['name']); ?>
