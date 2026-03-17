@@ -710,12 +710,6 @@ function handlePersonalBookRecs($data) {
 		return ['success' => false, 'message' => 'User not authenticated (from getUser - tryna list meetings)!]'];
 	}
 
-	/*
-	$club_id = $data['group_id'];
-	$book_id = $data['book_id'];
-	$note = $data['note'];
-	*/
-
 	//$genre_score = [];
 	//should return top genre reviewed by the user
 	$stmt = $conn->prepare("SELECT b.genre, COUNT(*) as score FROM book_reviews r JOIN books b ON r.book_id = b.book_id WHERE r.user_id = ? GROUP BY b.genre ORDER BY score DESC LIMIT 1");
@@ -822,15 +816,16 @@ function handleDiscussions($data) {
 	}
 
 	//from front end
-	//$club_id = $data['group_id']; 
+	$club_id = $data['group_id']; 
+	echo "club_id is $club_id from creating discussions\n";
 	//$user_id = $data['user_id'];
 	$disc_name = $data['discussion_name'];
 	//$club_book = $data['disc_book'];
 	$message = $data['discussion_message']; //changed tryna match front end
 
 	//change variable u need to insert into db the club_book_id, user_id, and post_text
-	$stmt = $conn->prepare("INSERT INTO discussions (discussion_name, user_id, post_text) VALUES (?, ?, ?)");
-	$stmt->bind_param("sis", $disc_name, $user_id, $message);
+	$stmt = $conn->prepare("INSERT INTO discussions (discussion_name, club_id, user_id, post_text) VALUES (?, ?, ?, ?)");
+	$stmt->bind_param("siis", $disc_name, $club_id, $user_id, $message);
 
 	if ($stmt->execute()) {
 		$disc_id = $conn->insert_id;
@@ -858,9 +853,10 @@ function handleDiscussionReply($data) {
 	$discussion_id = $data['discussion_id'];
 	//$user_id = $data['user_id'];
 	$message = $data['discussion_message'];
+	$club_id = $data['group_id'];
 
-	$stmt = $conn->prepare("INSERT INTO discussion_replies (discussion_id, user_id, message) VALUES (?, ?, ?)");
-	$stmt->bind_param("iis", $discussion_id, $user_id, $message);
+	$stmt = $conn->prepare("INSERT INTO discussion_replies (discussion_id, club_id, user_id, message) VALUES (?, ?, ?, ?)");
+	$stmt->bind_param("iiis", $discussion_id, $club_id, $user_id, $message);
 	if ($stmt->execute()) {
 		$log->info("SUCCESS: Discussion reply posted for discussion $discussion_id by user $user_id");
 		return ['success' => true, 'message' => 'Reply posted!'];
@@ -885,12 +881,12 @@ function handleDiscussionList($data) {
 		return ['success' => false, 'message' => 'User not authenticated (tryna list discussions)!]'];
 	}
 
-	//$club_id = $data['club_id'];
+	//$club_id = $data['group_id'];
 
-	$stmt = $conn->prepare("SELECT d.discussion_id, d.post_text AS discussion_message, d.created_at AS discussion_created, u.id FROM discussions d JOIN users u ON d.user_id = u.id");
+	//$stmt = $conn->prepare("SELECT d.discussion_id, d.post_text AS discussion_message, d.created_at AS discussion_created, u.id FROM discussions d JOIN users u ON d.user_id = u.id");
 
-	//$stmt = $conn->prepare("SELECT d.discussion_id, d.post_text AS discussion_message, d.created_at AS discussion_created, u.user_id FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.club_id = ?");
-	//$stmt->bind_param("i", $club_id);
+	$stmt = $conn->prepare("SELECT d.discussion_id, d.discussion_name, u.username AS username, d.post_text AS discussion_message, d.created_at AS discussion_created, u.id FROM discussions d JOIN users u ON d.user_id = u.id WHERE d.user_id = ?");
+	$stmt->bind_param("i", $user_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
 
@@ -898,13 +894,14 @@ function handleDiscussionList($data) {
 	while ($row = $result->fetch_assoc()) {
 		$discussions[] = [
 			'discussion_id' => $row['discussion_id'],
+			'discussion_name' => $row['discussion_name'],
 			'message' => $row['discussion_message'],
 			'created_at' => $row['discussion_created'],
 			'username' => $row['username']
 		];
 	}
 	$log->info("SUCCESS: Retrieved " . count($discussions) . " discussions");
-
+	//echo "discussions is: " . json_encode($discussions) . "\n";
 	//$log->info("SUCCESS: Retrieved " . count($discussions) . " discussions for club id: $club_id");
 	return ['success' => true, 'discussions' => $discussions, 'message' => 'Discussions retrieved!'];
 }
@@ -1042,7 +1039,7 @@ function processMessage($req) {
 	global $log;
 	$routing_key = $req->delivery_info['routing_key'];
 	$message = json_decode($req->body, true);
-	echo print_r("RAHHH$routing_key\n", true);
+	echo print_r("RAHHH $routing_key\n", true);
 
 	if($routing_key==='user.login') {
 		$response = handleLogin($message);
@@ -1071,10 +1068,10 @@ function processMessage($req) {
 	}elseif($routing_key==='group.list') {
 		$response = handleListGroups($message); //adding to fix front end popups rahhh
 	
-		}elseif($routing_key==='schedule.create') { //scheduling meeting
+	}elseif($routing_key==='schedule.create') { //scheduling meeting
 		$response = handleScheduleMeeting($message);
 
-	}elseif($routing_key==='schedule.list') { //TODO add new route for pulling up scheduled meetings*****
+	}elseif($routing_key==='schedule.list') { //pulling up scheduled meetings
 		$response = handleScheduleList($message);
 	
 	}elseif($routing_key==='suggestion.create') { //creating book suggestion
