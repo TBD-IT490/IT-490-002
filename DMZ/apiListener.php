@@ -126,7 +126,7 @@ function onDemandAPICall($data) {
     }
 }
 
-refreshCache();
+//refreshCache();
 $connection = new AMQPStreamConnection(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
 $channel = $connection->channel();
 $channel->exchange_declare('user_exchange', 'direct', false, true, false);

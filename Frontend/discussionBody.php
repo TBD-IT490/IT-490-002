@@ -49,7 +49,8 @@ $disc_res   = rmq_rpc('discussion.list', [
 ]);
 
 $discussion = $disc_res['discussions'][0] ?? null;
-$replies    = $discussion['replies'] ?? [];
+//$replies    = $discussion['replies'] ?? [];
+$replies = rmq_rpc("replies.list",['discussion_id' => $discussion_id,'username'=> $_SESSION['username']]);
 
 list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 
@@ -98,20 +99,20 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
         <h5 style="font-family:'IM Fell English',serif; margin-bottom:1rem;">
             Replies
             <span style="font-size:0.8rem; font-family:inherit; color:var(--text-muted);">
-                (<?php echo count($replies); ?>)
+                (<?php echo count($replies["replies"]); ?>)
             </span>
         </h5>
 
         <?php if (empty($replies)): ?>
             <p style="color:var(--text-muted); font-style:italic;">No replies yet. Be the first!</p>
         <?php else: ?>
-            <?php foreach ($replies as $reply): ?>
+            <?php foreach ($replies["replies"] as $reply): ?>
                 <div class="border rounded p-3 mb-2" style="border-color:rgba(134,113,91,0.25) !important;">
                     <strong style="font-size:0.9rem;">
-                        <?php echo htmlspecialchars($reply['username']); ?>
+                        <?php echo htmlspecialchars($reply['user_id']); ?>
                     </strong>
                     <p class="mb-0 mt-1">
-                        <?php echo htmlspecialchars($reply['discussion_message']); ?>
+                        <?php echo htmlspecialchars($reply['message']); ?>
                     </p>
                 </div>
             <?php endforeach; ?>
