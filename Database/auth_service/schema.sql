@@ -56,7 +56,7 @@ CREATE TABLE `book_reviews` (
   CONSTRAINT `book_reviews_ibfk_1` FOREIGN KEY (`book_id`) REFERENCES `books` (`book_id`),
   CONSTRAINT `book_reviews_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
   CONSTRAINT `book_reviews_chk_1` CHECK ((`rating` between 1 and 5))
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -108,7 +108,7 @@ CREATE TABLE `books` (
   `pages` int DEFAULT NULL,
   PRIMARY KEY (`book_id`),
   UNIQUE KEY `api_book_id` (`api_book_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=225 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1216 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -146,14 +146,14 @@ CREATE TABLE `club_meetings` (
   `event_title` varchar(255) NOT NULL,
   `event_date` date NOT NULL,
   `event_time` time NOT NULL,
-  `event_format` enum('virtual','in-person') NOT NULL,
+  `event_format` varchar(255) NOT NULL,
   `notes` text,
   `created_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`meeting_id`),
   KEY `club_id` (`club_id`),
   CONSTRAINT `club_meetings_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `book_clubs` (`club_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -174,7 +174,7 @@ CREATE TABLE `club_members` (
   KEY `user_id` (`user_id`),
   CONSTRAINT `club_members_ibfk_1` FOREIGN KEY (`club_id`) REFERENCES `book_clubs` (`club_id`),
   CONSTRAINT `club_members_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=77 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -187,15 +187,18 @@ DROP TABLE IF EXISTS `discussion_replies`;
 CREATE TABLE `discussion_replies` (
   `reply_id` int NOT NULL AUTO_INCREMENT,
   `discussion_id` int NOT NULL,
+  `club_id` int NOT NULL,
   `user_id` int NOT NULL,
   `message` text NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`reply_id`),
   KEY `discussion_id` (`discussion_id`),
   KEY `user_id` (`user_id`),
+  KEY `disc_reply_clubs_fk` (`club_id`),
+  CONSTRAINT `disc_reply_clubs_fk` FOREIGN KEY (`club_id`) REFERENCES `book_clubs` (`club_id`) ON DELETE CASCADE,
   CONSTRAINT `discussion_replies_ibfk_1` FOREIGN KEY (`discussion_id`) REFERENCES `discussions` (`discussion_id`),
   CONSTRAINT `discussion_replies_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -207,16 +210,20 @@ DROP TABLE IF EXISTS `discussions`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `discussions` (
   `discussion_id` int NOT NULL AUTO_INCREMENT,
+  `discussion_name` varchar(100) NOT NULL,
   `club_book_id` int DEFAULT NULL,
+  `club_id` int NOT NULL,
   `user_id` int DEFAULT NULL,
   `post_text` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`discussion_id`),
   KEY `club_book_id` (`club_book_id`),
   KEY `user_id` (`user_id`),
+  KEY `disc_clubs_fk` (`club_id`),
+  CONSTRAINT `disc_clubs_fk` FOREIGN KEY (`club_id`) REFERENCES `book_clubs` (`club_id`) ON DELETE CASCADE,
   CONSTRAINT `discussions_ibfk_1` FOREIGN KEY (`club_book_id`) REFERENCES `club_books` (`id`),
   CONSTRAINT `discussions_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -236,7 +243,7 @@ CREATE TABLE `sessions` (
   UNIQUE KEY `session_key` (`session_key`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=138 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -255,7 +262,7 @@ CREATE TABLE `users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -267,4 +274,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-03-12 21:53:59
+-- Dump completed on 2026-03-17 21:49:09
