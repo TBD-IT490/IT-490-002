@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 ExecStart=/home/it490/IT-490-002/DMZ/apiListener.php
+User=it490
 Restart=always
-RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
