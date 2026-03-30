@@ -1,13 +1,13 @@
 
 [Unit]
 Description=Broker Service For Noetic
+Requires=rabbitmq-server.service
 After=network.target
 
 [Service]
-ExecStart=/usr/bin/python3 /path/to/my-script.py
+ExecStart=/home/it490/IT-490-002/Backend/db_listener.php
 Restart=always
-User=myuser
-Group=mygroup
+User=it490
 
 [Install]
 WantedBy=multi-user.target
