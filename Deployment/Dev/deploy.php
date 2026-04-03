@@ -105,7 +105,7 @@ $tar->compress(Phar::GZ);
 $tar->buildFromDirectory($folder);
 $response = rmq_rpc("deploy.request_bundle", ["host"=> $hostname]);
 $success = $response["success"];
-
+$remote = 'localhost';
 if ($success) {
     $version = $response["version"];
     $path = "/home/it490/IT-490-002/Deployment/bundles/" . $archive_name . $version;
