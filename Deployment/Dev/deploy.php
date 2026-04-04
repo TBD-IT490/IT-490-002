@@ -108,12 +108,12 @@ $success = $response["success"];
 $remote = 'localhost';
 if ($success) {
     $version = $response["version"];
-    $path = "/home/it490/IT-490-002/Deployment/bundles/" . $archive_name . $version;
+    $path = "/home/it490/IT-490-002/Deployment/bundles/" . $archive_name . $version . ".tar";
 
-    $cmd_scp = "scp $archive_name it490@$remote:$path";
+    $cmd_scp = "scp $archive_name" .".tar" ." it490@$remote:$path";
     exec($cmd_scp, $output, $status);
     if ($status === 0) {
-        $response = rmq_rpc("deploy.submit_bundle", ["host"=> $hostname, "path" => $path]);
+        $response = rmq_rpc("deploy.submit_bundle", ["host"=> $hostname, "path" => $path, "version" => $version, "name" =>$archive_name . $version . ".tar"]);
 
     } else {
     // explain why it broke

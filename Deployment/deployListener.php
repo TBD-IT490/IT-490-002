@@ -134,7 +134,7 @@ function handle_submit_bundle($data) {
 	if(!$conn) {
 		return ['success' => false, 'message' => 'Database connection failed.'];
 	}
-    $name = $data[''];
+    $name = $data['name'];
     $version = $data['version'];
     $status = "new";
     $path = $data["path"];
