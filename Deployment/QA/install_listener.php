@@ -99,9 +99,8 @@ function handleInstall($data) {
     $path = $data['path'];
     $phar = new PharData($path);
     $path = "/home/it490/target";
-
-    $phar->extractTo($path);
-
+    $phar->extractTo($path, null, true);
+    unlink($path);
 
 
     return ["success" => true, "message" => "should be installed"];

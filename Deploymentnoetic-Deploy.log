@@ -13,3 +13,7 @@
 [2026-04-04T06:12:22.645663+00:00] Noetic-Deploy-Listener.INFO: Name: broker_bundle_v2.tar Version: 2 Path: /home/it490/IT-490-002/Deployment/bundles/broker_bundle_v2.tar Status: new [] []
 [2026-04-04T18:17:46.273831+00:00] Noetic-Deploy-Listener.INFO: Name: broker_bundle_v2.tar Version: 2 Path: /home/it490/IT-490-002/Deployment/bundles/broker_bundle_v2.tar Status: new [] []
 [2026-04-04T18:29:53.393046+00:00] Noetic-Deploy-Listener.INFO: Name: broker_bundle_v2.tar Version: 2 Path: /home/it490/IT-490-002/Deployment/bundles/broker_bundle_v2.tar Status: new [] []
+[2026-04-05T03:19:22.321044+00:00] Noetic-Deploy-Listener.INFO: You selected: broker_bundle_v1.tar version 1  [] []
+[2026-04-05T03:21:00.274793+00:00] Noetic-Deploy-Listener.INFO: You selected: broker_bundle_v1.tar version 1  [] []
+[2026-04-05T03:25:15.346820+00:00] Noetic-Deploy-Listener.INFO: You selected: broker_bundle_v1.tar version 1  [] []
+[2026-04-05T03:29:05.539674+00:00] Noetic-Deploy-Listener.INFO: You selected: broker_bundle_v1.tar version 1  [] []

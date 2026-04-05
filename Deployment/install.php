@@ -105,62 +105,91 @@ if(!$conn) {
     //explain why it broke and dont return anything
 	return ['success' => false, 'message' => 'Database connection failed.'];
 }
-
-if ($argv[1] == "prod") {
-$stmt = $conn->prepare(query:"Select * from bundle where name like CONCAT (?, '%') ORDER BY version DESC limit 1");
-$stmt->bind_param('s', $argv[2]);
-$stmt->execute();
-$result = $stmt->get_result();
-$row = $result->fetch_assoc();
-$log->info("Name: " . $row["name"] . " Version: " . $row["version"] . " Path: " . $row["file_path"] . " Status: " . $row["status"]);
-
-$input = readline("Install y or n: ");
-
-if ($input == "y") { 
-
-
-
+$host;
+$cluster;
+$choice;
+$input = readline("Install or Rollback: ");
+if($input == "install") { 
+    $choice = "install";
+} else if($input == "rollback") {
+    $choice = "rollback";
 } else {
-
-exit();
+    echo "input rollback or install\n";
+    exit();
 }
-$input = readline("Enter Package Status: ");
-
-} else if ($argv[1] == "qa") {
-$stmt = $conn->prepare(query:"Select * from bundle where name like CONCAT (?, '%') ORDER BY version DESC limit 1");
-$stmt->bind_param('s', $argv[2]);
+$input = readline("qa or prod: ");
+if($input == "qa") {
+    $cluster = "qa";
+} elseif ($input == "prod") {
+    $cluster = "prod";
+} else {
+    echo "qa or prod\n";
+    exit();
+}
+$input = readline("front|back|dmz: ");
+if($input == "front") {
+    $host = "front";
+} elseif ($input == "back") {
+    $host = "broker"; // change these later
+} elseif ($input == "dmz") {
+    $host = "dmz";
+} else {
+    echo "front or back or dmz\n";
+    exit();
+}
+$stmt = $conn->prepare(query:"Select * from bundle where name like CONCAT (?, '%') ORDER BY version DESC");
+$stmt->bind_param('s', $host);
 $stmt->execute();
 $result = $stmt->get_result();
-$row = $result->fetch_assoc();
-$log->info("Name: " . $row["name"] . " Version: " . $row["version"] . " Path: " . $row["file_path"] . " Status: " . $row["status"]);
-
-$input = readline("Install y or n: ");
-
+$bundles = [];
+$i = 1;
+while($row = $result->fetch_assoc()) {
+    echo "[$i] " . $row['name'] . " - version " . $row['version'] . " - Status " . $row["status"]."\n";
+    $bundles[$i] = $row; // store for later    
+    $i++;
+}
+if (empty($bundles)) {
+    echo "No results found\n";
+    exit;
+}
+$bundle = readline("Pick a number: ");
+if (!isset($bundles[$bundle])) {
+    echo "Invalid selection\n";
+    exit;
+}
+$selected = $bundles[$bundle];
+$log->info("You selected: " . $selected['name'] . " version " . $selected['version'] . "\n");
+$input = readline("Install/rollback y or n: ");
 if ($input == "y") { 
-    $path = "/home/it490/target/"  . $row["name"];
+    $path = "/home/it490/target/"  . $selected["name"];
     $remote = "localhost";
-    $cmd_scp = "scp " . $row["file_path"] ." it490@$remote:$path";
+    $cmd_scp = "scp " . $selected["file_path"] ." it490@$remote:$path";
     exec($cmd_scp, $output, $status);
     if ($status === 0) {
-        $response = rmq_rpc("install.install", ["name" => $row["name"], "path" => $path]);
-
-        } else {
-    // explain why it broke
+        $response = rmq_rpc("install.install", ["name" => $selected["name"], "path" => $path]);
+    } else {
+        echo "something broke with install/rollback";
     }
-
-} else {
-
-exit();
+    $input = readline("Enter Package Status(new|passed|failed): ");
+    if ($input == "new") { 
+        echo "everything is cool just change status later";
+        exit();
+    } elseif ($input == "passed") { 
+    echo "everything is cool, package passed so send to prod";
+    $stmt = $conn->prepare(query:"UPDATE bundle SET status = 'passed' WHERE name = ?");
+    $stmt->bind_param('s', $row['name']);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} elseif ($input == "failed") {
+    echo "everything is cool, roll it back";
+    $stmt = $conn->prepare(query:"UPDATE bundle SET status = 'failed' WHERE name = ?");
+    $stmt->bind_param('s', $row['name']);
+    $stmt->execute();
+    $result = $stmt->get_result();
 }
-$input = readline("Enter Package Status: ");
 } else {
-
 //explain why broke
 }
-
-
-
-
 
 
 
