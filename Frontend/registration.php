@@ -43,6 +43,7 @@ if (isset($_POST["register"])) {
         "username" => $username,
         "email" => $email,
         "password_hash" => $password_hash,
+        "phone_number" => filter_input(INPUT_POST, "phone_number", FILTER_SANITIZE_STRING),
     ];
 
     list($callback_queue, ,) = $channel->queue_declare(
@@ -140,6 +141,11 @@ I'm sure you understand-->
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="phone-number" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone-number" name="phone_number" required>
                         </div>
 
                     <!--password and strength meter i wrote below-->
