@@ -54,7 +54,7 @@ $discussions = $all_disc_res['discussions'] ?? [];
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
+    
 <?php if ($msg_text): ?>
     <div class="alert alert-<?php echo $msg_type === 'success' ? 'success' : 'danger'; ?>">
         <?php echo htmlspecialchars($msg_text); ?>
