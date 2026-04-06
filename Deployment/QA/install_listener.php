@@ -98,8 +98,8 @@ function handleInstall($data) {
     $name = $data['name'];
     $path = $data['path'];
     $phar = new PharData($path);
-    $path = "/home/it490/target";
-    $phar->extractTo($path, null, true);
+    $path_to = "/home/it490/target";
+    $phar->extractTo($path_to, null, true);
     unlink($path);
 
 

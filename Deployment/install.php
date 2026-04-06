@@ -163,6 +163,25 @@ $input = readline("Install/rollback y or n: ");
 if ($input == "y") { 
     $path = "/home/it490/target/"  . $selected["name"];
     $remote = "localhost";
+    if ($cluster == "qa") {
+        if ($host == "front"){
+            $remote = "100.122.99.69";
+        } elseif ($host == "back") {
+            $remote = "100.107.210.121";
+        } elseif ($host == "dmz") {
+            $remote = "100.114.131.27";
+        } else {}
+    } elseif ($cluster == "prod") {
+        if ($host == "front"){
+            $remote = "100.109.181.25";
+        } elseif ($host == "back") {
+            $remote = "100.91.21.90";
+        } elseif ($host == "dmz") {
+            $remote = "100.70.132.110";
+        } else {}
+    } else {
+
+    }
     $cmd_scp = "scp " . $selected["file_path"] ." it490@$remote:$path";
     exec($cmd_scp, $output, $status);
     if ($status === 0) {
@@ -177,13 +196,13 @@ if ($input == "y") {
     } elseif ($input == "passed") { 
     echo "everything is cool, package passed so send to prod";
     $stmt = $conn->prepare(query:"UPDATE bundle SET status = 'passed' WHERE name = ?");
-    $stmt->bind_param('s', $row['name']);
+    $stmt->bind_param('s', $selected['name']);
     $stmt->execute();
     $result = $stmt->get_result();
 } elseif ($input == "failed") {
     echo "everything is cool, roll it back";
     $stmt = $conn->prepare(query:"UPDATE bundle SET status = 'failed' WHERE name = ?");
-    $stmt->bind_param('s', $row['name']);
+    $stmt->bind_param('s', $selected['name']);
     $stmt->execute();
     $result = $stmt->get_result();
 }
