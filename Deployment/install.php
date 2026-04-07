@@ -24,11 +24,11 @@ $formatter = new LineFormatter($format);
 $cli=new StreamHandler('php://stdout', Logger::DEBUG);
 $cli->setFormatter($formatter);
 $log->pushHandler($cli);
-function rmq_rpc(string $action, array $payload = []): ?array {
+function rmq_rpc(string $action, string $remote ,array $payload = []): ?array {
     global $_DEBUG_LOG;
     try {
         $connection = new AMQPStreamConnection(
-            RMQ_HOST,
+            $remote,
             RMQ_PORT,
             RMQ_USER,
             RMQ_PASS
@@ -187,7 +187,7 @@ if ($input == "y") {
     $cmd_scp = "scp " . $selected["file_path"] ." it490@$remote:$path";
     exec($cmd_scp, $output, $status);
     if ($status === 0) {
-        $response = rmq_rpc("install.install", ["name" => $selected["name"], "path" => $path]);
+        $response = rmq_rpc("install.install", $remote,["name" => $selected["name"], "path" => $path]);
     } else {
         echo "something broke with install/rollback";
     }

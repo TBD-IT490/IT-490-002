@@ -10,7 +10,7 @@ use Monolog\Formatter\LineFormatter;
 
 
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
-define('RMQ_HOST', 'localhost'); //p3 ts pass - matt
+define('RMQ_HOST', '100.106.173.65'); //p3 ts pass - matt
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
@@ -93,20 +93,31 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 }
 
 $hostname = gethostname();
-$archive_name = "" . "dmz" . "_bundle_v";
-$folder = "/home/it490/IT-490-002/Dmz";
-if ($hostname === "broker") { // change these to the new vm names
+$input = readline("front|back|dmz: ");
+$host;
+if ($input === "front") {
+    $host = "Frontend";
+
+} else if ($input === "back") {
+    $host = "Backend";
+
+} else if ($input === "dmz") {
+    $host = "Dmz";
+
+} else {
+    echo "it broke\n";
+    exit();
+}
+$archive_name = "" . $host . "_bundle_v";
+$folder = "/home/it490/IT-490-002/" . $host;
 //$folder = $folder . "/Backend";
 //$folder = $folder . "/DMZ";
-}elseif ($hostname === "") { }
-else {}
-echo $folder . "\n";
 $tar = new PharData($archive_name . ".tar");
 $tar->compress(Phar::GZ);
 $tar->buildFromDirectory($folder);
-$response = rmq_rpc("deploy.request_bundle", ["host"=> $hostname]);
+$response = rmq_rpc("deploy.request_bundle", ["host"=> $host]);
 $success = $response["success"];
-$remote = 'localhost';
+$remote = RMQ_HOST;
 if ($success) {
     $version = $response["version"];
     $path = "/home/it490/IT-490-002/Deployment/bundles/" . $archive_name . $version . ".tar";
