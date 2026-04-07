@@ -11,7 +11,9 @@ define('DB_HOST', 'localhost');
 define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
 define('DB_NAME', 'deploy');
-define('RMQ_HOST','localhost');
+//define('RMQ_HOST','localhost');
+define('RMQ_HOST','100.114.131.27');
+
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
@@ -130,7 +132,7 @@ $input = readline("front|back|dmz: ");
 if($input == "front") {
     $host = "front";
 } elseif ($input == "back") {
-    $host = "broker"; // change these later
+    $host = "back"; // change these later
 } elseif ($input == "dmz") {
     $host = "dmz";
 } else {

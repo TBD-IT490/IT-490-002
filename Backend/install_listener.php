@@ -1,6 +1,7 @@
+#!/usr/bin/php
 <?php
-require_once __DIR__ .'/vendor/autoload.php'; /** rmq library */
 
+require_once __DIR__ .'/vendor/autoload.php'; /** rmq library */
 use PhpAmqpLib\Connection\AMQPStreamConnection; /**import RMQ classes*/
 use PhpAmqpLib\Message\AMQPMessage;
 use Monolog\Logger;
@@ -8,14 +9,13 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Formatter\LineFormatter;
 
-
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
-define('RMQ_HOST', 'localhost'); //p3 ts pass - matt
+define('RMQ_HOST','localhost');
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
-$log = new Logger('Noetic-dev-deploy-Listener');
-$log->pushHandler(new StreamHandler(__DIR__ .'noetic-dev-deploy.log', Logger::DEBUG));
+$log = new Logger('Noetic-Deploy-Listener');
+$log->pushHandler(new StreamHandler(__DIR__ .'noetic-Deploy.log', Logger::DEBUG));
 $format = "%level_name%: %message%\n";
 $formatter = new LineFormatter($format);
 $cli=new StreamHandler('php://stdout', Logger::DEBUG);
@@ -33,8 +33,8 @@ function rmq_rpc(string $action, array $payload = []): ?array {
         );
 
         $channel = $connection->channel();
-        $channel->exchange_declare('deploy_exchange', 'direct', false, true, false);
-        $channel->queue_declare('deploy_events_queue', false, true, false, false);
+        $channel->exchange_declare('user_exchange', 'direct', false, true, false);
+        $channel->queue_declare('user_events_queue', false, true, false, false);
         $channel->basic_qos(null, 1, null);
 
         
@@ -61,7 +61,7 @@ function rmq_rpc(string $action, array $payload = []): ?array {
             ]
         );
 
-        $channel->basic_publish($msg, 'deploy_exchange', $action);
+        $channel->basic_publish($msg, 'user_exchange', $action);
 
         while ($response === null) {
             $channel->wait(null, false, 0); 
@@ -92,39 +92,66 @@ function rmq_rpc(string $action, array $payload = []): ?array {
     }
 }
 
-$hostname = gethostname();
-$archive_name = "" . "dmz" . "_bundle_v";
-$folder = "/home/it490/IT-490-002/Dmz";
-if ($hostname === "broker") { // change these to the new vm names
-//$folder = $folder . "/Backend";
-//$folder = $folder . "/DMZ";
-}elseif ($hostname === "") { }
-else {}
-echo $folder . "\n";
-$tar = new PharData($archive_name . ".tar");
-$tar->compress(Phar::GZ);
-$tar->buildFromDirectory($folder);
-$response = rmq_rpc("deploy.request_bundle", ["host"=> $hostname]);
-$success = $response["success"];
-$remote = 'localhost';
-if ($success) {
-    $version = $response["version"];
-    $path = "/home/it490/IT-490-002/Deployment/bundles/" . $archive_name . $version . ".tar";
 
-    $cmd_scp = "scp $archive_name" .".tar" ." it490@$remote:$path";
-    exec($cmd_scp, $output, $status);
-    if ($status === 0) {
-        $response = rmq_rpc("deploy.submit_bundle", ["host"=> $hostname, "path" => $path, "version" => $version, "name" =>$archive_name . $version . ".tar"]);
 
-    } else {
-    // explain why it broke
-    }
-} else {
-// log the breakage
+function handleInstall($data) {
+    $name = $data['name'];
+    $path = $data['path'];
+    $phar = new PharData($path);
+    $path_to = "/home/it490/target";
+    $phar->extractTo($path_to, null, true);
+    unlink($path);
+
+
+    return ["success" => true, "message" => "should be installed"];
+}
+function handleRollback($data) {
+    return [];
+}
+function processMessage($req) {
+	global $log;
+	$routing_key = $req->delivery_info['routing_key'];
+	$message = json_decode($req->body, true);
+	echo print_r("RAHHH $routing_key\n", true);
+
+	if($routing_key==='install.install') {
+		$response = handleInstall($message);
+
+	}elseif($routing_key==='install.rollback') {
+		$response = handleRollback($message);
+
+	}else {
+		$log->error('SOMEONE FORGOT ROUTING KEY >:( ' . $routing_key ."");
+	}
+
+	//sending reply back
+	$reply_msg = new AMQPMessage(json_encode($response), ['correlation_id' => $req->get('correlation_id')]);	
+	$req->getChannel()->basic_publish($reply_msg, '', $req->get('reply_to'));
+	$log->info("".  $response['message'] . "");
+	$req->ack(); //tell rmq we done w/ msg
 }
 
+echo "Deploy Listener Starting\n";
 
+//connecting to rmq
+$connection = new AMQPStreamConnection(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
+$channel = $connection->channel();
+$channel->exchange_declare('install_exchange', 'direct', false, true, false);
+$channel->queue_declare('install_events_queue', false, true, false, false); //creating queue if one not existent
+$channel->basic_qos(null, 1, null); //process one msg at a time
+$channel->queue_bind('install_events_queue', 'install_exchange', 'install.install');
+$channel->queue_bind('install_events_queue', 'install_exchange', 'install.rollback');
 
+$channel->basic_consume('install_events_queue', '', false, false, false, false, 'processMessage');
 
-
+echo "[*] Connected to RMQ\n";
+echo "[*] Waiting for messages...\n";
+echo "[*] Press CTRL+C to exit\n";
+//listen
+while ($channel->is_consuming()) {
+	$channel->wait();
+}
+//clean
+$channel->close();
+$connection->close();
 ?>
