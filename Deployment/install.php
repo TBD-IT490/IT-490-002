@@ -11,7 +11,9 @@ define('DB_HOST', 'localhost');
 define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
 define('DB_NAME', 'deploy');
-define('RMQ_HOST','localhost');
+//define('RMQ_HOST','localhost');
+define('RMQ_HOST','100.114.131.27');
+
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
@@ -22,11 +24,11 @@ $formatter = new LineFormatter($format);
 $cli=new StreamHandler('php://stdout', Logger::DEBUG);
 $cli->setFormatter($formatter);
 $log->pushHandler($cli);
-function rmq_rpc(string $action, array $payload = []): ?array {
+function rmq_rpc(string $action, string $remote ,array $payload = []): ?array {
     global $_DEBUG_LOG;
     try {
         $connection = new AMQPStreamConnection(
-            RMQ_HOST,
+            $remote,
             RMQ_PORT,
             RMQ_USER,
             RMQ_PASS
@@ -130,7 +132,7 @@ $input = readline("front|back|dmz: ");
 if($input == "front") {
     $host = "front";
 } elseif ($input == "back") {
-    $host = "broker"; // change these later
+    $host = "back"; // change these later
 } elseif ($input == "dmz") {
     $host = "dmz";
 } else {
@@ -163,10 +165,29 @@ $input = readline("Install/rollback y or n: ");
 if ($input == "y") { 
     $path = "/home/it490/target/"  . $selected["name"];
     $remote = "localhost";
+    if ($cluster == "qa") {
+        if ($host == "front"){
+            $remote = "100.122.99.69";
+        } elseif ($host == "back") {
+            $remote = "100.107.210.121";
+        } elseif ($host == "dmz") {
+            $remote = "100.114.131.27";
+        } else {}
+    } elseif ($cluster == "prod") {
+        if ($host == "front"){
+            $remote = "100.109.181.25";
+        } elseif ($host == "back") {
+            $remote = "100.91.21.90";
+        } elseif ($host == "dmz") {
+            $remote = "100.70.132.110";
+        } else {}
+    } else {
+
+    }
     $cmd_scp = "scp " . $selected["file_path"] ." it490@$remote:$path";
     exec($cmd_scp, $output, $status);
     if ($status === 0) {
-        $response = rmq_rpc("install.install", ["name" => $selected["name"], "path" => $path]);
+        $response = rmq_rpc("install.install", $remote,["name" => $selected["name"], "path" => $path]);
     } else {
         echo "something broke with install/rollback";
     }
@@ -177,13 +198,13 @@ if ($input == "y") {
     } elseif ($input == "passed") { 
     echo "everything is cool, package passed so send to prod";
     $stmt = $conn->prepare(query:"UPDATE bundle SET status = 'passed' WHERE name = ?");
-    $stmt->bind_param('s', $row['name']);
+    $stmt->bind_param('s', $selected['name']);
     $stmt->execute();
     $result = $stmt->get_result();
 } elseif ($input == "failed") {
     echo "everything is cool, roll it back";
     $stmt = $conn->prepare(query:"UPDATE bundle SET status = 'failed' WHERE name = ?");
-    $stmt->bind_param('s', $row['name']);
+    $stmt->bind_param('s', $selected['name']);
     $stmt->execute();
     $result = $stmt->get_result();
 }
