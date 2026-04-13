@@ -12,7 +12,7 @@ require_once 'includes/data.php';
 require_once 'includes/header.php';
 require_once 'vendor/autoload.php';
 
-$stripe = new \Stripe\StripeClient('sk_test_BQokikJOvBiI2HlWgH4olfQ2');
+$stripe = new \Stripe\StripeClient('');
 $customer = $stripe->customers->create([
     'description' => 'example customer',
     'email' => 'email@example.com',
