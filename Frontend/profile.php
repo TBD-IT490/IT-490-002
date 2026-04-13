@@ -29,33 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         : 'Could not save changes. Please try again.';
 }
 
-//loading user data for display
-
-$profile = rmq_rpc('user.profile') ?? [];
-$stats = $profile['stats'] ?? [];
-$genre_count = $profile['genre_affinity'] ?? [];
-arsort($genre_count);
-
-
-$userRatings = [];
-if ($tab === 'books') {
-    $ratings = rmq_rpc('user.ratings') ?? [];
-    $userRatings  = $ratings['ratings'] ?? [];
-}
-
-$userReviews = [];
-if ($tab === 'reviews') {
-    $reviews = rmq_rpc('user.reviews') ?? [];
-    $userReviews  = $reviews['reviews'] ?? [];
-}
-
-$userSettings = [];
-if ($tab === 'settings') {
-    $settings  = rmq_rpc('user.settings') ?? [];
-    $userSettings = $settings ?? [];
-}
-$savedPreferences = $userSettings['preferences'] ?? [];
-
 ?>
 
 
