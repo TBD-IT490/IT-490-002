@@ -1,0 +1,11 @@
+[Unit]
+Description= Systemd service for install listener for DMZ
+After=network.target
+
+[Service]
+ExecStart=/home/it490/IT-490-002/Dmz/install_listener.php
+User = it490
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
