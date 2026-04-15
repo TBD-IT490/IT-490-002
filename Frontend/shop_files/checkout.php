@@ -6,7 +6,9 @@
 
     $checkout_session = \Stripe\Checkout\Session::create([
         "mode" => "payment",
-        "success_url" => "http://localhost/success.php",
+        "success_url" => "http://localhost:8080/shop_files/success.php",
+        "cancel_url" => "http://localhost:8080/shop_files/cart.php",
+        "locale" => "en",
         "line_items" => [
             [
                 "quantity" => 1,
