@@ -1,0 +1,10 @@
+[Unit]
+Description= Systemd service for install for deploy
+After=network.target
+
+[Service]
+ExecStart=/target/install.php
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

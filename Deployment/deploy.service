@@ -1,0 +1,12 @@
+[Unit]
+Description= Systemd service for deploy listener
+After=network.target
+
+[Service]
+ExecStart=/home/it490/IT-490-002/Deployment/deployListener.php
+User=it490
+Restart=always
+
+
+[Install]
+WantedBy=multi-user.target
