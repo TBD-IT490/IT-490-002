@@ -7,3 +7,5 @@ Database/auth_service/composer.lock
 DMZ/composer.lock
 DMZ/vendor/
 DMZ/cron.log
+Backend/central.log
+Dmz/central.log

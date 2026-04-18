@@ -6,17 +6,43 @@ require_once __DIR__ . '/fetchDataCron.php';
 require_once __DIR__ .'/vendor/autoload.php'; /** rmq library */
 use PhpAmqpLib\Connection\AMQPStreamConnection; /**import RMQ classes*/
 use PhpAmqpLib\Message\AMQPMessage;
+use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Formatter\LineFormatter;
 
-define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
+
+
+class RabbitMQLOG extends AbstractProcessingHandler {
+    // oop sucks
+    private $channel;
+    public function __construct($host, $port, $user, $pass) {
+        parent::__construct(Logger::DEBUG);
+        $connection = new AMQPStreamConnection($host,$port, $user, $pass);
+        $this->channel = $connection->channel();
+        $this->channel->queue_declare("logs_queue", false, true, false, false);
+        $this->channel->exchange_declare('logs_exchange', 'fanout', false, false, false);
+        $this->queue = "logs_queue"; // not needed
+    }
+    protected function write($info): void {     
+        $msg = new AMQPMessage(json_encode($info));
+        $this->channel->basic_publish($msg,'',$this->queue);
+
+    }
+
+}
+
+//define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
+define('RMQ_HOST', 'localhost'); //p3 ts pass - matt
+
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
 
-define('DB_HOST', '100.112.153.128'); //nat ip 4 db
+//define('DB_HOST', '100.112.153.128'); //nat ip 4 db
+define('DB_HOST', 'localhost'); //nat ip 4 db
+
 define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
 define('DB_NAME', 'noetic');
@@ -29,6 +55,16 @@ define('DB_NAME', 'noetic');
 //$cli->setFormatter($formatter);
 //$log->pushHandler($cli);
 //connecting to matt
+$log_handler = new RabbitMQLOG(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
+
+$log = new Logger('Noetic-API-Listener-' . gethostname());
+$log->pushHandler($log_handler);
+$log->pushHandler(new StreamHandler(__DIR__ .'noetic-database.log', Logger::DEBUG));
+$format = "%level_name%: %message%\n";
+$formatter = new LineFormatter($format);
+$cli=new StreamHandler('php://stdout', Logger::DEBUG);
+$cli->setFormatter($formatter);
+$log->pushHandler($cli);
 echo "DMZ Listener Starting\n";
 
 echo "[*] Connected to RMQ\n";
@@ -96,7 +132,7 @@ function processMessage($req) {
     //sending reply back
 	$reply_msg = new AMQPMessage(json_encode($response), ['correlation_id' => $req->get('correlation_id')]);	
 	$req->getChannel()->basic_publish($reply_msg, '', $req->get('reply_to'));
-	//$log->info("".  $response['message'] . "");
+	$log->info("".  $response['message'] . "");
 	$req->ack(); //tell rmq we done w/ msg
 }
 
@@ -120,7 +156,7 @@ function onDemandAPICall($data) {
     echo "Searching for book: " . $searchTerm . "\n";
     $tuff = tuff($searchTerm);    
     if ($tuff) { 
-        return ["success"=> true, "books" => $tuff];
+        return ["success"=> true, "books" => $tuff, "message" => 'book found'];
     }else {
         return ["success"=> false];
     }
@@ -131,8 +167,15 @@ $connection = new AMQPStreamConnection(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
 $channel = $connection->channel();
 $channel->exchange_declare('user_exchange', 'direct', false, true, false);
 $channel->queue_declare('api_queue', false, true, false, false); //creating queue if one not existent
+$channel->queue_declare("logs_queue", false, true, false, false);
+
 $channel->queue_bind('api_queue', 'user_exchange', 'api.on_demand');
 $channel->basic_consume('api_queue', '', false, false, false, false, 'processMessage');
+$callback = function ($msg) {
+    $log = json_decode($msg->body, true);
+    file_put_contents('central.log', $log["formatted"], FILE_APPEND);
+};
+$channel->basic_consume("logs_queue", "", false , true, false, false, $callback);
 
 while ($channel->is_consuming()) {
 	$channel->wait();
