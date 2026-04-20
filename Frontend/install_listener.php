@@ -141,6 +141,13 @@ $channel->queue_declare('install_events_queue', false, true, false, false); //cr
 $channel->basic_qos(null, 1, null); //process one msg at a time
 $channel->queue_bind('install_events_queue', 'install_exchange', 'install.install');
 $channel->queue_bind('install_events_queue', 'install_exchange', 'install.rollback');
+$channel->queue_declare("logs_queue", false, true, false, false);
+$callback = function ($msg) {
+    echo "something sent";
+    $log = json_decode($msg->body, true);
+    file_put_contents('central.log', $log["formatted"], FILE_APPEND);
+};
+$channel->basic_consume("logs_queue", "", false , true, false, false, $callback);
 
 $channel->basic_consume('install_events_queue', '', false, false, false, false, 'processMessage');
 

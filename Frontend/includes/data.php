@@ -3,6 +3,8 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+use Monolog\Handler\AbstractProcessingHandler;
+use Monolog\Logger;
 
 //connecting to matt's rabbitmq server, running on different vm
 define('RABBITMQ_HOST', '100.101.27.73');
@@ -12,6 +14,28 @@ define('RABBITMQ_PASS', 'test');
 define('RABBITMQ_EXCHANGE', 'user_exchange');
 
 $_DEBUG_LOG = [];
+
+class RabbitMQLOG extends AbstractProcessingHandler {
+    // oop sucks
+    private $channel;
+    public function __construct($host, $port, $user, $pass) {
+        parent::__construct(Logger::DEBUG);
+        $connection = new AMQPStreamConnection($host,$port, $user, $pass);
+        $this->channel = $connection->channel();
+        $this->channel->queue_declare("logs_queue", false, true, false, false);
+        $this->channel->exchange_declare('logs_exchange', 'fanout', false, false, false);
+        $this->queue = "logs_queue"; // not needed
+    }
+    protected function write($info): void {     
+        $msg = new AMQPMessage(json_encode($info));
+        $this->channel->basic_publish($msg,'',$this->queue);
+
+    }
+
+}
+
+
+
 
 function rmq_rpc(string $action, array $payload = []): ?array {
     global $_DEBUG_LOG;

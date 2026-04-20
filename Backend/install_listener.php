@@ -34,7 +34,7 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 
         $channel = $connection->channel();
         $channel->exchange_declare('user_exchange', 'direct', false, true, false);
-        $channel->queue_declare('user_events_queue', false, true, false, false);
+        //$channel->queue_declare('user_events_queue', false, true, false, false);
         $channel->basic_qos(null, 1, null);
 
         
@@ -107,6 +107,15 @@ function handleInstall($data) {
 }
 function handleRollback($data) {
     return [];
+}
+
+function handleInstallScript($data) {
+
+
+    $output = shell_exec("tailscale status");
+    echo "" . $output;
+    
+    return ["success" => true, "message" => "should be installed"];
 }
 function processMessage($req) {
 	global $log;
