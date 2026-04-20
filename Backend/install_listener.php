@@ -8,9 +8,11 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Formatter\LineFormatter;
-
+use Dotenv\Dotenv;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
-define('RMQ_HOST','localhost');
+define('RMQ_HOST',$_ENV['BACKEND']);
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
