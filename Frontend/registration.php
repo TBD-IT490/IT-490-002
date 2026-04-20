@@ -6,8 +6,12 @@ require_once __DIR__ . "/vendor/autoload.php";
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
+use Dotenv\Dotenv;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
 //connecting to matt's vm on the broker
-define('RABBITMQ_HOST', '100.101.27.73');
+define('RABBITMQ_HOST', $_ENV['BACKEND']);
 define('RABBITMQ_PORT', 5672);
 define('RABBITMQ_USER', 'broker');
 define('RABBITMQ_PASS', 'test');

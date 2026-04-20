@@ -7,7 +7,6 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 $rabbit_host = $_ENV['BACKEND'];
-$self = $_ENV['SELF'];
 
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -27,8 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
     //connecting to rabbit
             $connection = new AMQPStreamConnection(
-                '100.101.27.73',
-            //    'localhost',
                 $rabbit_host,
                 5672,
                 'broker',

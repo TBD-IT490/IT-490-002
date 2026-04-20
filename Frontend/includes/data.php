@@ -9,9 +9,12 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+
 
 //connecting to matt's rabbitmq server, running on different vm
-define('RABBITMQ_HOST', '100.101.27.73');
+define('RABBITMQ_HOST', $_ENV['BACKEND']);
 define('RABBITMQ_PORT', 5672);
 define('RABBITMQ_USER', 'broker');
 define('RABBITMQ_PASS', 'test');
