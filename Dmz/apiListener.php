@@ -65,7 +65,6 @@ $cli=new StreamHandler('php://stdout', Logger::DEBUG);
 $cli->setFormatter($formatter);
 $log->pushHandler($cli);
 echo "DMZ Listener Starting\n";
-
 echo "[*] Connected to RMQ\n";
 echo "[*] Waiting for messages...\n";
 echo "[*] Press CTRL+C to exit\n";
@@ -183,8 +182,6 @@ while ($channel->is_consuming()) {
 //clean
 $channel->close();
 $connection->close();
-
-
 
 
 ?>
