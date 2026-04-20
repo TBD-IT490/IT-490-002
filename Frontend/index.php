@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
     //connecting to rabbit
             $connection = new AMQPStreamConnection(
-                '100.101.27.73',
+                $self,
             //    'localhost',
                 $rabbit_host,
                 5672,
