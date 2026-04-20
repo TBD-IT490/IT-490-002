@@ -1,0 +1,4 @@
+[2026-04-20T16:02:48.387184+00:00] Noetic-Database-Listener-broker.WARNING: Invalid login forpay [] []
+[2026-04-20T16:02:48.387671+00:00] Noetic-Database-Listener-broker.INFO: Invalid username or password! [] []
+[2026-04-20T16:02:59.277131+00:00] Noetic-Database-Listener-broker.WARNING: Invalid login forway [] []
+[2026-04-20T16:02:59.278002+00:00] Noetic-Database-Listener-broker.INFO: Invalid username or password! [] []
