@@ -11,6 +11,14 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Formatter\LineFormatter;
 
+//require_once __DIR__ . '/vendor/autoload.php';
+//require_once __DIR__ realpath(__DIR__ . '/vendor/autoload.php');
+use Dotenv\Dotenv;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+$rabbit_host = $_ENV['BACKEND'];
+$self = $_ENV['SELF'];
+
 
 
 class RabbitMQLOG extends AbstractProcessingHandler {
