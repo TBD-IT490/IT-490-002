@@ -17,7 +17,6 @@ use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 $backend = $_ENV['BACKEND']; //for rabbit and db
-$self = $_ENV['SELF'];
 
 
 
