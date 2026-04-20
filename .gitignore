@@ -12,3 +12,4 @@ DMZ/vendor/
 DMZ/cron.log
 Backend/central.log
 Dmz/central.log
+Backendnoetic-database.log
