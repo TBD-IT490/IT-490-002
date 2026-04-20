@@ -1,4 +1,5 @@
 Backend/vendor/
+Backend/composer.json
 Frontend/vendor/
 Dmz/vendor
 Deployment/vendor
