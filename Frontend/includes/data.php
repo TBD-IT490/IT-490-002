@@ -1,6 +1,10 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
+
+
+
+use Dotenv\Dotenv;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Monolog\Handler\AbstractProcessingHandler;
@@ -12,6 +16,11 @@ define('RABBITMQ_PORT', 5672);
 define('RABBITMQ_USER', 'broker');
 define('RABBITMQ_PASS', 'test');
 define('RABBITMQ_EXCHANGE', 'user_exchange');
+
+
+$dotenv = Dotenv::createMutable(__DIR__);
+$dotenv->load();
+
 
 $_DEBUG_LOG = [];
 
