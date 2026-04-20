@@ -9,6 +9,11 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Formatter\LineFormatter;
 
+use Dotenv\Dotenv;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+$backend = $_ENV['BACKEND']; //for rabbit and db
+
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
 define('RMQ_HOST','localhost');
 define('RMQ_PORT', 5672);
