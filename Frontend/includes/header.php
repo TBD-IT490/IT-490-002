@@ -1,11 +1,3 @@
-<?php
-//REDIRECT TO LOGIN IF NOT LOGGED IN PROPERLY (so you can't access without signing in hehe)
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-   header("Location: index.php");
-   exit();
-}
-$current_page = basename($_SERVER['PHP_SELF'], '.php');
-?>
 
 <!--HTML FOR HEADER-->
 <!DOCTYPE html>
@@ -30,6 +22,7 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
             <a href="books.php" class="nav-link <?php echo $current_page==='books'?'active':''; ?>">Library</a>
             <a href="groups.php" class="nav-link <?php echo $current_page==='groups'?'active':''; ?>">Circles</a>
             <a href="schedule.php" class="nav-link <?php echo $current_page==='schedule'?'active':''; ?>">Gatherings</a>
+            <a href="cart.php" class="nav-link <?php echo $current_page==='cart'?'active':''; ?>">Marketplace</a>
             <a href="recommendations.php" class="nav-link <?php echo $current_page==='recommendations'?'active':''; ?>">Discoveries</a>
             <a href="discussions.php" class="nav-link <?php echo $current_page==='discussions'?'active':''; ?>">Discussions</a>
         </div>

@@ -19,6 +19,36 @@
                         "name" => "Mystery Novel"
                     ]
                 ]
+            ],
+            [
+                "quantity" => 3,
+                "price_data" => [
+                    "currency" => "usd",
+                    "unit_amount" => 700,
+                    "product_data" => [
+                        "name" => "Action Novel"
+                    ]
+                ]
+            ],
+            [
+                "quantity" => 1,
+                "price_data" => [
+                    "currency" => "usd",
+                    "unit_amount" => 1900,
+                    "product_data" => [
+                        "name" => "History Novel"
+                    ]
+                ]
+            ],
+            [
+                "quantity" => 1,
+                "price_data" => [
+                    "currency" => "usd",
+                    "unit_amount" => 2000,
+                    "product_data" => [
+                        "name" => "Romance Novel"
+                    ]
+                ]
             ]
         ]
     ]);
