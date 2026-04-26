@@ -55,3 +55,4 @@
 
     http_response_code(303);
     header("Location: " . $checkout_session->url);
+?>
