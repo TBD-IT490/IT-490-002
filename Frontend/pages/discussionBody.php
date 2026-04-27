@@ -7,8 +7,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 }
 
 //data functions and header file
-require_once 'includes/data.php';
-require_once 'includes/header.php';
+require_once '../includes/data.php';
+require_once '../includes/header.php';
 
 //$view_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $discussion_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
@@ -138,6 +138,6 @@ list($msg_type, $msg_text) = $msg ? explode(':', $msg, 2) : ['', ''];
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
 </body>
 </html>

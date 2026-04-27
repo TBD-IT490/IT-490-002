@@ -7,8 +7,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit();
 }
 
-require_once 'includes/data.php';
-require_once 'includes/header.php';
+require_once '../includes/data.php';
+require_once '../includes/header.php';
 
 $view_id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 
@@ -175,4 +175,4 @@ if ($view_id) {
 
 <?php endif; ?>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

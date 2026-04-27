@@ -7,8 +7,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit();
 }
 
-require_once 'includes/data.php';
-require_once 'includes/header.php';
+require_once '../includes/data.php';
+require_once '../includes/header.php';
 
 $filter_group = isset($_GET['group_id']) ? (int)$_GET['group_id'] : 0;
 $msg          = '';
@@ -198,4 +198,4 @@ foreach ($filtered_schedule as $ev):
 </div>
 </html>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>

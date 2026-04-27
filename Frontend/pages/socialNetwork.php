@@ -8,6 +8,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 }
 
 //functions and headers
-require_once 'includes/data.php';
-require_once 'includes/header.php';
+require_once '../includes/data.php';
+require_once '../includes/header.php';
 ?>

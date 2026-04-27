@@ -8,8 +8,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 }
 
 //functions and headers
-require_once 'includes/data.php';
-require_once 'includes/header.php';
+require_once '../includes/data.php';
+require_once '../includes/header.php';
 
 $msg = '';
 $tab = $_GET['tab'] ?? 'books';
@@ -47,4 +47,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </html>
 
 <!--footer code :) at least it stays consistent-->
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once '../includes/footer.php'; ?>
