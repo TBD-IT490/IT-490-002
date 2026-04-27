@@ -1,4 +1,10 @@
-<?php require_once '../includes/header.php'; ?>
+<?php 
+  require_once '../includes/header.php'; 
+  session_start();
+
+  $_SESSION['cart'] = [  
+  ];
+?>
 
 <doctype html>
 <h1 class="my-4">Noetic's Blind Date with a Book</h1>
@@ -15,8 +21,8 @@
         </p>
         <div class="mt-auto">
           <p><strong>$19.99</strong></p>
-          <form method="post" action="checkout.php">
-            <button type="submit" class="btn btn-primary">Checkout</button>
+          <form method="post" action="add_to_cart.php">
+            <button type="submit" class="btn btn-primary">Add To Cart</button>
           </form>
         </div>
       </div>
@@ -32,8 +38,8 @@
         </p>
         <div class="mt-auto">
           <p><strong>$19.99</strong></p>
-          <form method="post" action="checkout.php">
-            <button type="submit" class="btn btn-primary">Checkout</button>
+          <form method="post" action="add_to_cart.php">
+            <button type="submit" class="btn btn-primary">Add To Cart</button>
           </form>
         </div>
       </div>
@@ -49,8 +55,8 @@
         </p>
         <div class="mt-auto">
           <p><strong>$19.99</strong></p>
-          <form method="post" action="checkout.php">
-            <button type="submit" class="btn btn-primary">Checkout</button>
+          <form method="post" action="add_to_cart.php">
+            <button type="submit" class="btn btn-primary">Add To Cart</button>
           </form>
         </div>
       </div>
@@ -66,8 +72,8 @@
         </p>
         <div class="mt-auto">
           <p><strong>$19.99</strong></p>
-          <form method="post" action="checkout.php">
-            <button type="submit" class="btn btn-primary">Checkout</button>
+          <form method="post" action="add_to_cart.php">
+            <button type="submit" class="btn btn-primary">Add To Cart</button>
           </form>
         </div>
       </div>
@@ -83,8 +89,8 @@
         </p>
         <div class="mt-auto">
           <p><strong>$19.99</strong></p>
-          <form method="post" action="checkout.php">
-            <button type="submit" class="btn btn-primary">Checkout</button>
+          <form method="post" action="add_to_cart.php">
+            <button type="submit" class="btn btn-primary">Add To Cart</button>
           </form>
         </div>
       </div>
