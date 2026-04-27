@@ -2,8 +2,7 @@
   require_once '../includes/header.php'; 
   session_start();
 
-  $_SESSION['cart'] = [  
-  ];
+  
 ?>
 
 <doctype html>
