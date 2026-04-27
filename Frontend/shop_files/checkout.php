@@ -4,53 +4,29 @@
 
     \Stripe\Stripe::setApiKey($stripe_secret_key);
 
+    session_start();
+    $cart_items = $_SESSION['cart'];
+    $line_items = [];
+
+    foreach ($cart_items as $item){
+        $line_items[] = [
+            'price_data' => [
+                'currency' => 'usd',
+                'product_data' => [
+                    'name' => $item['name'],
+                ],
+                'unit_amount' => $item['price'] * 100, // this is the amount in cents
+            ],
+            'quantity' => $item['quantity'],
+        ];
+    }
+
     $checkout_session = \Stripe\Checkout\Session::create([
-        "mode" => "payment",
-        "success_url" => "http://localhost:8080/shop_files/success.php",
-        "cancel_url" => "http://localhost:8080/shop_files/cart.php",
-        "locale" => "en",
-        "line_items" => [
-            [
-                "quantity" => 1,
-                "price_data" => [
-                    "currency" => "usd",
-                    "unit_amount" => 2000,
-                    "product_data" => [
-                        "name" => "Mystery Novel"
-                    ]
-                ]
-            ],
-            [
-                "quantity" => 3,
-                "price_data" => [
-                    "currency" => "usd",
-                    "unit_amount" => 700,
-                    "product_data" => [
-                        "name" => "Action Novel"
-                    ]
-                ]
-            ],
-            [
-                "quantity" => 1,
-                "price_data" => [
-                    "currency" => "usd",
-                    "unit_amount" => 1900,
-                    "product_data" => [
-                        "name" => "History Novel"
-                    ]
-                ]
-            ],
-            [
-                "quantity" => 1,
-                "price_data" => [
-                    "currency" => "usd",
-                    "unit_amount" => 2000,
-                    "product_data" => [
-                        "name" => "Romance Novel"
-                    ]
-                ]
-            ]
-        ]
+        'payment_method_types' => ['card'],
+        'line_items' => $line_items,
+        'mode' => 'payment',
+        'success_url' => 'http://localhost:8080/cart.php',
+        'cancel_url' => 'http://localhost:8080/cart.php',
     ]);
 
     http_response_code(303);
