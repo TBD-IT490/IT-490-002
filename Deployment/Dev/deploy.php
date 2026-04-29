@@ -92,7 +92,9 @@ function rmq_rpc(string $action, array $payload = []): ?array {
     }
 }
 
-$hostname = gethostname();
+$hostname = explode('-', gethostname());
+$hostname = end($hostname);
+
 $input = readline("front|back|dmz: ");
 $host;
 if ($input === "front") {

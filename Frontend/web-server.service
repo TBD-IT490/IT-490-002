@@ -6,9 +6,9 @@ Requires=apache2.service
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/systemctl start apache2.service
+ExecStart=/usr/bin/php /home/it490/target/install_listener.php
 ExecStop=/usr/bin/systemctl stop apache2.service
-ExecReload=/usr/bin/systemctl reload apache2.service
+ExecReload=/usr/bin/php /home/it490/target/install_listener.php
 User=it490
 
 [Install]

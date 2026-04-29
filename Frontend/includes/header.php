@@ -1,11 +1,3 @@
-<?php
-//REDIRECT TO LOGIN IF NOT LOGGED IN PROPERLY (so you can't access without signing in hehe)
-if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-   header("Location: index.php");
-   exit();
-}
-$current_page = basename($_SERVER['PHP_SELF'], '.php');
-?>
 
 <!--HTML FOR HEADER-->
 <!DOCTYPE html>
@@ -27,14 +19,17 @@ $current_page = basename($_SERVER['PHP_SELF'], '.php');
         <a href="dashboard.php" class="nav-brand">Noetic<span>.</span></a>
         <div class="d-flex align-items-center gap-1 ms-2 flex-grow-1">
             <!--navbar links at top of every page-->
-            <a href="books.php" class="nav-link <?php echo $current_page==='books'?'active':''; ?>">Library</a>
-            <a href="groups.php" class="nav-link <?php echo $current_page==='groups'?'active':''; ?>">Circles</a>
-            <a href="schedule.php" class="nav-link <?php echo $current_page==='schedule'?'active':''; ?>">Gatherings</a>
-            <a href="recommendations.php" class="nav-link <?php echo $current_page==='recommendations'?'active':''; ?>">Discoveries</a>
-            <a href="discussions.php" class="nav-link <?php echo $current_page==='discussions'?'active':''; ?>">Discussions</a>
+            <a href="../pages/books.php" class="nav-link <?php echo $current_page==='books'?'active':''; ?>">Library</a>
+            <a href="../pages/groups.php" class="nav-link <?php echo $current_page==='groups'?'active':''; ?>">Circles</a>
+            <a href="../pages/schedule.php" class="nav-link <?php echo $current_page==='schedule'?'active':''; ?>">Gatherings</a>
+            <a href="../shop_files/cart.php" class="nav-link <?php echo $current_page==='cart'?'active':''; ?>">Marketplace</a>
+            <a href="../pagesrecommendations.php" class="nav-link <?php echo $current_page==='recommendations'?'active':''; ?>">Discoveries</a>
+            <a href="../pages/discussions.php" class="nav-link <?php echo $current_page==='discussions'?'active':''; ?>">Discussions</a>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <a href="profile.php" class="nav-link <?php echo $current_page==='profile'?'active':''; ?> d-flex align-items-center gap-2">
+            <a href= "../shop_files/checkout.php" class="nav-link <?php echo $current_page==='checkout'?'active':''; ?>">
+                <i class="bi bi-cart3"></i>
+            <a href="../pages/profile.php" class="nav-link <?php echo $current_page==='profile'?'active':''; ?> d-flex align-items-center gap-2">
                 <div class="avatar-ring"><?php echo strtoupper(substr($_SESSION['username'],0,1)); ?></div>
                 <span><?php echo htmlspecialchars($_SESSION['username']); ?></span>
             </a>

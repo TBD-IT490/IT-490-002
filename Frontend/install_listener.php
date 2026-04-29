@@ -9,8 +9,13 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Formatter\LineFormatter;
 
+use Dotenv\Dotenv;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
+$backend = $_ENV['BACKEND']; //for rabbit and db
+
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
-define('RMQ_HOST','localhost');
+define('RMQ_HOST',$backend);
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
@@ -141,6 +146,13 @@ $channel->queue_declare('install_events_queue', false, true, false, false); //cr
 $channel->basic_qos(null, 1, null); //process one msg at a time
 $channel->queue_bind('install_events_queue', 'install_exchange', 'install.install');
 $channel->queue_bind('install_events_queue', 'install_exchange', 'install.rollback');
+$channel->queue_declare("logs_queue", false, true, false, false);
+$callback = function ($msg) {
+    echo "something sent";
+    $log = json_decode($msg->body, true);
+    file_put_contents('central.log', $log["formatted"], FILE_APPEND);
+};
+$channel->basic_consume("logs_queue", "", false , true, false, false, $callback);
 
 $channel->basic_consume('install_events_queue', '', false, false, false, false, 'processMessage');
 

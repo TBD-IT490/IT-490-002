@@ -461,7 +461,8 @@
 sorry it's ugly i just copy pasted from the original file*/
 
 :root {
-            --deep: #202030;
+            /*--deep: #202030;*/
+            --deep: #103030;
             --card: #39304A;
             --blush: #DCBCCE;
             --moss: #242E0F;
@@ -475,8 +476,8 @@ sorry it's ugly i just copy pasted from the original file*/
             color: var(--blush);
             font-family: 'Crimson Text', Georgia, serif;
             min-height: 100vh;
-            background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(57,48,74,0.4) 0%, transparent 60%);
+            /*background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(57,48,74,0.4) 0%, transparent 60%);*/
         }
         .login-wrapper{
             min-height:100vh;
