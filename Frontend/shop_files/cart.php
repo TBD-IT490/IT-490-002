@@ -1,8 +1,6 @@
-<?php 
-  require_once '../includes/header.php'; 
-  session_start();
-
-  
+<?php
+session_start();
+require_once '../includes/header.php';
 ?>
 
 <doctype html>
