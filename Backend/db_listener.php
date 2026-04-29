@@ -1,4 +1,4 @@
-#!/usr/bin/php
+sudo#!/usr/bin/php
 <?php
 
 require_once __DIR__ .'/vendor/autoload.php'; /** rmq library */
