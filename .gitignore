@@ -1,8 +1,9 @@
 Backend/vendor/
-Backend/composer.json
+Backend/composer.lock
 Frontend/vendor/
 Dmz/vendor
 Deployment/vendor
+Deployment/composer.lock
 Frontend/composer.lock
 Database/auth_servicenoetic-database.log
 Database/auth_service/.db_listener.php.swp
@@ -13,3 +14,4 @@ Dmz/cron.log
 Backend/central.log
 Dmz/central.log
 Backendnoetic-database.log
+Deploymentnoetic-Deploy.log

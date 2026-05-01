@@ -51,14 +51,12 @@ class RabbitMQLOG extends AbstractProcessingHandler {
 
 }
 
-//define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
 define('RMQ_HOST', $backend); //rabbit
 
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
 
-//define('DB_HOST', '100.112.153.128'); //nat ip 4 db
 define('DB_HOST', $backend); //db
 
 define('DB_USER', 'app_user');
@@ -77,7 +75,7 @@ $log_handler = new RabbitMQLOG($backend, RMQ_PORT, RMQ_USER, RMQ_PASS);
 
 $log = new Logger('Noetic-API-Listener-' . gethostname());
 $log->pushHandler($log_handler);
-$log->pushHandler(new StreamHandler(__DIR__ .'noetic-database.log', Logger::DEBUG));
+$log->pushHandler(new StreamHandler(__DIR__ .'central.log', Logger::DEBUG));
 $format = "%level_name%: %message%\n";
 $formatter = new LineFormatter($format);
 $cli=new StreamHandler('php://stdout', Logger::DEBUG);

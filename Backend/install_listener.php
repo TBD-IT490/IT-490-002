@@ -16,8 +16,8 @@ define('RMQ_HOST',$_ENV['BACKEND']);
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
-$log = new Logger('Noetic-Deploy-Listener');
-$log->pushHandler(new StreamHandler(__DIR__ .'noetic-Deploy.log', Logger::DEBUG));
+$log = new Logger('Noetic-Install-Listener');
+$log->pushHandler(new StreamHandler(__DIR__ .'central.log', Logger::DEBUG));
 $format = "%level_name%: %message%\n";
 $formatter = new LineFormatter($format);
 $cli=new StreamHandler('php://stdout', Logger::DEBUG);
