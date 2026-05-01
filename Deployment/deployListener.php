@@ -20,7 +20,7 @@ define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
 define('DB_NAME', 'deploy');
 $log = new Logger('Noetic-Deploy-Listener');
-$log->pushHandler(new StreamHandler(__DIR__ .'noetic-Deploy.log', Logger::DEBUG));
+$log->pushHandler(new StreamHandler(__DIR__ .'central.log', Logger::DEBUG));
 $format = "%level_name%: %message%\n";
 $formatter = new LineFormatter($format);
 $cli=new StreamHandler('php://stdout', Logger::DEBUG);

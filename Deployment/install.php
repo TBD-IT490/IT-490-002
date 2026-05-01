@@ -17,8 +17,8 @@ define('RMQ_HOST','100.114.131.27');
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
-$log = new Logger('Noetic-Deploy-Listener');
-$log->pushHandler(new StreamHandler(__DIR__ .'noetic-Deploy.log', Logger::DEBUG));
+$log = new Logger('Noetic-Install');
+$log->pushHandler(new StreamHandler(__DIR__ .'central.log', Logger::DEBUG));
 $format = "%level_name%: %message%\n";
 $formatter = new LineFormatter($format);
 $cli=new StreamHandler('php://stdout', Logger::DEBUG);
@@ -119,11 +119,13 @@ if($input == "install") {
     echo "input rollback or install\n";
     exit();
 }
-$input = readline("qa or prod: ");
+$input = readline("qa, dev, or prod: ");
 if($input == "qa") {
     $cluster = "qa";
 } elseif ($input == "prod") {
     $cluster = "prod";
+} elseif ($input == "dev") {
+    $cluster = "dev";
 } else {
     echo "qa or prod\n";
     exit();
@@ -136,7 +138,7 @@ if($input == "front") {
 } elseif ($input == "dmz") {
     $host = "dmz";
 } else {
-    echo "front or back or dmz\n";
+    echo "front or back or dev\n";
     exit();
 }
 $stmt = $conn->prepare(query:"Select * from bundle where name like CONCAT (?, '%') ORDER BY version DESC");
@@ -180,6 +182,14 @@ if ($input == "y") {
             $remote = "100.91.21.90";
         } elseif ($host == "dmz") {
             $remote = "100.70.132.110";
+        } else {}
+    } elseif ($cluster == "dmz") {
+        if ($host == "front"){
+            $remote = "100.122.173.95";
+        } elseif ($host == "back") {
+            $remote = "100.107.106.57";
+        } elseif ($host == "dmz") {
+            $remote = "100.112.225.25";
         } else {}
     } else {
 
