@@ -46,7 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-    <div class="container mt-5">
+<!-- cant c stuff rn so it might look ugly, forgive me taryn :( -->
+    <div class="brand">
         <h1>Profile</h1>
         <?php if ($msg): ?>
             <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
@@ -80,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="form-check-label" for="pref3">Preference 3</label>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="submit" class="btn btn-theme">Save Changes</button>
         </form>
     </div>
 </body>
