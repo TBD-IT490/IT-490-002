@@ -29,5 +29,7 @@ $friends = rmq_rpc('friends.get', ['user_id' => $_SESSION['id']])['friends'] ?? 
 </head>
 <body>
 
+
+
 </body>
 </html>

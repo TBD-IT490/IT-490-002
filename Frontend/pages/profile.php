@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-<!-- cant c stuff rn so it might look ugly, forgive me taryn :( -->
+<!-- cant c stuff rn so it looks basic i think, forgive me taryn :( -->
     <div class="brand">
         <h1>Profile</h1>
         <?php if ($msg): ?>
@@ -66,6 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <textarea class="form-control" id="bio" name="bio" rows="3"><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></textarea>
             </div>
             <div class="mb-3">
+
                 <!-- REMINDER: ask taryn ab preferences -->
                 <label class="form-label">Preferences</label><br>
                 <div class="form-check form-check-inline">
@@ -81,7 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label class="form-check-label" for="pref3">Preference 3</label>
                 </div>
             </div>
-            <button type="submit" class="btn btn-theme">Save Changes</button>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
         </form>
     </div>
 </body>
