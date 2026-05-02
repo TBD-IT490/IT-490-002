@@ -1,0 +1,6 @@
+[2026-05-02T16:21:00.335195+00:00] Noetic-API-Listener-broker.INFO: Searching for book: dadk [] []
+[2026-05-02T16:21:00.335565+00:00] Noetic-API-Listener-broker.INFO: https://www.googleapis.com/books/v1/volumes?q=dadk&maxResults=10&key=AIzaSyDYJbl3JpctqD5r3bn_qF4LkCzBvjOfdQI [] []
+[2026-05-02T16:21:01.017246+00:00] Noetic-API-Listener-broker.INFO: book found [] []
+[2026-05-02T16:21:04.767469+00:00] Noetic-API-Listener-broker.INFO: Searching for book: fool [] []
+[2026-05-02T16:21:04.767714+00:00] Noetic-API-Listener-broker.INFO: https://www.googleapis.com/books/v1/volumes?q=fool&maxResults=10&key=AIzaSyDYJbl3JpctqD5r3bn_qF4LkCzBvjOfdQI [] []
+[2026-05-02T16:21:05.602079+00:00] Noetic-API-Listener-broker.INFO: book found [] []
