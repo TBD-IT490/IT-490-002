@@ -5,7 +5,7 @@ Requires=rabbitmq-server.service
 After=network.target
 
 [Service]
-ExecStart=/home/it490/target/db_listener.php
+ExecStart= /home/it490/target/db_listener.php
 Restart=always
 User=it490
 
