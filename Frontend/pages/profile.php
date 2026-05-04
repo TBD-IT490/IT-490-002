@@ -22,7 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'display_name' => trim($_POST['display_name'] ?? ''), 
         'email'=> trim($_POST['email'] ?? ''),
         'bio'=> trim($_POST['bio'] ?? ''),
-        'preferences' => $_POST['prefs'] ?? [],
     ]);
     $msg = ($result['success'] ?? false)
         ? 'Profile updated.'
@@ -64,23 +63,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="mb-3">
                 <label for="bio" class="form-label">Bio</label>
                 <textarea class="form-control" id="bio" name="bio" rows="3"><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></textarea>
-            </div>
-            <div class="mb-3">
-
-                <!-- REMINDER: ask taryn ab preferences -->
-                <label class="form-label">Preferences</label><br>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="pref1" name="prefs[]" value="pref1" <?= in_array('pref1', $_SESSION['preferences'] ?? []) ? 'checked' : '' ?>>
-                    <label class="form-check-label" for="pref1">Preference 1</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="pref2" name="prefs[]" value="pref2" <?= in_array('pref2', $_SESSION['preferences'] ?? []) ? 'checked' : '' ?>>
-                    <label class="form-check-label" for="pref2">Preference 2</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" id="pref3" name="prefs[]" value="pref3" <?= in_array('pref3', $_SESSION['preferences'] ?? []) ? 'checked' : '' ?>>
-                    <label class="form-check-label" for="pref3">Preference 3</label>
-                </div>
             </div>
 
             <button type="submit" class="btn btn-primary">Save Changes</button>
