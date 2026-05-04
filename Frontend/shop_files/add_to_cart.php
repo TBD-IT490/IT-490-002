@@ -2,7 +2,7 @@
 session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $id = $_POST['book_id'];
+    
     $title = $_POST['book_title'];
     $price = $_POST['book_price'];
 
