@@ -8,19 +8,16 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Formatter\LineFormatter;
-
 use Dotenv\Dotenv;
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
-$backend = $_ENV['BACKEND']; //for rabbit and db
-
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
-define('RMQ_HOST',$backend);
+define('RMQ_HOST',$_ENV['BACKEND']);
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
-$log = new Logger('Noetic-Deploy-Listener');
-$log->pushHandler(new StreamHandler(__DIR__ .'noetic-Deploy.log', Logger::DEBUG));
+$log = new Logger('Noetic-Install-Listener');
+$log->pushHandler(new StreamHandler(__DIR__ .'central.log', Logger::DEBUG));
 $format = "%level_name%: %message%\n";
 $formatter = new LineFormatter($format);
 $cli=new StreamHandler('php://stdout', Logger::DEBUG);
@@ -39,7 +36,7 @@ function rmq_rpc(string $action, array $payload = []): ?array {
 
         $channel = $connection->channel();
         $channel->exchange_declare('user_exchange', 'direct', false, true, false);
-        $channel->queue_declare('user_events_queue', false, true, false, false);
+        //$channel->queue_declare('user_events_queue', false, true, false, false);
         $channel->basic_qos(null, 1, null);
 
         
@@ -113,6 +110,15 @@ function handleInstall($data) {
 function handleRollback($data) {
     return [];
 }
+
+function handleInstallScript($data) {
+
+
+    $output = shell_exec("tailscale status");
+    echo "" . $output;
+    
+    return ["success" => true, "message" => "should be installed"];
+}
 function processMessage($req) {
 	global $log;
 	$routing_key = $req->delivery_info['routing_key'];
@@ -146,13 +152,6 @@ $channel->queue_declare('install_events_queue', false, true, false, false); //cr
 $channel->basic_qos(null, 1, null); //process one msg at a time
 $channel->queue_bind('install_events_queue', 'install_exchange', 'install.install');
 $channel->queue_bind('install_events_queue', 'install_exchange', 'install.rollback');
-$channel->queue_declare("logs_queue", false, true, false, false);
-$callback = function ($msg) {
-    echo "something sent";
-    $log = json_decode($msg->body, true);
-    file_put_contents('central.log', $log["formatted"], FILE_APPEND);
-};
-$channel->basic_consume("logs_queue", "", false , true, false, false, $callback);
 
 $channel->basic_consume('install_events_queue', '', false, false, false, false, 'processMessage');
 
