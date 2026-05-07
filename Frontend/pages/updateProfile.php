@@ -16,11 +16,12 @@ $tab = $_GET['tab'] ?? 'books';
 
 
 //ALL OF THIS MUST MATCH NAT'S BACKEND CODE
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
     $result = rmq_rpc('user.update', [
-        'display_name' => trim($_GET['display_name'] ?? ''), 
-        'email'=> trim($_GET['email'] ?? ''),
-        'bio'=> trim($_GET['bio'] ?? ''),
+        'display_name' => trim($_POST['display_name'] ?? ''), 
+        'email'=> trim($_POST['email'] ?? ''),
+        'bio'=> trim($_POST['bio'] ?? ''),
     ]);
     $msg = ($result['success'] ?? false)
         ? 'Profile updated.'
@@ -37,33 +38,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Noetic — Profile</title>
+    <title>Noetic — Update Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
+<!-- cant c stuff rn so it looks basic i think, forgive me taryn :( -->
     <div class="brand">
-        <h1>Profile</h1>
-    <!--gotta c if the msg can be seen after updating profile-->
+        <h1>Update Profile</h1>
         <?php if ($msg): ?>
             <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
         <?php endif; ?>
-    </div>
-    
+        <form method="POST" action="profile.php">
+            <div class="mb-3">
+                <label for="display_name" class="form-label">Display Name</label>
+                <input type="text" class="form-control" id="display_name" name="display_name" value="<?= htmlspecialchars($_SESSION['display_name'] ?? '') ?>">
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="<?= htmlspecialchars($_SESSION['email'] ?? '') ?>">
+            </div>
+            <div class="mb-3">
+                <label for="bio" class="form-label">Bio</label>
+                <textarea class="form-control" id="bio" name="bio" rows="3"><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></textarea>
+            </div>
 
-    <div>
-    <h1><?= htmlspecialchars($_SESSION['display_name'] ?? '') ?></h1>
-    <p ><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
-    <p><?= htmlspecialchars($_SESSION['email'] ?? '') ?></p>
-    <button class="btn-n btn" style="text-decoration: none; color: inherit;"><a href="updateProfile.php">Update Profile</a></button>
-    </div>
-
-    <div> 
-    <h2>Friends</h2>
-    <!--for now... we WILL have friends-->
-    <p>Friends list coming soon!</p>
+            
+            <button type="submit" class="btn-n btn"><a href="profile.php">Back</a></button>
+            <button type="submit" class="btn-n btn">Save Changes</button>
+        </form>
     </div>
 </body>
 </html>

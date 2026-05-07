@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['username'] = $username;
             $channel->close();
             $connection->close();
-            header("Location: books.php");
+            header("Location: pages/books.php");
             exit();
         } else {
             $error = "Invalid username or password.";

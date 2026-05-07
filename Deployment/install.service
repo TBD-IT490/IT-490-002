@@ -3,7 +3,7 @@ Description= Systemd service for install for deploy
 After=network.target
 
 [Service]
-ExecStart=/target/install.php
+ExecStart= /home/it490/target/install.php
 Restart=always
 
 [Install]

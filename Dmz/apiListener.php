@@ -1,7 +1,7 @@
 #!/usr/bin/php
 <?php
 //require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/fetchData.php';
+//require_once __DIR__ . '/fetchData.php';
 require_once __DIR__ .'/vendor/autoload.php'; /** rmq library */
 use PhpAmqpLib\Connection\AMQPStreamConnection; /**import RMQ classes*/
 use PhpAmqpLib\Message\AMQPMessage;
@@ -90,6 +90,7 @@ echo "[*] Press CTRL+C to exit\n";
 
 //caching 10 random books
 function refreshCache() {
+    global $log;
     //makes 10 random search terms 
     $randomTerms=[];
     for($i=0; $i<10; $i++) {
@@ -100,45 +101,32 @@ function refreshCache() {
         }
         $randomTerms[] = $word;
     }
-    //caches the 10 random terms
-    //erm google?
-    /*
-    $cachFile='cache.log';
-    if(file_exists($cachFile)) {
-        $books=file_get_contents($cachFile), true;
-    } else {
-        $data=file_get_contents($cachFile), true;
-        $books=$data['books'] ?? [];
-
-        //logs cached books
-        file_put_contents($cachFile, ['books'=>$books]);
-        
-    }*/
     shuffle($randomTerms);
     $terms=array_slice($randomTerms, 0, 10);
     foreach($terms as $term) {
-        echo "Fetching data for term: " . $term . "\n";
+        $log->info("Fetching data for term: " . $term . "\n");
         $data=fetchBooks($term);
         if($data==null){
-            echo"Failed to fetch data for term: " . $term . "\n";
+            $log->info("Failed to fetch data for term: " . $term . "");
             continue;
         }
         try {
             $clean_data = cleanData($data);
             proccessPublishBooks($clean_data);
         } catch (Exception $e) {
-            echo "Error cleaning da data: ". $e->getMessage() ."";
+            $log->info("Error cleaning da data: ". $e->getMessage() ."");
         }
     }
-    echo "HORRAY! Cache refresh complete.\n";
+    $log->info("HORRAY! Cache refresh complete.");
 }
 function buildURL(string $searchTerm): string
 {
-	
+    global $log;
 	$query = http_build_query(['q'=>$searchTerm, 'maxResults'=>10, 'key'=>API_KEY]);
 	return API_BASE . '?' . $query;
 }
 function cleanData($data){
+    global $log;
 	$book = [];
 	for($i = 0; $i < count($data["items"] ?? []); $i++) {
 	/// print array
@@ -184,46 +172,31 @@ function processMessage($req) {
 }
 
 function tuff($searchTerms) {
+    global $log;
     $data=fetchBooks($searchTerms);
     if($data==null){
-	echo"[" . date('c'). "Failed to fetch data :c \n";
+    $log->info("[" . date('c'). "Failed to fetch data :c \n");
 	exit(1);
     }
-
-try {
-	$clean_data = cleanData($data);
-} catch (Exception $e) {
-	echo "". $e->getMessage() ."";
-}
+    try {
+    	$clean_data = cleanData($data);
+    } catch (Exception $e) {
+        $log->info("[" .  $e->getMessage() . "Failed to fetch data :c \n");
+    }
 
     return processPublishBooks($clean_data);
 }
 function processPublishBooks(array $data){
-	//$seenFile= __DIR__ . '/bookIDsInQueue.txt';
-	//$seen = file_exists($seenFile) ? array_flip(file($seenFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) : [];
+    global $log;
 	$count=count($data);
 	$books = [];
-	/*foreach($data as $book){
-
-		//turns book entry into json string
-		$json=json_encode($book);
-
-
-		publishToRabbit($json);
-		$count++;
-		if($count > 10){ 
-			break;
-		}
-	}*/
 	$json=json_encode($data);
 	return $json;
-	//publishToRabbit($json);
-	echo "Published $count books to RabbitMQ :D !!\n";
-	//if($count > 0){return true;} else {return false;}
 }
 function fetchBooks(string $searchTerm): ?array{
+    global $log;
 	$url=buildURL($searchTerm);
-	echo''.$url.'';
+    $log->info(''.$url.'');
 	$ch=curl_init($url);
 	curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT=>10]);
 	$response=curl_exec($ch);
@@ -231,7 +204,7 @@ function fetchBooks(string $searchTerm): ?array{
 
 	//trying to fix that 429 error :c
 	if($httpCode==429){
-		echo"Google hates us, waiting 5 seconds...\n";
+        $log->log("Google hates us, waiting 5 seconds...");
 		sleep(5);
 		return null;//fetchBooks($searchTerm);
 	}
@@ -249,8 +222,9 @@ function fetchBooks(string $searchTerm): ?array{
 	} return $data;
 }
 function onDemandAPICall($data) {
+    global $log;
     $searchTerm = $data['search_query'] ?? '';
-    echo "Searching for book: " . $searchTerm . "\n";
+    $log->info("Searching for book: " . $searchTerm);
     $tuff = tuff($searchTerm);    
     if ($tuff) { 
         return ["success"=> true, "books" => $tuff, "message" => 'book found'];
