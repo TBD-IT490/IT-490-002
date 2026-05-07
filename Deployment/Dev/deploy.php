@@ -10,7 +10,7 @@ use Monolog\Formatter\LineFormatter;
 
 
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
-define('RMQ_HOST', '100.106.173.65'); //p3 ts pass - matt
+define('RMQ_HOST', 'localhost'); //p3 ts pass - matt
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made

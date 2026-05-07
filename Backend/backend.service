@@ -3,11 +3,13 @@
 Description=Broker Service For Noetic
 Requires=rabbitmq-server.service
 After=network.target
+Type=simple
 
 [Service]
-ExecStart= /home/it490/target/db_listener.php
+ExecStart=/home/it490/IT-490-002/db_listener.php
 Restart=always
 User=it490
+WorkingDirectory=/home/it490/IT-490-002/
 
 [Install]
 WantedBy=multi-user.target

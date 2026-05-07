@@ -171,7 +171,7 @@ if ($input == "y") {
         if ($host == "front"){
             $remote = "100.122.99.69";
         } elseif ($host == "back") {
-            $remote = "100.107.210.121";
+            $remote = "100.112.186.45";
         } elseif ($host == "dmz") {
             $remote = "100.114.131.27";
         } else {}
