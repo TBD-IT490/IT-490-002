@@ -1,0 +1,7 @@
+[2026-05-07T03:54:13.209409+00:00] Noetic-Deploy-Listener.INFO: version given2 [] []
+[2026-05-07T03:55:51.917561+00:00] Noetic-Deploy-Listener.INFO: version not given [] []
+[2026-05-07T03:57:29.182856+00:00] Noetic-Deploy-Listener.INFO: version not given [] []
+[2026-05-07T03:59:39.031907+00:00] Noetic-Deploy-Listener.INFO: version not given [] []
+[2026-05-07T03:59:41.703257+00:00] Noetic-Deploy-Listener.INFO: bundle added [] []
+[2026-05-07T04:00:57.777750+00:00] Noetic-Install.INFO: You selected: Backend_bundle_v1.tar version 1  [] []
+[2026-05-07T04:02:11.284455+00:00] Noetic-Install.INFO: You selected: Backend_bundle_v1.tar version 1  [] []

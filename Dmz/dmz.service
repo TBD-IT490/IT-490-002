@@ -1,11 +1,13 @@
 [Unit]
 Description=DMZ For External Connections Controlled by Jess
 After=network.target
+Type=simple
 
 [Service]
-ExecStart=/home/it490/target/apiListener.php
+ExecStart=/home/it490/IT-490-002/apiListener.php
 User=it490
 Restart=always
+WorkingDirectory=/home/it490/IT-490-002/
 
 [Install]
 WantedBy=multi-user.target
