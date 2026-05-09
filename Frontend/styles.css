@@ -911,3 +911,32 @@ again, sorry it's ugly i had this from the file itself too and it was indented W
             margin-top: 0.2rem;
             letter-spacing: 0.1em;
         }
+
+        /*for the shopping products*/
+.products-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.product-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #fff;
+    padding: 15px;
+}
+
+.product-card img {
+    width: 100%;
+    height: 250px;       /* same height for all */
+    object-fit: cover;   /* keeps images neat */
+}
+
+.product-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
