@@ -46,19 +46,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 <body>
     <div class="brand">
         <h1>Profile</h1>
-    <!--gotta c if the msg can be seen after updating profile-->
-        <?php if ($msg): ?>
-            <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
-        <?php endif; ?>
     </div>
     
 
     <div>
-    <h1><?= htmlspecialchars($_SESSION['display_name'] ?? '') ?></h1>
-    <p ><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
-    <p><?= htmlspecialchars($_SESSION['email'] ?? '') ?></p>
-    <button class="btn-n btn" style="text-decoration: none; color: inherit;"><a href="updateProfile.php">Update Profile</a></button>
-    </div>
+        <h1>Profile Information</h1>
+        <p>Display Name: <?= htmlspecialchars($_SESSION['display_name'] ?? '') ?></p>
+        <p>Email: <?= htmlspecialchars($_SESSION['email'] ?? '') ?></p>
+        <p>Bio: <?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
+        <button class="btn-n btn" style="text-decoration: none; color: inherit;"><a href="updateProfile.php">Update Profile</a></button>
+    </div>  
+
+   
 
     <div> 
     <h2>Friends</h2>
