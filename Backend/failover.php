@@ -62,10 +62,11 @@ while (true) {
             echo "RESET REPLICA! \n";
             echo "SET GLOBAL read_only = 0; \n";
 
+            /*raahh
             $stmt = $conn2->query("STOP REPLICA;");
             $stmt2 = $conn2->query("RESET REPLICA ALL;");
             $stmt3 = $conn2->query("SET GLOBAL read_only = 0;");
-            
+            */
             /* test raahh
             echo "Showing users... \n";
             $rah = $conn2->query("SELECT * FROM users");
@@ -73,20 +74,7 @@ while (true) {
                 echo $row['username'] . "\n";
             }
             */
-            /*
-            $rah = $conn2->query("SELECT * FROM users");
-            foreach($rah as $row) {
-                echo $row['username'] . "\n";
-            }
-                */
         }
-        //raahh
-        /*
-        $conn2 = connectReplica();
-        $stmt = $conn2->query("STOP REPLICA;");
-        $stmt2 = $conn2->query("RESET REPLICA ALL;");
-        $stmt3 = $conn2->query("SET GLOBAL read_only = 0;");
-        */
 
         echo "Replica has been promoted to source...RAAHH! \n";
         $conn2->close();
