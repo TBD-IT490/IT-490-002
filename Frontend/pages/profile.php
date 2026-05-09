@@ -11,8 +11,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 require_once '../includes/data.php';
 require_once '../includes/header.php';
 
-$msg = '';
-$tab = $_GET['tab'] ?? 'books';
+$freinds = rmq_rpc('friends.get', ['user_id' => $_SESSION['id']])['friends'] ?? [];
 
 
 //ALL OF THIS MUST MATCH NAT'S BACKEND CODE
@@ -60,9 +59,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
    
 
     <div> 
-    <h2>Friends</h2>
-    <!--for now... we WILL have friends-->
-    <p>Friends list coming soon!</p>
+    <h2>Your Friends</h2>
+    
+    <?php if (!empty($freinds)): ?>
+        <ul class="list-group">
+            <?php foreach ($freinds as $friend): ?>
+                <li class="list-group-item"><?php echo htmlspecialchars($friend['username']); ?>
+                <div>
+                    <a href="friendActions.php?action=remove&friend_id=<?php echo $friend['id']; ?>" class="btn btn-danger btn-sm">Remove Friend</a>
+                    <!--if i can do this td, we can keep block-->
+                    <a href="friendActions.php?action=block&friend_id=<?php echo $friend['id']; ?>" class="btn btn-warning btn-sm">Block Friend</a>
+                </div>
+                </li>
+                <?php endforeach; ?>
+        </ul>
+    <?php else: ?>
+        <p>You have no friends yet. Find some to follow!</p>
+    <?php endif; ?>
+    <a href="searchFriends.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Find Friends!</a>
     </div>
 </body>
 </html>
