@@ -6,11 +6,11 @@ require_once '../includes/header.php';
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>PHP Shopping Cart with Stripe Payment Integration</title>
-		<link rel="stylesheet" href="../styles.css">
+		<title>Noetic's MarketPlace</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="../styles.css">
 		<style>
 		.popover
 		{
@@ -22,7 +22,7 @@ require_once '../includes/header.php';
 	<body>
 		<div class="container">
 			<br />
-			<h3 align="center"><a href="#">PHP Shopping Cart with Stripe Payment Integration</a></h3>
+			<h1>Noetic Store</h1>
 			<br />
 			<nav class="navbar navbar-default" role="navigation">
 				<div class="container-fluid">
@@ -31,7 +31,7 @@ require_once '../includes/header.php';
 						<span class="sr-only">Menu</span>
 						<span class="glyphicon glyphicon-menu-hamburger"></span>
 						</button>
-						<a class="navbar-brand" href="/">Webslesson</a>
+						<a class="navbar-brand" href="/"></a>
 					</div>
 					<div id="navbar-cart" class="navbar-collapse collapse">
 						<ul class="nav navbar-nav">
@@ -50,7 +50,7 @@ require_once '../includes/header.php';
 			<div id="popover_content_wrapper" style="display: none">
 				<span id="cart_details"></span>
 				<div align="right">
-					<a href="order_process.php" class="btn btn-primary" id="check_out_cart">
+					<a href="checkout.php" class="btn btn-primary" id="check_out_cart">
 						<span class="glyphicon glyphicon-shopping-cart"></span> Check out
 					</a>
 					<a href="#" class="btn btn-default" id="clear_cart">
