@@ -177,7 +177,7 @@ I'm sure you understand-->
 
             <!-- Already have an account?? Click here!!! Don't waste your time registering again :) -->
             <div class="footer-link">
-                Already have an account? <a href="index.php">Log in here</a>
+                Already have an account? <a href="../index.php">Log in here</a>
             </div>
 
         </div>
