@@ -68,15 +68,6 @@ $tradeRequests = [
     </head> 
     <body>
     <div class="container">
-        <div class ="row g-4">
-            <div class="col-sm-6 col-md-4 col-lg-3">
-                <div class="n-card p-3 h-100 d-flex flex-column">
-                    <h5 class="n-card-title">Book Exchange</h5>
-                    <p class="n-card-text"> Trade wth friends and other book lovers! </p>
-                </div>
-            </div>
-        </div>
-        <br></br>
         <!-- ALL BOOKS UP FOR TRADE -->
     <h2>Browse Books</h2>
     <div class="ex-section">
@@ -85,7 +76,7 @@ $tradeRequests = [
                 <div class="book-ex-card">
                     <div class="book-ex-content">
                         <div class="condition">
-                            <? = $book['condition']; ?>
+                            <?= $book['condition']; ?>
                         </div>
 
                         <h3><?= $book['title']; ?></h3>
