@@ -914,9 +914,12 @@ again, sorry it's ugly i had this from the file itself too and it was indented W
 
 /*book exchange css and stylings*/
 
+.ex-section{
+    margin-bottom: 50px;
+}
 .book-ex-grid{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
 }
 .book-ex-card{
