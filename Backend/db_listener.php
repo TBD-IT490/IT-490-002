@@ -218,9 +218,13 @@ function handleLogin($data) {
 	}
 
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection error!'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 
 	//data from request
 	$username = $data['username'];
