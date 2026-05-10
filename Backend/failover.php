@@ -6,7 +6,7 @@ define('proxy_user', 'haproxy_user');
 define('proxy_pass', '');
 define('db_name', 'noetic');
 
-define('replica_ip', '100.112.186.45'); //replica ip
+define('replica_ip', '127.0.0.1'); //replica ip
 define('replica_user', 'root');
 define('replica_pass', 'it490');
 
@@ -61,14 +61,14 @@ while (true) {
             echo "STOP REPLICA! \n";
             echo "RESET REPLICA! \n";
             echo "SET GLOBAL read_only = 0; \n";
-            echo "SET GLOBAL super_read_only = 0; \n";
-            //$stmt1 = $conn2->query("STOP REPLICA");
-            //$stmt2 = $conn2->query("RESET REPLICA ALL");
-            //$stmt3 = $conn2->query("SET GLOBAL read_only = OFF");
-            //$stmt4 = $conn2->query("SET GLOBAL super_read_only = OFF");
 
-            echo "Switch successful! \n";
-            /*
+            /*raahh
+            $stmt = $conn2->query("STOP REPLICA;");
+            $stmt2 = $conn2->query("RESET REPLICA ALL;");
+            $stmt3 = $conn2->query("SET GLOBAL read_only = 0;");
+            */
+            /* test raahh
+            echo "Showing users... \n";
             $rah = $conn2->query("SELECT * FROM users");
             foreach($rah as $row) {
                 echo $row['username'] . "\n";
