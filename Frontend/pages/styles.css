@@ -461,8 +461,7 @@
 sorry it's ugly i just copy pasted from the original file*/
 
 :root {
-            /*--deep: #202030;*/
-            --deep: #103030;
+            --deep: #202030;
             --card: #39304A;
             --blush: #DCBCCE;
             --moss: #242E0F;
@@ -476,8 +475,8 @@ sorry it's ugly i just copy pasted from the original file*/
             color: var(--blush);
             font-family: 'Crimson Text', Georgia, serif;
             min-height: 100vh;
-            /*background-image:
-                radial-gradient(ellipse at 20% 50%, rgba(57,48,74,0.4) 0%, transparent 60%);*/
+            background-image:
+                radial-gradient(ellipse at 20% 50%, rgba(57,48,74,0.4) 0%, transparent 60%);
         }
         .login-wrapper{
             min-height:100vh;
@@ -914,10 +913,12 @@ again, sorry it's ugly i had this from the file itself too and it was indented W
         }
 
 /*book exchange css and stylings*/
-
+.ex-section{
+    margin-bottom: 50px;
+}
 .book-ex-grid{
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 20px;
 }
 .book-ex-card{
