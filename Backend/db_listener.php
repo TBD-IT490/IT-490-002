@@ -32,10 +32,6 @@ class RabbitMQLOG extends AbstractProcessingHandler {
 
 }
 
-
-
-
-
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
 
 define('RMQ_HOST', $_ENV['BACKEND']); //p3 ts pass - matt
@@ -50,6 +46,11 @@ define('DB_HOST', '100.112.153.128'); //my ts ip
 define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
 define('DB_NAME', 'noetic');
+
+define('REP_HOST', $_ENV['BACKEND']); //my ts ip
+define('REP_USER', 'rep_root');
+define('REP_PASS', 'root'); 
+define('REP_NAME', 'noetic');
 
 /*
 define('REP_RMQ_HOST', '100.112.186.45');
@@ -153,6 +154,17 @@ function connectDB() {
 		return null;
 	}
 	return $conn;
+}
+
+//replica connection
+function connectReplica() {
+    $conn2 = new mysqli(REP_HOST, REP_USER, REP_PASS, REP_NAME);
+    if ($conn2->connect_error) {
+        global $log;
+        $log->error('Database connection failed'. $conn2->connect_error);
+        return null;
+    }
+    return $conn2;
 }
 
 //handle user reg
