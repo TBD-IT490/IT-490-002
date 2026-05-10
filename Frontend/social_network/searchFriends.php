@@ -19,8 +19,16 @@ if (isset($_GET['query'])) {
         ])['results'] ?? [];
 }
 
-
-
+/* maybe?
+function searchFriends($data){
+    $query = "%" . $data['query'] . "%";
+    $current_user_id = $data['user_id'];
+    $stmt = $pdo->prepare("SELECT id, username FROM users WHERE (username LIKE ? OR email LIKE ?) AND id != ? LIMIT 20");
+    $stmt->execute([$query, $current_user_id]);
+    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return ['results' => $users];
+}
+*/
 ?>
 
 <!--HTML CODE-->

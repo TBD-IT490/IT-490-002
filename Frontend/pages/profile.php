@@ -34,8 +34,7 @@ require_once '../includes/header.php';
     
 
     <div>
-        <h1>Profile Information</h1>
-        <p>Display Name: <?= htmlspecialchars($_SESSION['display_name'] ?? '') ?></p>
+        <h1>Hi, I'm <?= htmlspecialchars($_SESSION['username'] ?? '') ?>!</h1>
         <p>Email: <?= htmlspecialchars($_SESSION['email'] ?? '') ?></p>
         <p>Bio: <?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
         

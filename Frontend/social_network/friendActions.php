@@ -18,6 +18,8 @@ if(!$action || !$target) {
     exit();
 }
 
+//need to create backend stuff for this to work
+//and create table for friends
 switch ($action) {
     case 'add':
         rmq_rpc('friends.add', ['user_id' => $_SESSION['id'], 'friend_id' => $target]);
