@@ -9,9 +9,9 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Formatter\LineFormatter;
-//use Dotenv\Dotenv;
-//$dotenv = Dotenv::createImmutable(__DIR__);
-//$dotenv->load();
+use Dotenv\Dotenv;
+$dotenv = Dotenv::createImmutable(__DIR__);
+$dotenv->load();
 
 class RabbitMQLOG extends AbstractProcessingHandler {
     // oop sucks
@@ -38,15 +38,15 @@ class RabbitMQLOG extends AbstractProcessingHandler {
 
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
 
-//define('RMQ_HOST', $_ENV['BACKEND']); //p3 ts pass - matt
-define('RMQ_HOST', '100.112.153.128');
+define('RMQ_HOST', $_ENV['BACKEND']); //p3 ts pass - matt
+//define('RMQ_HOST', '100.112.153.128');
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
 define('RMQ_PASS', 'test'); //wtv pass matt made
 
 //define('DB_HOST', '100.112.153.128'); //my ts ip
-//define('DB_HOST', $_ENV['BACKEND']); //my ts ip
-define('DB_HOST', '100.112.153.128'); //my ts ip
+define('DB_HOST', $_ENV['BACKEND']); //my ts ip
+//define('DB_HOST', '100.112.153.128'); //my ts ip
 define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
 define('DB_NAME', 'noetic');

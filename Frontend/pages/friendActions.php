@@ -11,10 +11,6 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 require_once '../includes/data.php';
 require_once '../includes/header.php';
 
-$msg = '';
-$tab = $_GET['tab'] ?? 'books';
-
-
 //ALL OF THIS MUST MATCH NAT'S BACKEND CODE
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -30,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 ?>
 
-
 <!--HTML CODE-->
 
 <!DOCTYPE html>
@@ -44,33 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="styles.css">
 </head>
 
-<body>
-<!-- cant c stuff rn so it looks basic i think, forgive me taryn :( -->
-    <div class="brand">
-        <h1>Update Profile</h1>
-        <?php if ($msg): ?>
-            <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
-        <?php endif; ?>
-        <form method="POST" action="profile.php">
-            <div class="mb-3">
-                <label for="display_name" class="form-label">Display Name</label>
-                <input type="text" class="form-control" id="display_name" name="display_name" value="<?= htmlspecialchars($_SESSION['display_name'] ?? '') ?>">
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" value="<?= htmlspecialchars($_SESSION['email'] ?? '') ?>">
-            </div>
-            <div class="mb-3">
-                <label for="bio" class="form-label">Bio</label>
-                <textarea class="form-control" id="bio" name="bio" rows="3"><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></textarea>
-            </div>
 
-            
-            <button type="submit" class="btn-n btn"><a href="profile.php">Back</a></button>
-            <button type="submit" class="btn-n btn">Save Changes</button>
-        </form>
-    </div>
-</body>
+
 </html>
 
 <!--footer code :) at least it stays consistent-->

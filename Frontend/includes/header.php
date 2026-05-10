@@ -22,6 +22,7 @@
             <a href="../pages/books.php" class="nav-link <?php echo $current_page==='books'?'active':''; ?>">Library</a>
             <a href="../pages/groups.php" class="nav-link <?php echo $current_page==='groups'?'active':''; ?>">Circles</a>
             <a href="../pages/schedule.php" class="nav-link <?php echo $current_page==='schedule'?'active':''; ?>">Gatherings</a>
+            <a href="../pages/bookExchange.php" class="nav-link <?php echo $current_page==='exchange'?'active':''; ?>">Trading</a>
             <a href="../shop_files/cart.php" class="nav-link <?php echo $current_page==='cart'?'active':''; ?>">Marketplace</a>
             <a href="../pagesrecommendations.php" class="nav-link <?php echo $current_page==='recommendations'?'active':''; ?>">Discoveries</a>
             <a href="../pages/discussions.php" class="nav-link <?php echo $current_page==='discussions'?'active':''; ?>">Discussions</a>

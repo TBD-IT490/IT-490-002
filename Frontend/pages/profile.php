@@ -3,7 +3,7 @@ session_start();
 
 //REDIRECT TO LOGIN IF NOT LOGGED IN PROPERLY (so you can't access without signing in hehe)
 if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
-    header("Location: index.php");
+    header("Location: ../index.php");
     exit();
 }
 
@@ -11,8 +11,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 require_once '../includes/data.php';
 require_once '../includes/header.php';
 
-$msg = '';
-$tab = $_GET['tab'] ?? 'books';
+$freinds = rmq_rpc('friends.get', ['user_id' => $_SESSION['id']])['friends'] ?? [];
 
 
 //ALL OF THIS MUST MATCH NAT'S BACKEND CODE
@@ -46,24 +45,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 <body>
     <div class="brand">
         <h1>Profile</h1>
-    <!--gotta c if the msg can be seen after updating profile-->
-        <?php if ($msg): ?>
-            <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
-        <?php endif; ?>
     </div>
     
 
     <div>
-    <h1><?= htmlspecialchars($_SESSION['display_name'] ?? '') ?></h1>
-    <p ><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
-    <p><?= htmlspecialchars($_SESSION['email'] ?? '') ?></p>
-    <button class="btn-n btn" style="text-decoration: none; color: inherit;"><a href="updateProfile.php">Update Profile</a></button>
-    </div>
+        <h1>Profile Information</h1>
+        <p>Display Name: <?= htmlspecialchars($_SESSION['display_name'] ?? '') ?></p>
+        <p>Email: <?= htmlspecialchars($_SESSION['email'] ?? '') ?></p>
+        <p>Bio: <?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
+        <button class="btn-n btn" style="text-decoration: none; color: inherit;"><a href="updateProfile.php">Update Profile</a></button>
+    </div>  
+
+   
 
     <div> 
-    <h2>Friends</h2>
-    <!--for now... we WILL have friends-->
-    <p>Friends list coming soon!</p>
+    <h2>Your Friends</h2>
+    
+    <?php if (!empty($freinds)): ?>
+        <ul class="list-group">
+            <?php foreach ($freinds as $friend): ?>
+                <li class="list-group-item"><?php echo htmlspecialchars($friend['username']); ?>
+                <div>
+                    <a href="friendActions.php?action=remove&friend_id=<?php echo $friend['id']; ?>" class="btn btn-danger btn-sm">Remove Friend</a>
+                    <!--if i can do this td, we can keep block-->
+                    <a href="friendActions.php?action=block&friend_id=<?php echo $friend['id']; ?>" class="btn btn-warning btn-sm">Block Friend</a>
+                </div>
+                </li>
+                <?php endforeach; ?>
+        </ul>
+    <?php else: ?>
+        <p>You have no friends yet. Find some to follow!</p>
+    <?php endif; ?>
+    <a href="searchFriends.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Find Friends!</a>
     </div>
 </body>
 </html>
