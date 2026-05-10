@@ -172,9 +172,13 @@ function handleRegistration($data) {
 	global $log;
 
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 
 	$username = $data['username'];	
 	$email = $data['email'];
@@ -279,9 +283,13 @@ function getUserId($conn, $data) {
 function handleSearchBooks($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	/*
 	if(!isset($data['search'])) {
 		$log->warning("FAILED: no 'search' key.");
@@ -379,9 +387,13 @@ function handleSearchBooks($data) {
 function handleGetBook($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -407,9 +419,13 @@ function handleGetBook($data) {
 function handleGetGroupBooks($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//ASSOCIATE USER_ID W/O FRONT END SENDING IT IN REQ (have FE send username)
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -436,9 +452,13 @@ function handleGetGroupBooks($data) {
 function handleCreateClub($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//get user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -472,9 +492,13 @@ function handleCreateClub($data) {
 function handleGetGroup($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -502,9 +526,13 @@ function handleGetGroup($data) {
 function handleListGroups($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -537,9 +565,13 @@ function handleListGroups($data) {
 function handleJoinClub($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	// ASSOCIATE USER_ID W/O FE SENDING IT IN REQ (have her send username) ~~
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -587,9 +619,13 @@ function handleJoinClub($data) {
 function handleScheduleMeeting($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}/*
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }/*
 	//validate fields
 	if(!isset($data['club_id'], $data['event_title'], $data['event_date'], $data['event_time'], $data['event_format'], $data['notes'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
@@ -626,9 +662,13 @@ function handleScheduleMeeting($data) {
 function handleScheduleList($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	if(!isset($data['club_id'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
 	}
@@ -665,9 +705,13 @@ function handleScheduleList($data) {
 function handleCreateReview($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -693,9 +737,13 @@ function handleCreateReview($data) {
 function handleReviewList($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//validate fields
 	if(!isset($data['book_id'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
@@ -732,9 +780,13 @@ function handleReviewList($data) {
 function handleCreateSuggestion($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -760,9 +812,13 @@ function handleCreateSuggestion($data) {
 function handlePersonalBookRecs($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//useer from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -810,9 +866,13 @@ function handlePersonalBookRecs($data) {
 function handleGroupBookRecs($data) { //faaaahh
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//useer from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -865,9 +925,13 @@ function handleGroupBookRecs($data) { //faaaahh
 function handleDiscussions($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -899,9 +963,13 @@ function handleDiscussions($data) {
 function handleGetDiscussion($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -929,9 +997,13 @@ function handleGetDiscussion($data) {
 function handleDiscussionReply($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//user from db
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
@@ -957,9 +1029,13 @@ function handleDiscussionReply($data) {
 function handleDiscussionReplyList($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	//validate fields
 	if(!isset($data['discussion_id'])) {
 		return ['success' => false, 'message' => 'Missing required discussion_id!'];
@@ -995,9 +1071,13 @@ function handleDiscussionReplyList($data) {
 function handleDiscussionList($data) {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	/* -uncomment after attatching discussions to group
 	if(!isset($data['club_id'])) {
 		return ['success' => false, 'message' => 'Missing required fields!'];
@@ -1038,9 +1118,13 @@ function handleBookCache($data) {
 	global $log;
 
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	$api_book_id = $data['api_book_id'];
 	$isbn = $data['isbn'];
 	$title = $data['title'];
@@ -1094,15 +1178,19 @@ function handleBookCache($data) {
 function recommendBooks($data)  {
 	global $log;
 	$conn = connectDB();
-	if(!$conn) {
-		return ['success' => false, 'message' => 'Database connection failed.'];
-	}
+    if(!$conn) {
+        $log->error('Database connection failed to source'. $conn->connect_error);
+        $conn = connectReplica();
+        if (!$conn) {
+            return ['success' => false, 'message' => 'Database connection failed to both.'];
+        }
+    }
 	$user_id = getUserId($conn, $data);
 	$stmt = $conn->prepare(query:'Select book_id from book_reviews where user_id = ? AND rating >= 4');
 	$stmt->bind_param('i', $user_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
-
+ 
 	$liked_books = [];
 	while ($row = $result->fetch_assoc()) { 
 		$liked_books = $row['book_id'];
