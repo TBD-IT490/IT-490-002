@@ -20,13 +20,39 @@ if (isset($_GET['query'])) {
 }
 
 /* maybe?
-function searchFriends($data){
-    $query = "%" . $data['query'] . "%";
-    $current_user_id = $data['user_id'];
-    $stmt = $pdo->prepare("SELECT id, username FROM users WHERE (username LIKE ? OR email LIKE ?) AND id != ? LIMIT 20");
-    $stmt->execute([$query, $current_user_id]);
-    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    return ['results' => $users];
+//also sending info to nat but getting info back as well
+if ($view_id) {
+
+    $book_res = rmq_rpc('book.get', [
+        'book_id'=> $view_id,
+        'username' => $_SESSION['username'],
+    ]);
+    $book = $book_res['book'];
+
+    if ($book) {
+
+        $book['id'] = $book['book_id'] ?? $view_id;
+        $book['cover'] = $book['cover_url'] ?? '';
+        $book['year'] = $book['published_year'] ?? '';
+
+        //hopefully this works pray for me it is midnight
+       $reviews_res = rmq_rpc('review.list',[
+        'book_id' => $view_id,
+        'username' => $_SESSION['username'] ?? '',
+       ]);
+         $book_reviews = $reviews_res['reviews'] ?? [];
+         $my_rating = 0;
+    }
+
+    //book list function, nat has her own on her side
+} else {
+
+    $books_res = rmq_rpc('book.list', [
+        'search' => $search,
+        'username' => $_SESSION['username'] ?? '',
+    ]);
+  
+}
 }
 */
 ?>
@@ -68,6 +94,7 @@ function searchFriends($data){
     <?php elseif (isset($_GET['query'])): ?>
         <p>No users found. Try a different search.</p>
     <?php endif; ?>
+    <a href="../social_network/socialNetwork.php" class="btn-n btn" style="text-decoration: none; color: inherit;">View Friends</a>
 </body>
 
 </html>

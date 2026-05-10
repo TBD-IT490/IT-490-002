@@ -10,7 +10,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 //functions and headers
 require_once '../includes/data.php';
 require_once '../includes/header.php';
-require_once '../includes/footer.php';
+
 
 $friends = rmq_rpc('friends.get', ['user_id' => $_SESSION['id']])['friends'] ?? [];
 
@@ -48,7 +48,10 @@ $friends = rmq_rpc('friends.get', ['user_id' => $_SESSION['id']])['friends'] ?? 
     <?php else: ?>
         <p>You have no friends. Find some to follow!</p>
     <?php endif; ?>
+    <a href="../pages/profile.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Back</a>
     <a href="searchFriends.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Find Friends!</a>
     </div>
 </body>
 </html>
+<!--footer code :) at least it stays consistent-->
+<?php require_once '../includes/footer.php'; ?>

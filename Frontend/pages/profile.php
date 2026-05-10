@@ -11,6 +11,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 require_once '../includes/data.php';
 require_once '../includes/header.php';
 
+
+
 ?>
 
 
@@ -38,8 +40,8 @@ require_once '../includes/header.php';
         <p>Email: <?= htmlspecialchars($_SESSION['email'] ?? '') ?></p>
         <p>Bio: <?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
         
-        <a href="social_network/updateProfile.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Update Profile</a>
-        <a href="social_network/socialNetwork.php" class="btn-n btn" style="text-decoration: none; color: inherit;">View Friends</a>
+        <a href="../social_network/updateProfile.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Update Profile</a>
+        <a href="../social_network/socialNetwork.php" class="btn-n btn" style="text-decoration: none; color: inherit;">View Friends</a>
     
     </div>  
 
