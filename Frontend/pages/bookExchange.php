@@ -1,12 +1,12 @@
 <?php
 session_start();
 require_once '../includes/header.php';
-//functions and headers
-require_once 'includes/data.php';
+require_once '../includes/data.php';
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+    <head>
     <h1 class="my-4">Trade and Buy Books with Noetic</h1>
     <div class="container">
         <div class ="row g-4">
@@ -17,7 +17,8 @@ require_once 'includes/data.php';
                 </div>
             </div>
         </div>
-    </div>  
+    </div>
+</head>  
 </html>
 
 
