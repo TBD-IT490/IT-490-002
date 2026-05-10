@@ -53,13 +53,11 @@ define('DB_NAME', 'noetic');
 
 /*
 define('REP_RMQ_HOST', '100.112.186.45');
-
 define('REP_HOST', '100.112.186.45'); //my ts ip
 define('REP_USER', 'rep_root');
 define('REP_PASS', 'root'); 
 define('REP_NAME', 'noetic');
 */
-
 
 $log_handler = new RabbitMQLOG(RMQ_HOST, RMQ_PORT, RMQ_USER, RMQ_PASS);
 
