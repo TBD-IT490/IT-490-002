@@ -912,3 +912,86 @@ again, sorry it's ugly i had this from the file itself too and it was indented W
             margin-top: 0.2rem;
             letter-spacing: 0.1em;
         }
+
+/*book exchange css and stylings*/
+
+.book-ex-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, fr));
+    gap: 20px;
+}
+.book-ex-card{
+    background: #39304A;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.book-ex-card img{
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+}
+
+.book-ex-content {
+    padding: 15px;
+}
+
+.condition {
+    display: inline-block;
+    background: #242E0F;
+    color: #DCBCCE;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    margin-bottom: 10px;
+}
+
+.owner{
+font-size: 14px;
+            color: gray;
+            margin-top: 10px;
+}
+
+.ex-btn {
+    display: inline-block;
+    background: #590453;
+    color: #dcbcce;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.ex-btn:hover{
+    background: #960b8c;
+}
+
+.trade-box{
+    background: #39304A;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 15px;
+    box-shadow: 500px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.form-box{
+    background: #39304A;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 500px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.form-box input,
+.form-box select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
