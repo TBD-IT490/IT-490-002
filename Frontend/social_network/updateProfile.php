@@ -18,22 +18,22 @@ $msg = '';
 //ALL OF THIS MUST MATCH NAT'S BACKEND CODE
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $display = trim($_POST['display_name'] ?? '');
+    $display = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $bio = trim($_POST['bio'] ?? '');
 
     $result = rmq_rpc('user.update', [
-        'display_name' => $display, 
+        'username' => $display, 
         'email'=> $email,
         'bio'=> $bio,
     ]);
-    if($result['success'] ?? false) {
+    if($result['success'] ?? true) {
         //updating sesh values so they show up on profile immediately 
-        $_SESSION['display_name'] = $display;
+        $_SESSION['username'] = $display;
         $_SESSION['email'] = $email;
         $_SESSION['bio'] = $bio;
+        header("Location: ../pages/profile.php");
 
-        $msg = 'Profile updated.';
     } else {
         $msg = 'Could not save changes. Please try again.';
     }
@@ -63,10 +63,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($msg): ?>
             <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
         <?php endif; ?>
-        <form method="POST" action="profile.php">
+        <form method="POST" action="updateProfile.php">
             <div class="mb-3">
-                <label for="display_name" class="form-label">Display Name</label>
-                <input type="text" class="form-control" id="display_name" name="display_name" value="<?= htmlspecialchars($_SESSION['display_name'] ?? '') ?>">
+                <label for="username" class="form-label">Display Name</label>
+                <input type="text" class="form-control" id="username" name="username" value="<?= htmlspecialchars($_SESSION['username'] ?? '') ?>">
             </div>
             <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <textarea class="form-control" id="bio" name="bio" rows="3"><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></textarea>
             </div>
 
-            <a href="pages/profile.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Back</a>
+            <a href="../pages/profile.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Back</a>
             <button type="submit" class="btn-n btn">Save Changes</button>
         </form>
     </div>

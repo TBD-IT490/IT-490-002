@@ -10,10 +10,30 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 //functions and headers
 require_once '../includes/data.php';
 require_once '../includes/header.php';
-require_once '../includes/footer.php';
 
-$friends = rmq_rpc('friends.get', ['user_id' => $_SESSION['id']])['friends'] ?? [];
 
+$msg = '';
+if($_SERVER['REQUEST_METHOD'] === 'POST'){
+    $action = $_POST['action'] ?? '';
+    $friendID = $_POST['friend_id'] ?? '';
+    if($friendID >0){
+        if($action === 'remove') {
+            rmq_rpc('friends.remove', ['user_id' => $_SESSION['id'], 'friend_id' => $friendID]);
+            $msg = 'Friend removed.';
+        } elseif ($action === 'block') {
+            rmq_rpc('friends.block', ['user_id' => $_SESSION['id'], 'friend_id' => $friendID]);
+            $msg = 'Friend blocked.';
+        } elseif ($action === 'add') {
+            rmq_rpc('friends.add', ['user_id' => $_SESSION['id'], 'friend_id' => $friendID]);
+            $msg = 'Friend added.';
+        } else{
+            $msg = 'action failed';
+        }
+    }
+}
+
+$friendsResult = rmq_rpc('friends.list', ['user_id' => $_SESSION['id']]);
+$friends = $friendsResult['friends'] ?? [];
 
 ?>
 
@@ -31,24 +51,56 @@ $friends = rmq_rpc('friends.get', ['user_id' => $_SESSION['id']])['friends'] ?? 
 <body>
    <div> 
     <h2>Your Friends: </h2>
-    
+    </div>
+    <div class="container mt-3">
+        <?php if ($msg): ?>
+            <div class="alert alert-info"><?= htmlspecialchars($msg) ?></div>
+        <?php endif; ?>
     <?php if (!empty($friends)): ?>
-        <ul class="list-group">
-            <?php foreach ($friends as $friend): ?>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <?=  htmlspecialchars($friend['username']); ?>
-                <div>
-                    <a href="friendActions.php?action=remove&id=<?= $friend['id']; ?>" class="btn btn-danger btn-sm">Remove</a>
-                    <!--if i can do this td, we can keep block-->
-                    <a href="friendActions.php?action=block&id=<?= $friend['id']; ?>" class="btn btn-warning btn-sm">Block</a>
-                </div>
-                </li>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Bio</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($friends as $friend): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($friend['username'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($friend['email'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($friend['bio'] ?? '') ?></td>
+                        <td><?= htmlspecialchars($friend['isBlocked'] ? 'Yes' : 'No') ?></td>
+                        <td>
+                            <form method="POST" class="d-inline">
+                                <input type="hidden" name="friend_id" value="<?= (int)$friend['id'] ?>">
+                                <button type="submit" name="action" value="remove" class="btn btn-sm btn-danger">Remove</button>
+                            </form>
+                            <?php if (!$friend['isBlocked']): ?>
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="friend_id" value="<?= (int)$friend['id'] ?>">
+                                    <button type="submit" name="action" value="block" class="btn btn-sm btn-success">Block</button>
+                                </form>
+                            <?php else: ?>
+                                <form method="POST" class="d-inline">
+                                    <input type="hidden" name="friend_id" value="<?= (int)$friend['id'] ?>">
+                                    <button type="submit" name="action" value="add" class="btn btn-sm btn-primary">Unblock</button>
+                                </form>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
                 <?php endforeach; ?>
-        </ul>
+            </tbody>
+    </table>
     <?php else: ?>
         <p>You have no friends. Find some to follow!</p>
     <?php endif; ?>
+    <a href="../pages/profile.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Back</a>
     <a href="searchFriends.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Find Friends!</a>
     </div>
 </body>
 </html>
+<!--footer code :) at least it stays consistent-->
+<?php require_once '../includes/footer.php'; ?>
