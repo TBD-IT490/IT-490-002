@@ -1254,6 +1254,45 @@ function recommendBooks($data)  {
 	return ["success"=> true,"message"=> "all good twin heres the books", "recommendations" => $recommendations];
 
 }
+//searching friends that don't have u blocked or aren't blocked
+function handleFriendsSearch($data){
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		$log->error('Database connection failed to source'. $conn->connect_error);
+		$conn = connectReplica();
+		if (!$conn) {
+			return ['success' => false, 'message' => 'Database connection failed to both.'];
+		}
+	}
+	//based on handleSearchBooks
+	$search = $data['search'] ?? ''; //might need to change to match frontend
+	$user_id = getUserId($conn, $data);
+	if (!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (searching friends)!]'];
+	}
+	$stmt = $conn->prepare("SELECT id, username FROM users WHERE username LIKE CONCAT('%', ?, '%') AND id != ? AND id NOT IN (SELECT friend_id FROM friends WHERE user_id = ? AND isBlocked = 1) AND id NOT IN (SELECT user_id FROM friends WHERE friend_id = ? AND isBlocked = 1) LIMIT 10 ORDER BY username ASC");
+	$like_query = '%' . $search . '%';
+	$stmt->bind_param("ss", $like_query, $like_query);
+	$stmt->execute();
+	$result = $stmt->get_result();
+
+	if($result->num_rows ===0 && !empty($search)){
+			$users = [];
+		while ($row = $result->fetch_assoc()) {
+			$users[] = [
+				'id' => $row['id'],
+				'username' => $row['username']
+			];
+		}
+		$log->info("SUCCESS: friends.search works " . count($users) . " user_ids found: $user_id");
+		return ['success' => true, 'users' => $users, 'message' => 'Friend search retrieved!'];
+	} else {
+		$log->info("FAILED: friends.search no users found for search: $search");
+		return ['success' => false, 'message' => 'No users found.'];
+	}
+	}
+
 //RMQ processing
 function processMessage($req) {
 	global $log;
@@ -1266,6 +1305,9 @@ function processMessage($req) {
 
 	}elseif($routing_key==='user.register') {
 		$response = handleRegistration($message);
+
+	}elseif($type == 'friends.search'){ // friend search
+		$response = handleFriendsSearch($message);
 
 	}elseif($routing_key==='book.list') { //book search
 		$response = handleSearchBooks($message);
