@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-theme btn-lg">Log In</button>
                         <button type="button" class="btn btn-outline-theme btn-lg"
-                                onclick="window.location.href='registration.php'">Register</button>
+                                onclick="window.location.href='/pages/registration.php'">Register</button>
                     </div>
 
                 </form>
