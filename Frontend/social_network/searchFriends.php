@@ -12,12 +12,22 @@ require_once '../includes/data.php';
 require_once '../includes/header.php';
 
 $results=[];
+$query = trim($_GET['query'] ?? '');
+
+//noquery? dont care send empty string to get nonblocked ppl twin
+$results = rmq_rpc('friends.search', [
+    'user_id' => $_SESSION['id'], 
+    'query' => $query
+])['results'] ?? [];
+
+/*
 if (isset($_GET['query'])) {
     $results = rmq_rpc('friends.search', [
         'user_id' => $_SESSION['id'], 
         'query' => trim($_GET['query'])
         ])['results'] ?? [];
 }
+*/
 
 /*
 users to test search: urmoms, faah, test2020
@@ -62,7 +72,7 @@ users to test search: urmoms, faah, test2020
     <?php elseif (isset($_GET['query'])): ?>
         <p>No users found. Try a different search.</p>
     <?php endif; ?>
-    <a href="../social_network/socialNetwork.php" class="btn-n btn" style="text-decoration: none; color: inherit;">View Friends</a>
+    <a href="../social_network/socialNetwork.php" class="btn-n btn" style="text-decoration: none; color: inherit;">View Your Friends</a>
 </body>
 
 </html>
