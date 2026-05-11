@@ -34,7 +34,7 @@ class RabbitMQLOG extends AbstractProcessingHandler {
 
 //define('RMQ_HOST', '100.101.27.73'); //p3 ts pass - matt
 
-define('RMQ_HOST', $_ENV['BACKEND']); //p3 ts pass - matt
+define('RMQ_HOST', $_ENV['RABBIT']); //p3 ts pass - matt
 //define('RMQ_HOST', '100.112.153.128');
 define('RMQ_PORT', 5672);
 define('RMQ_USER', 'broker'); //wtv user matt made
@@ -47,7 +47,7 @@ define('DB_USER', 'app_user');
 define('DB_PASS', 'AppUsrPwd123!'); 
 define('DB_NAME', 'noetic');
 
-define('REP_HOST', $_ENV['BACKEND']); //my ts ip
+define('REP_HOST', $_ENV['REPLICA']); //my ts ip
 define('REP_USER', 'rep_root');
 define('REP_PASS', 'root'); 
 define('REP_NAME', 'noetic');
