@@ -85,7 +85,7 @@ if (isset($_POST["register"])) {
         $_SESSION["loggedin"] = true;
         $_SESSION["username"] = $username;
         $_SESSION["id"] = $result["id"] ?? null;
-        header("Location: index.php"); //once done registering, go to login page (instead of the home page)
+        header("Location: ../index.php"); //once done registering, go to login page (instead of the home page)
 
         $channel->close();
 	

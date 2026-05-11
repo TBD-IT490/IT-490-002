@@ -67,6 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         while ($response === null) {
             $channel->wait(null, false, 5); 
+
+            if (time() - $start > 5){
+                $error = "Service timeout (no response from backend)";
+                break;
+            }
         }
         
         $result = json_decode($response, true);
@@ -137,7 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
                 <!--register for our service :) please :)-->
             <div class="footer-link">
-                New to Noetic? <a href="registration.php">Create an account</a>
+                New to Noetic? <a href="/pages/registration.php">Create an account</a>
             </div>
 
         </div>
