@@ -1254,7 +1254,7 @@ function recommendBooks($data)  {
 	return ["success"=> true,"message"=> "all good twin heres the books", "recommendations" => $recommendations];
 
 }
-/*
+
 //searching friends that don't have u blocked or aren't blocked
 function handleFriendsSearch($data){
 	global $log;
@@ -1267,19 +1267,23 @@ function handleFriendsSearch($data){
 		}
 	}
 	//based on handleSearchBooks
-	$search = $data['search'] ?? ''; //might need to change to match frontend
+	$user_id = getUserId($conn, $data);
+	if(!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (searching friends)!]'];
+	}
+	$search = $data['query'] ?? ''; //need to change to match frontend
 	$user_id = getUserId($conn, $data);
 	if (!$user_id) {
 		return ['success' => false, 'message' => 'User not authenticated (searching friends)!]'];
 	}
-	$stmt = $conn->prepare("SELECT id, username FROM users WHERE username LIKE CONCAT('%', ?, '%') AND id != ? AND id NOT IN (SELECT friend_id FROM friends WHERE user_id = ? AND isBlocked = 1) AND id NOT IN (SELECT user_id FROM friends WHERE friend_id = ? AND isBlocked = 1) LIMIT 10 ORDER BY username ASC");
-	$like_query = '%' . $search . '%';
-	$stmt->bind_param("ss", $like_query, $like_query);
+
+	$stmt = $conn->prepare("SELECT id, username FROM users WHERE username LIKE CONCAT('%', ?, '%') AND id != ? AND id NOT IN (SELECT friend_id FROM friends WHERE user_id = ? AND isBlocked = 1) AND id NOT IN (SELECT user_id FROM friends WHERE friend_id = ? AND isBlocked = 1) ORDER BY username ASC LIMIT 10");
+	//$like_query = '%' . $search . '%';
+	$stmt->bind_param("issii", $user_id, $query, $user_id, $user_id);
 	$stmt->execute();
 	$result = $stmt->get_result();
 
-	if($result->num_rows ===0 && !empty($search)){
-			$users = [];
+	$users = [];
 		while ($row = $result->fetch_assoc()) {
 			$users[] = [
 				'id' => $row['id'],
@@ -1288,12 +1292,115 @@ function handleFriendsSearch($data){
 		}
 		$log->info("SUCCESS: friends.search works " . count($users) . " user_ids found: $user_id");
 		return ['success' => true, 'users' => $users, 'message' => 'Friend search retrieved!'];
-	} else {
-		$log->info("FAILED: friends.search no users found for search: $search");
-		return ['success' => false, 'message' => 'No users found.'];
+	} 
+	//yayy friends
+function handleFriendAdd($data){
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		$log->error('Database connection failed to source'. $conn->connect_error);
+		$conn = connectReplica();
+		if (!$conn) {
+			return ['success' => false, 'message' => 'Database connection failed to both.'];
+		}
 	}
-	}*/
-
+	$user_id = getUserId($conn, $data);
+	if(!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (adding friend)!]'];
+	}
+	$friend_id = $data['friend_id'] ?? null;
+	if(!$friend_id) {
+		return ['success' => false, 'message' => 'Invalid friend ID (adding friend)!]'];
+	}
+	//gotta c if alr friends
+	$stmt = $conn->prepare("SELECT * FROM friends WHERE user_id = ? AND friend_id = ?");
+	$stmt->bind_param("ii", $user_id, $friend_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+	if($results) {
+		return ['success' => false, 'message' => 'Already friends with this user!'];
+	}
+	//make frined
+	$stmt = $conn->prepare("INSERT INTO friends (user_id, friend_id, isBlocked) VALUES (?, ?, 0)");
+	$stmt->bind_param("ii", $user_id, $friend_id);
+	if($stmt->execute()) {
+		$log->info("SUCCESS: friends.add works for user_id: $user_id and friend_id: $friend_id");
+		return ['success' => true, 'message' => 'Friend added!'];
+	} else {
+		return ['success' => false, 'message' => 'Failed to add friend.'];
+	}
+}
+//bye bye friends
+function handleFriendRemove($data){
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		$log->error('Database connection failed to source'. $conn->connect_error);
+		$conn = connectReplica();
+		if (!$conn) {
+			return ['success' => false, 'message' => 'Database connection failed to both.'];
+		}
+	}
+	$user_id = getUserId($conn, $data);
+	if(!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (removing friend)!]'];
+	}
+	$friend_id = $data['friend_id'] ?? null;
+	if(!$friend_id) {
+		return ['success' => false, 'message' => 'Invalid friend ID (removing friend)!]'];
+	}
+	$stmt = $conn->prepare("DELETE FROM friends WHERE user_id = ? AND friend_id = ?");
+	$stmt->bind_param("ii", $user_id, $friend_id);
+	if($stmt->execute()) {
+		$log->info("SUCCESS: friends.remove works for user_id: $user_id and friend_id: $friend_id");
+		return ['success' => true, 'message' => 'Friend removed!'];
+	} else {
+		return ['success' => false, 'message' => 'Failed to remove friend.'];
+	}
+}
+//perm goodbye friend
+function handleFriendBlock($data){
+	global $log;
+	$conn = connectDB();
+	if(!$conn) {
+		$log->error('Database connection failed to source'. $conn->connect_error);
+		$conn = connectReplica();
+		if (!$conn) {
+			return ['success' => false, 'message' => 'Database connection failed to both.'];
+		}
+	}
+	$user_id = getUserId($conn, $data);
+	if(!$user_id) {
+		return ['success' => false, 'message' => 'User not authenticated (blocking friend)!]'];
+	}
+	$friend_id = $data['friend_id'] ?? null;
+	if(!$friend_id) {
+		return ['success' => false, 'message' => 'Invalid friend ID (blocking friend)!]'];
+	}
+	$stmt = $conn->prepare("SELECT id FROM friends WHERE user_id = ? AND friend_id = ?");
+	$stmt->bind_param("ii", $user_id, $friend_id);
+	$stmt->execute();
+	$result = $stmt->get_result();
+	if($result){
+		$stmt = $conn->prepare("UPDATE friends SET isBlocked = 1 WHERE user_id = ? AND friend_id = ?");
+		$stmt->bind_param("ii", $user_id, $friend_id);
+		if($stmt->execute()) {
+			$log->info("SUCCESS: friends.block works for user_id: $user_id and friend_id: $friend_id");
+			return ['success' => true, 'message' => 'Friend blocked!'];
+		} else {
+			return ['success' => false, 'message' => 'Failed to block friend.'];
+		}
+	} else {
+		$stmt = $conn->prepare("INSERT INTO friends (user_id, friend_id, isBlocked) VALUES (?, ?, 1)");
+		$stmt->bind_param("ii", $user_id, $friend_id);
+		if($stmt->execute()) {
+			$log->info("SUCCESS: friends.block works for user_id: $user_id and friend_id: $friend_id");
+			return ['success' => true, 'message' => 'Friend blocked!'];
+		} else {
+			return ['success' => false, 'message' => 'Failed to block friend.'];
+		}
+	}
+	}
 //RMQ processing
 function processMessage($req) {
 	global $log;
@@ -1307,10 +1414,19 @@ function processMessage($req) {
 	}elseif($routing_key==='user.register') {
 		$response = handleRegistration($message);
 
-	}/*elseif($type == 'friends.search'){ // friend search
+	}elseif($routing_key == 'friends.search'){ // friend search
 		$response = handleFriendsSearch($message);
 
-	}*/elseif($routing_key==='book.list') { //book search
+	}elseif($routing_key == 'friends.add'){ // friend add
+		$response = handleFriendAdd($message);
+
+	}elseif($routing_key == 'friends.remove'){ // friend remove
+		$response = handleFriendRemove($message);
+
+	}elseif($routing_key == 'friends.block'){ // friend block
+		$response = handleFriendBlock($message);
+
+	}elseif($routing_key==='book.list') { //book search
 		$response = handleSearchBooks($message);
 
 	}elseif($routing_key==='book.get') { //getting single book
