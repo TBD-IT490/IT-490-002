@@ -61,11 +61,17 @@ while (true) {
             echo "STOP REPLICA! \n";
             echo "RESET REPLICA! \n";
             echo "SET GLOBAL read_only = 0; \n";
+            echo "SET GLOBAL super_read_only = 0; \n";
+            $stmt = $conn2->query("STOP REPLICA;");
+            $stmt2 = $conn2->query("RESET REPLICA ALL;");
+            $stmt3 = $conn2->query("SET GLOBAL read_only = 0;");
+            $stmt4 = $conn2->query("SET GLOBAL super_read_only = 0;");
 
             /*raahh
             $stmt = $conn2->query("STOP REPLICA;");
             $stmt2 = $conn2->query("RESET REPLICA ALL;");
             $stmt3 = $conn2->query("SET GLOBAL read_only = 0;");
+            $stmt4 = $conn2->query("SET GLOBAL super_read_only = 0;");
             */
             /* test raahh
             echo "Showing users... \n";
