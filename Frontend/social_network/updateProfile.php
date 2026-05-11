@@ -34,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['bio'] = $bio;
         header("Location: ../pages/profile.php");
 
-        $msg = 'Profile updated.';
     } else {
         $msg = 'Could not save changes. Please try again.';
     }
