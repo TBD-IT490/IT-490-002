@@ -38,14 +38,12 @@ require_once '../includes/header.php';
     <div>
         <h1>Hi, I'm <?= htmlspecialchars($_SESSION['username'] ?? '') ?>!</h1>
         <p>Email: <?= htmlspecialchars($_SESSION['email'] ?? '') ?></p>
-        <p>Bio: <?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
+        <p><?= htmlspecialchars($_SESSION['bio'] ?? '') ?></p>
         
         <a href="../social_network/updateProfile.php" class="btn-n btn" style="text-decoration: none; color: inherit;">Update Profile</a>
         <a href="../social_network/socialNetwork.php" class="btn-n btn" style="text-decoration: none; color: inherit;">View Friends</a>
     
     </div>  
-
-   
 
     
 </body>

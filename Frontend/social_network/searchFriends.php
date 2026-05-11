@@ -19,42 +19,10 @@ if (isset($_GET['query'])) {
         ])['results'] ?? [];
 }
 
-/* maybe?
-//also sending info to nat but getting info back as well
-if ($view_id) {
+/*
+users to test search: urmoms, faah, test2020
+*/ 
 
-    $book_res = rmq_rpc('book.get', [
-        'book_id'=> $view_id,
-        'username' => $_SESSION['username'],
-    ]);
-    $book = $book_res['book'];
-
-    if ($book) {
-
-        $book['id'] = $book['book_id'] ?? $view_id;
-        $book['cover'] = $book['cover_url'] ?? '';
-        $book['year'] = $book['published_year'] ?? '';
-
-        //hopefully this works pray for me it is midnight
-       $reviews_res = rmq_rpc('review.list',[
-        'book_id' => $view_id,
-        'username' => $_SESSION['username'] ?? '',
-       ]);
-         $book_reviews = $reviews_res['reviews'] ?? [];
-         $my_rating = 0;
-    }
-
-    //book list function, nat has her own on her side
-} else {
-
-    $books_res = rmq_rpc('book.list', [
-        'search' => $search,
-        'username' => $_SESSION['username'] ?? '',
-    ]);
-  
-}
-}
-*/
 ?>
 
 <!--HTML CODE-->

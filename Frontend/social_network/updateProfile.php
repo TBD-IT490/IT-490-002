@@ -27,11 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'email'=> $email,
         'bio'=> $bio,
     ]);
-    if($result['success'] ?? false) {
+    if($result['success'] ?? true) {
         //updating sesh values so they show up on profile immediately 
         $_SESSION['username'] = $display;
         $_SESSION['email'] = $email;
         $_SESSION['bio'] = $bio;
+        header("Location: ../pages/profile.php");
 
         $msg = 'Profile updated.';
     } else {
