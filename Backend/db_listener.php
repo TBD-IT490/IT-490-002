@@ -1254,6 +1254,7 @@ function recommendBooks($data)  {
 	return ["success"=> true,"message"=> "all good twin heres the books", "recommendations" => $recommendations];
 
 }
+/*
 //searching friends that don't have u blocked or aren't blocked
 function handleFriendsSearch($data){
 	global $log;
@@ -1291,7 +1292,7 @@ function handleFriendsSearch($data){
 		$log->info("FAILED: friends.search no users found for search: $search");
 		return ['success' => false, 'message' => 'No users found.'];
 	}
-	}
+	}*/
 
 //RMQ processing
 function processMessage($req) {
@@ -1306,10 +1307,10 @@ function processMessage($req) {
 	}elseif($routing_key==='user.register') {
 		$response = handleRegistration($message);
 
-	}elseif($type == 'friends.search'){ // friend search
+	}/*elseif($type == 'friends.search'){ // friend search
 		$response = handleFriendsSearch($message);
 
-	}elseif($routing_key==='book.list') { //book search
+	}*/elseif($routing_key==='book.list') { //book search
 		$response = handleSearchBooks($message);
 
 	}elseif($routing_key==='book.get') { //getting single book
